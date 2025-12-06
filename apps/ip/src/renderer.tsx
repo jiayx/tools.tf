@@ -1,0 +1,24 @@
+import { jsxRenderer } from 'hono/jsx-renderer'
+import { Link, ViteClient, Script } from 'vite-ssr-components/hono'
+
+export const renderer = jsxRenderer(({ children }) => {
+  return (
+    <html>
+      <head>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>IP lookup · tools.tf</title>
+        <meta
+          name="description"
+          content="Check your public IP address and edge location details."
+        />
+        <ViteClient />
+        <Link href="/src/style.css" rel="stylesheet" />
+      </head>
+      <body>
+        {children}
+        <Script type="module" src="/src/client.ts" />
+      </body>
+    </html>
+  )
+})
