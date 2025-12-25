@@ -7,5 +7,10 @@
   },
   "keywords": [],
   "author": "jiayx",
-  "packageManager": "pnpm@10.22.0"
+  "packageManager": "pnpm@10.22.0",
+  "pnpm": {
+    "overrides": {
+      "vite": "npm:rolldown-vite@7.2.5"
+    }
+  }
 }
