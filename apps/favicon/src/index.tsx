@@ -1,0 +1,360 @@
+import { Hono } from 'hono'
+import { renderer } from './renderer'
+import { iconNames, getLucideIconMarkup } from './lucide'
+
+const app = new Hono()
+
+app.use(renderer)
+
+const DEFAULTS = {
+  type: 'text',
+  text: 'TF',
+  icon: 'sparkles',
+  fg: '#f8fafc',
+  bg1: '#111827',
+  bg2: '#6366f1',
+  angle: 140,
+  size: 128,
+  glyph: 64,
+}
+
+const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max)
+
+const parseNumber = (value: string | undefined, fallback: number) => {
+  if (!value) return fallback
+  const num = Number(value)
+  if (Number.isNaN(num)) return fallback
+  return num
+}
+
+const parseHex = (value: string | undefined, fallback: string) => {
+  if (!value) return fallback
+  const normalized = value.trim()
+  return /^#[0-9a-fA-F]{6}$/.test(normalized) ? normalized.toLowerCase() : fallback
+}
+
+const sanitizeText = (value: string | undefined, fallback: string) => {
+  if (!value) return fallback
+  const trimmed = value.replace(/\s+/g, '').slice(0, 6)
+  return trimmed ? trimmed : fallback
+}
+
+const normalizeIconName = (value: string | undefined, fallback: string) => {
+  if (!value) return fallback
+  const normalized = value.trim().toLowerCase()
+  return iconNames.includes(normalized) ? normalized : fallback
+}
+
+const isWideGlyph = (char: string) =>
+  /[\u1100-\u115F\u2E80-\uA4CF\uAC00-\uD7A3\uF900-\uFAFF\uFE10-\uFE19\uFE30-\uFE6F\uFF01-\uFF60\uFFE0-\uFFE6]/.test(
+    char
+  )
+
+const measureTextUnits = (text: string) => {
+  let units = 0
+  for (const char of text) {
+    if (isWideGlyph(char)) {
+      units += 1
+    } else if (/[0-9A-Za-z]/.test(char)) {
+      units += 0.62
+    } else {
+      units += 0.8
+    }
+  }
+  return Math.max(units, 1)
+}
+
+const hasWideGlyph = (text: string) => {
+  for (const char of text) {
+    if (isWideGlyph(char)) return true
+  }
+  return false
+}
+
+const escapeSvgText = (value: string) =>
+  value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+const fallbackIconMarkup = '<circle cx="12" cy="12" r="9" />'
+
+type IconOptions = {
+  type: 'text' | 'icon'
+  text: string
+  icon: string
+  fg: string
+  bg1: string
+  bg2: string
+  angle: number
+  size: number
+  glyph: number
+}
+
+const parseOptions = (query: Record<string, string>, sizeParam?: string) => {
+  const type = query.type === 'icon' ? 'icon' : 'text'
+  const size = clamp(parseNumber(sizeParam || query.size, DEFAULTS.size), 16, 512)
+  const glyph = clamp(parseNumber(query.glyph, DEFAULTS.glyph), 28, 86)
+  const angle = clamp(parseNumber(query.angle, DEFAULTS.angle), 0, 360)
+  const bg1 = parseHex(query.bg1, DEFAULTS.bg1)
+  const bg2 = query.bg2 ? parseHex(query.bg2, bg1) : bg1
+
+  return {
+    type,
+    text: sanitizeText(query.text, DEFAULTS.text),
+    icon: normalizeIconName(query.icon, DEFAULTS.icon),
+    fg: parseHex(query.fg, DEFAULTS.fg),
+    bg1,
+    bg2,
+    angle,
+    size,
+    glyph,
+  } satisfies IconOptions
+}
+
+const buildSvg = (options: IconOptions) => {
+  const { size, fg, bg1, bg2, angle, type, text, icon, glyph } = options
+  const radius = Math.round(size * 0.22)
+  const gradientId = 'bg'
+  const hasGradient = bg1 !== bg2
+
+  const defs = hasGradient
+    ? `<defs><linearGradient id="${gradientId}" gradientTransform="rotate(${angle} 0.5 0.5)"><stop offset="0%" stop-color="${bg1}"/><stop offset="100%" stop-color="${bg2}"/></linearGradient></defs>`
+    : ''
+  const fill = hasGradient ? `url(#${gradientId})` : bg1
+
+  if (type === 'text') {
+    const fontSizeBase = (size * glyph) / 100
+    const textUnits = measureTextUnits(text)
+    const targetWidth = size * 0.66
+    const targetHeight = size * 0.62
+    const fittedWidth = targetWidth / textUnits
+    const heightFactor = hasWideGlyph(text) ? 1 : 0.78
+    const fittedHeight = targetHeight / heightFactor
+    const fontSize = Math.max(Math.min(fontSizeBase, fittedWidth, fittedHeight), size * 0.18)
+    const fontFamily =
+      'Space Grotesk, Segoe UI, PingFang SC, Noto Sans SC, Helvetica Neue, sans-serif'
+    const letterSpacing = textUnits > 3.4 ? '0.01em' : '0.02em'
+    const safeText = escapeSvgText(text)
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+  ${defs}
+  <rect width="${size}" height="${size}" rx="${radius}" fill="${fill}" />
+  <text x="50%" y="50%" fill="${fg}" font-family='${fontFamily}' font-size="${fontSize}" font-weight="700" text-anchor="middle" dominant-baseline="central" letter-spacing="${letterSpacing}">${safeText}</text>
+</svg>`
+  }
+
+  const iconMarkup = getLucideIconMarkup(icon) ?? fallbackIconMarkup
+  const glyphSize = (size * glyph) / 100
+  const scale = glyphSize / 24
+  const offset = (size - glyphSize) / 2
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+  ${defs}
+  <rect width="${size}" height="${size}" rx="${radius}" fill="${fill}" />
+  <g transform="translate(${offset} ${offset}) scale(${scale})" fill="none" stroke="${fg}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    ${iconMarkup}
+  </g>
+</svg>`
+}
+
+const FaviconPage = () => {
+  const defaultParams = new URLSearchParams({
+    type: DEFAULTS.type,
+    text: DEFAULTS.text,
+    fg: DEFAULTS.fg,
+    bg1: DEFAULTS.bg1,
+    bg2: DEFAULTS.bg2,
+    angle: String(DEFAULTS.angle),
+    glyph: String(DEFAULTS.glyph),
+  }).toString()
+
+  return (
+    <main class="page">
+      <header class="hero">
+        <div class="hero__text">
+          <p class="eyebrow">Favicon Atelier</p>
+          <h1>Craft a favicon that feels like your brand.</h1>
+        </div>
+      </header>
+
+      <section class="studio">
+        <form class="panel controls" data-form>
+          <div class="panel__header">
+            <h3>Build your mark</h3>
+            <p>Pick a style, then refine colors and scale.</p>
+          </div>
+
+          <div class="control">
+            <label>Icon mode</label>
+            <div class="segmented" data-mode>
+              <button type="button" class="segmented__btn is-active" data-mode-btn data-mode-value="text">
+                Text
+              </button>
+              <button type="button" class="segmented__btn" data-mode-btn data-mode-value="icon">
+                Lucide icon
+              </button>
+            </div>
+          </div>
+
+          <div class="control-group" data-text-controls>
+            <div class="control">
+              <label htmlFor="textInput">Text</label>
+              <input id="textInput" type="text" maxlength={6} value={DEFAULTS.text} data-field="text" />
+              <span class="helper">Keep it short: up to 6 characters.</span>
+            </div>
+            <div class="control">
+              <label htmlFor="glyphSizeText">Text size</label>
+              <div class="range">
+                <input id="glyphSizeText" type="range" min={32} max={82} value={DEFAULTS.glyph} data-field="glyph" />
+                <span data-field-value="glyph">{DEFAULTS.glyph}%</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="control-group is-hidden" data-icon-controls>
+            <div class="control">
+              <label htmlFor="iconSelect">Lucide icon</label>
+              <select id="iconSelect" data-field="icon">
+                {iconNames.map((name) => (
+                  <option value={name} selected={name === DEFAULTS.icon}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div class="control">
+              <label htmlFor="glyphSizeIcon">Icon size</label>
+              <div class="range">
+                <input id="glyphSizeIcon" type="range" min={32} max={82} value={DEFAULTS.glyph} data-field="glyph" />
+                <span data-field-value="glyph">{DEFAULTS.glyph}%</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <div class="control">
+              <label>Background style</label>
+              <div class="segmented" data-bg-mode>
+                <button type="button" class="segmented__btn" data-bg-mode-btn data-bg-mode-value="solid">
+                  Solid
+                </button>
+                <button
+                  type="button"
+                  class="segmented__btn is-active"
+                  data-bg-mode-btn
+                  data-bg-mode-value="gradient"
+                >
+                  Gradient
+                </button>
+              </div>
+            </div>
+            <div class="control">
+              <label>Foreground</label>
+              <div class="color">
+                <input type="color" value={DEFAULTS.fg} data-field="fg" />
+                <input type="text" value={DEFAULTS.fg} data-field="fgText" />
+              </div>
+            </div>
+            <div class="control">
+              <label>Background 1</label>
+              <div class="color">
+                <input type="color" value={DEFAULTS.bg1} data-field="bg1" />
+                <input type="text" value={DEFAULTS.bg1} data-field="bg1Text" />
+              </div>
+            </div>
+            <div class="control" data-bg2-control>
+              <label>Background 2</label>
+              <div class="color">
+                <input type="color" value={DEFAULTS.bg2} data-field="bg2" />
+                <input type="text" value={DEFAULTS.bg2} data-field="bg2Text" />
+              </div>
+            </div>
+          </div>
+
+          <div class="control" data-angle-control>
+            <label htmlFor="angleRange">Gradient angle</label>
+            <div class="range">
+              <input id="angleRange" type="range" min={0} max={360} value={DEFAULTS.angle} data-field="angle" />
+              <span data-field-value="angle">{DEFAULTS.angle}°</span>
+            </div>
+          </div>
+
+          <div class="control">
+            <label htmlFor="sizeRange">Export size</label>
+            <div class="range">
+              <input id="sizeRange" type="range" min={16} max={512} step={8} value={DEFAULTS.size} data-field="size" />
+              <span data-field-value="size">{DEFAULTS.size}px</span>
+            </div>
+          </div>
+        </form>
+
+        <aside class="panel preview">
+          <div class="panel__header">
+            <h3>Live preview</h3>
+            <p>Use the URL below directly in your HTML.</p>
+          </div>
+
+          <div class="preview__canvas">
+            <img
+              class="preview__image"
+              alt="Favicon preview"
+              data-preview
+              src={`/icon/${DEFAULTS.size}?${defaultParams}`}
+            />
+          </div>
+
+          <div class="preview__url">
+            <input type="text" readOnly data-url />
+            <button type="button" data-copy>
+              Copy
+            </button>
+            <span class="copy-status" data-copy-status>
+              Copy
+            </span>
+          </div>
+
+          <div class="preview__sizes">
+            <p>Common favicon sizes</p>
+            <div class="chip-row">
+              {[16, 32, 48, 64, 96, 128, 256].map((size) => (
+                <a class="chip" href="#" data-size-link data-size={size}>
+                  {size}px
+                </a>
+              ))}
+            </div>
+          </div>
+
+          <div class="preview__grid">
+            {[16, 32, 48, 64].map((size) => (
+              <div class="thumb" data-size-preview data-size={size}>
+                <img alt={`${size} favicon`} />
+                <span>{size}px</span>
+              </div>
+            ))}
+          </div>
+
+          <div class="preview__snippet">
+            <p>HTML snippet</p>
+            <pre>
+              <code data-snippet></code>
+            </pre>
+          </div>
+        </aside>
+      </section>
+    </main>
+  )
+}
+
+app.get('/', (c) => {
+  return c.render(<FaviconPage />)
+})
+
+app.get('/icon/:size?', (c) => {
+  const options = parseOptions(c.req.query(), c.req.param('size'))
+  const svg = buildSvg(options)
+  return c.body(svg, 200, {
+    'Content-Type': 'image/svg+xml; charset=utf-8',
+    'Cache-Control': 'public, max-age=3600',
+  })
+})
+
+export default app
