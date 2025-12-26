@@ -146,6 +146,17 @@ body::after {
   font-size: 22px;
 }
 
+.panel__header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.panel__header-row h3 {
+  margin: 0;
+}
+
 .panel__header p {
   margin: 0 0 20px;
   color: var(--muted);
@@ -155,6 +166,22 @@ body::after {
   display: flex;
   flex-direction: column;
   gap: 18px;
+}
+
+.reset-btn {
+  border: 1px solid var(--panel-border);
+  background: #f7f9ff;
+  color: var(--ink);
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reset-btn:hover {
+  border-color: #c7d2fe;
+  box-shadow: var(--shadow-soft);
 }
 
 .control-group {

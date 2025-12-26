@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const snippet = document.querySelector<HTMLElement>('[data-snippet]')
   const copyBtn = document.querySelector<HTMLButtonElement>('[data-copy]')
   const copyStatus = document.querySelector<HTMLElement>('[data-copy-status]')
+  const resetBtn = document.querySelector<HTMLButtonElement>('[data-reset]')
   const textControls = document.querySelector<HTMLElement>('[data-text-controls]')
   const iconControls = document.querySelector<HTMLElement>('[data-icon-controls]')
   const modeButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-mode-btn]'))
@@ -35,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     glyph: Array.from(document.querySelectorAll<HTMLElement>('[data-field-value="glyph"]')),
   }
 
-  const state = {
+  const defaults = {
     type: 'text',
     bgMode: 'gradient',
     text: fields.text?.value || 'TF',
@@ -47,6 +48,8 @@ document.addEventListener('DOMContentLoaded', () => {
     size: Number(fields.size?.value || 128),
     glyph: Number(fields.glyphInputs[0]?.value || 64),
   }
+
+  const state = { ...defaults }
 
   const normalizeHex = (value: string) => {
     const trimmed = value.trim()
@@ -156,6 +159,38 @@ document.addEventListener('DOMContentLoaded', () => {
   const applyState = () => {
     updateLabels()
     updatePreview()
+  }
+
+  const resetToDefaults = () => {
+    state.type = defaults.type
+    state.bgMode = defaults.bgMode
+    state.text = defaults.text
+    state.icon = defaults.icon
+    state.fg = defaults.fg
+    state.bg1 = defaults.bg1
+    state.bg2 = defaults.bg2
+    state.angle = defaults.angle
+    state.size = defaults.size
+    state.glyph = defaults.glyph
+
+    setActiveMode(state.type)
+    setBackgroundMode(state.bgMode)
+
+    if (fields.text) fields.text.value = state.text
+    if (fields.icon) fields.icon.value = state.icon
+    if (fields.fg) fields.fg.value = state.fg
+    if (fields.fgText) fields.fgText.value = state.fg
+    if (fields.bg1) fields.bg1.value = state.bg1
+    if (fields.bg1Text) fields.bg1Text.value = state.bg1
+    if (fields.bg2) fields.bg2.value = state.bg2
+    if (fields.bg2Text) fields.bg2Text.value = state.bg2
+    if (fields.angle) fields.angle.value = String(state.angle)
+    if (fields.size) fields.size.value = String(state.size)
+    fields.glyphInputs.forEach((glyphInput) => {
+      glyphInput.value = String(state.glyph)
+    })
+
+    applyState()
   }
 
   modeButtons.forEach((btn) => {
@@ -295,6 +330,10 @@ document.addEventListener('DOMContentLoaded', () => {
       event.preventDefault()
       window.open(link.href, '_blank')
     })
+  })
+
+  resetBtn?.addEventListener('click', () => {
+    resetToDefaults()
   })
 
   setActiveMode(state.type)

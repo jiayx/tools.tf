@@ -179,7 +179,12 @@ const FaviconPage = () => {
       <section class="studio">
         <form class="panel controls" data-form>
           <div class="panel__header">
-            <h3>Build your mark</h3>
+            <div class="panel__header-row">
+              <h3>Build your mark</h3>
+              <button type="button" class="reset-btn" data-reset>
+                Reset
+              </button>
+            </div>
             <p>Pick a style, then refine colors and scale.</p>
           </div>
 
@@ -285,6 +290,7 @@ const FaviconPage = () => {
               <span data-field-value="size">{DEFAULTS.size}px</span>
             </div>
           </div>
+
         </form>
 
         <aside class="panel preview">
