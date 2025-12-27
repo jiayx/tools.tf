@@ -201,6 +201,36 @@ document.addEventListener('DOMContentLoaded', () => {
     target.innerHTML = buildLucideSvg(name, color, size)
   }
 
+  let isRenderingPreviews = false
+
+  const renderVisiblePreviews = () => {
+    if (isRenderingPreviews) return
+    isRenderingPreviews = true
+    const queue = iconPreviews.filter((preview) => {
+      if (preview.dataset.rendered === 'true') return false
+      const button = preview.closest<HTMLElement>('[data-icon-option]')
+      if (!button || button.classList.contains('is-hidden')) return false
+      return true
+    })
+
+    const paintBatch = () => {
+      const batch = queue.splice(0, 40)
+      batch.forEach((preview) => {
+        const name = preview.dataset.iconName
+        if (!name) return
+        renderLucidePreview(preview, name, '#111827', 20)
+        preview.dataset.rendered = 'true'
+      })
+      if (queue.length) {
+        window.requestAnimationFrame(paintBatch)
+      } else {
+        isRenderingPreviews = false
+      }
+    }
+
+    window.requestAnimationFrame(paintBatch)
+  }
+
   const updateIconPreview = () => {
     if (!iconTriggerPreview) return
     renderLucidePreview(iconTriggerPreview, state.icon, '#111827', 20)
@@ -378,6 +408,7 @@ document.addEventListener('DOMContentLoaded', () => {
     iconMenu.classList.remove('is-hidden')
     iconDropdown.classList.add('is-open')
     iconFilter?.focus()
+    renderVisiblePreviews()
   }
 
   const closeIconMenu = () => {
@@ -417,6 +448,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const matches = !query || name.includes(query)
         option.classList.toggle('is-hidden', !matches)
       })
+      renderVisiblePreviews()
     })
 
     iconFilter.addEventListener('focus', () => {
@@ -543,12 +575,6 @@ document.addEventListener('DOMContentLoaded', () => {
       event.preventDefault()
       window.open(link.href, '_blank')
     })
-  })
-
-  iconPreviews.forEach((preview) => {
-    const name = preview.dataset.iconName
-    if (!name) return
-    renderLucidePreview(preview, name, '#111827', 20)
   })
 
   iconOptions.forEach((option) => {
