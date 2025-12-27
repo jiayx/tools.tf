@@ -15,6 +15,7 @@ export const renderer = jsxRenderer(({ children }) => {
         />
         <ViteClient />
         <Link href="/src/style.css" rel="stylesheet" />
+        <link rel="icon" type="image/svg+xml" href="https://favicon.tools.tf/icon/32?type=icon&fg=%23f8fafc&bg1=%23111827&bg2=%236366f1&angle=140&glyph=64&icon=image" sizes="32x32" />
       </head>
       <body>
         {children}

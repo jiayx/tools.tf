@@ -113,9 +113,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const updateSnippet = (baseUrl: string) => {
     const lines = [
-      `<link rel="icon" type="image/svg+xml" href="${baseUrl}/icon/32?${buildQuery().toString()}" sizes="32x32">`,
-      `<link rel="icon" type="image/svg+xml" href="${baseUrl}/icon/16?${buildQuery().toString()}" sizes="16x16">`,
-      `<link rel="icon" type="image/svg+xml" href="${baseUrl}/icon/64?${buildQuery().toString()}" sizes="64x64">`,
+      `<link rel="icon" type="image/svg+xml" href="${baseUrl}/icon/32?${buildQuery().toString()}" sizes="32x32" />`,
+      `<link rel="icon" type="image/svg+xml" href="${baseUrl}/icon/16?${buildQuery().toString()}" sizes="16x16" />`,
+      `<link rel="icon" type="image/svg+xml" href="${baseUrl}/icon/64?${buildQuery().toString()}" sizes="64x64" />`,
     ]
     snippet.textContent = lines.join('\n')
   }
