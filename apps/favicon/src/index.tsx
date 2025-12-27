@@ -1,22 +1,11 @@
 import { Hono } from 'hono'
 import { renderer } from './renderer'
 import { iconNames, getLucideIconMarkup } from './lucide'
+import { DEFAULTS, PRESETS } from './config'
 
 const app = new Hono()
 
 app.use(renderer)
-
-const DEFAULTS = {
-  type: 'text',
-  text: 'TF',
-  icon: 'sparkles',
-  fg: '#f8fafc',
-  bg1: '#111827',
-  bg2: '#6366f1',
-  angle: 140,
-  size: 128,
-  glyph: 64,
-}
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max)
 
@@ -166,6 +155,10 @@ const FaviconPage = () => {
     angle: String(DEFAULTS.angle),
     glyph: String(DEFAULTS.glyph),
   }).toString()
+  const getPresetBackground = (bgMode: string, bg1: string, bg2: string, angle: number) => {
+    if (bgMode === 'solid') return bg1
+    return `linear-gradient(${angle}deg, ${bg1}, ${bg2})`
+  }
 
   return (
     <main class="page">
@@ -179,12 +172,7 @@ const FaviconPage = () => {
       <section class="studio">
         <form class="panel controls" data-form>
           <div class="panel__header">
-            <div class="panel__header-row">
-              <h3>Build your mark</h3>
-              <button type="button" class="reset-btn" data-reset>
-                Reset
-              </button>
-            </div>
+            <h3>Build your mark</h3>
             <p>Pick a style, then refine colors and scale.</p>
           </div>
 
@@ -249,6 +237,29 @@ const FaviconPage = () => {
                   data-bg-mode-value="gradient"
                 >
                   Gradient
+                </button>
+              </div>
+            </div>
+            <div class="control">
+              <label>Theme presets</label>
+              <div class="preset-row">
+                {PRESETS.map((preset, index) => {
+                  const background = getPresetBackground(preset.bgMode, preset.bg1, preset.bg2, preset.angle)
+                  return (
+                    <button
+                      type="button"
+                      class="preset-chip"
+                      data-preset={String(index)}
+                      style={`--preset-fg: ${preset.fg}; --preset-bg: ${background}`}
+                    >
+                      <span class="preset-swatch" style={`background: ${background}`}></span>
+                      {preset.label}
+                    </button>
+                  )
+                })}
+                <button type="button" class="preset-chip preset-chip--random" data-random>
+                  <span class="preset-swatch preset-swatch--rainbow"></span>
+                  Random
                 </button>
               </div>
             </div>

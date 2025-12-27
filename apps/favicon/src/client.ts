@@ -1,13 +1,16 @@
+import { DEFAULTS, PRESETS } from './config'
+
 document.addEventListener('DOMContentLoaded', () => {
   const preview = document.querySelector<HTMLImageElement>('[data-preview]')
   const urlInput = document.querySelector<HTMLInputElement>('[data-url]')
   const snippetList = document.querySelector<HTMLElement>('[data-snippet-list]')
   const copyBtn = document.querySelector<HTMLButtonElement>('[data-copy]')
-  const resetBtn = document.querySelector<HTMLButtonElement>('[data-reset]')
   const textControls = document.querySelector<HTMLElement>('[data-text-controls]')
   const iconControls = document.querySelector<HTMLElement>('[data-icon-controls]')
   const modeButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-mode-btn]'))
   const bgModeButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-bg-mode-btn]'))
+  const presetButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-preset]'))
+  const randomBtn = document.querySelector<HTMLButtonElement>('[data-random]')
   const bg2Control = document.querySelector<HTMLElement>('[data-bg2-control]')
   const angleControl = document.querySelector<HTMLElement>('[data-angle-control]')
   const sizeLinks = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-size-link]'))
@@ -35,24 +38,90 @@ document.addEventListener('DOMContentLoaded', () => {
     glyph: Array.from(document.querySelectorAll<HTMLElement>('[data-field-value="glyph"]')),
   }
 
+  const initialBg1 = fields.bg1?.value || DEFAULTS.bg1
+  const initialBg2 = fields.bg2?.value || DEFAULTS.bg2
+
   const defaults = {
     type: 'text',
-    bgMode: 'gradient',
-    text: fields.text?.value || 'TF',
-    icon: fields.icon?.value || 'sparkles',
-    fg: fields.fg?.value || '#f8fafc',
-    bg1: fields.bg1?.value || '#111827',
-    bg2: fields.bg2?.value || '#6366f1',
-    angle: Number(fields.angle?.value || 140),
-    size: Number(fields.size?.value || 128),
-    glyph: Number(fields.glyphInputs[0]?.value || 64),
+    bgMode: initialBg1 === initialBg2 ? 'solid' : 'gradient',
+    text: fields.text?.value || DEFAULTS.text,
+    icon: fields.icon?.value || DEFAULTS.icon,
+    fg: fields.fg?.value || DEFAULTS.fg,
+    bg1: initialBg1,
+    bg2: initialBg2,
+    angle: Number(fields.angle?.value || DEFAULTS.angle),
+    size: Number(fields.size?.value || DEFAULTS.size),
+    glyph: Number(fields.glyphInputs[0]?.value || DEFAULTS.glyph),
   }
 
   const state = { ...defaults }
 
+  const presets = PRESETS
+
   const normalizeHex = (value: string) => {
     const trimmed = value.trim()
     return /^#[0-9a-fA-F]{6}$/.test(trimmed) ? trimmed.toLowerCase() : null
+  }
+
+  const hslToHex = (h: number, s: number, l: number) => {
+    const sat = s / 100
+    const light = l / 100
+    const c = (1 - Math.abs(2 * light - 1)) * sat
+    const x = c * (1 - Math.abs(((h / 60) % 2) - 1))
+    const m = light - c / 2
+    let r = 0
+    let g = 0
+    let b = 0
+
+    if (h >= 0 && h < 60) {
+      r = c
+      g = x
+    } else if (h >= 60 && h < 120) {
+      r = x
+      g = c
+    } else if (h >= 120 && h < 180) {
+      g = c
+      b = x
+    } else if (h >= 180 && h < 240) {
+      g = x
+      b = c
+    } else if (h >= 240 && h < 300) {
+      r = x
+      b = c
+    } else {
+      r = c
+      b = x
+    }
+
+    const toHex = (value: number) => {
+      const channel = Math.round((value + m) * 255)
+      return channel.toString(16).padStart(2, '0')
+    }
+
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`
+  }
+
+  const hexToRgb = (hex: string) => {
+    const normalized = normalizeHex(hex)
+    if (!normalized) return null
+    const value = normalized.slice(1)
+    const r = parseInt(value.slice(0, 2), 16)
+    const g = parseInt(value.slice(2, 4), 16)
+    const b = parseInt(value.slice(4, 6), 16)
+    return { r, g, b }
+  }
+
+  const getLuminance = (hex: string) => {
+    const rgb = hexToRgb(hex)
+    if (!rgb) return 0
+    const transform = (value: number) => {
+      const channel = value / 255
+      return channel <= 0.03928 ? channel / 12.92 : Math.pow((channel + 0.055) / 1.055, 2.4)
+    }
+    const r = transform(rgb.r)
+    const g = transform(rgb.g)
+    const b = transform(rgb.b)
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
   }
 
   const syncColorText = (source: HTMLInputElement | null, target: HTMLInputElement | null) => {
@@ -173,23 +242,15 @@ document.addEventListener('DOMContentLoaded', () => {
     updatePreview()
   }
 
-  const resetToDefaults = () => {
-    state.type = defaults.type
-    state.bgMode = defaults.bgMode
-    state.text = defaults.text
-    state.icon = defaults.icon
-    state.fg = defaults.fg
-    state.bg1 = defaults.bg1
-    state.bg2 = defaults.bg2
-    state.angle = defaults.angle
-    state.size = defaults.size
-    state.glyph = defaults.glyph
+  const applyPalette = (palette: { bgMode: string; fg: string; bg1: string; bg2: string; angle: number }) => {
+    state.bgMode = palette.bgMode === 'solid' ? 'solid' : 'gradient'
+    state.fg = palette.fg
+    state.bg1 = palette.bg1
+    state.bg2 = palette.bg2
+    state.angle = palette.angle
 
-    setActiveMode(state.type)
     setBackgroundMode(state.bgMode)
 
-    if (fields.text) fields.text.value = state.text
-    if (fields.icon) fields.icon.value = state.icon
     if (fields.fg) fields.fg.value = state.fg
     if (fields.fgText) fields.fgText.value = state.fg
     if (fields.bg1) fields.bg1.value = state.bg1
@@ -197,13 +258,28 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fields.bg2) fields.bg2.value = state.bg2
     if (fields.bg2Text) fields.bg2Text.value = state.bg2
     if (fields.angle) fields.angle.value = String(state.angle)
-    if (fields.size) fields.size.value = String(state.size)
-    fields.glyphInputs.forEach((glyphInput) => {
-      glyphInput.value = String(state.glyph)
-    })
 
     applyState()
   }
+
+  const applyRandomPalette = () => {
+    const baseHue = Math.floor(Math.random() * 360)
+    const hueShift = 40 + Math.random() * 120
+    const sat = 55 + Math.random() * 25
+    const light = 38 + Math.random() * 22
+    const bg1 = hslToHex(baseHue, sat, light)
+    const bg2 = hslToHex((baseHue + hueShift) % 360, sat, light)
+    const fg = getLuminance(bg1) > 0.55 ? '#0f172a' : '#f8fafc'
+    const nextBgMode = state.bgMode
+    applyPalette({
+      bgMode: nextBgMode,
+      fg,
+      bg1,
+      bg2: nextBgMode === 'solid' ? bg1 : bg2,
+      angle: Math.floor(Math.random() * 361),
+    })
+  }
+
 
   modeButtons.forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -217,6 +293,19 @@ document.addEventListener('DOMContentLoaded', () => {
       setBackgroundMode(btn.dataset.bgModeValue || 'gradient')
       applyState()
     })
+  })
+
+  presetButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const index = Number(btn.dataset.preset || 0)
+      const preset = presets[index]
+      if (!preset) return
+      applyPalette(preset)
+    })
+  })
+
+  randomBtn?.addEventListener('click', () => {
+    applyRandomPalette()
   })
 
   if (fields.text) {
@@ -365,10 +454,6 @@ document.addEventListener('DOMContentLoaded', () => {
       event.preventDefault()
       window.open(link.href, '_blank')
     })
-  })
-
-  resetBtn?.addEventListener('click', () => {
-    resetToDefaults()
   })
 
   setActiveMode(state.type)
