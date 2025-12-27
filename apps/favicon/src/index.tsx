@@ -69,6 +69,7 @@ type IconOptions = {
   text: string
   icon: string
   fg: string
+  bgMode: 'solid' | 'gradient' | 'transparent'
   bg1: string
   bg2: string
   angle: number
@@ -84,8 +85,18 @@ const parseOptions = (query: Record<string, string>, sizeParam?: string) => {
         ? 'lucide'
         : 'text'
   const size = clamp(parseNumber(sizeParam || query.size, DEFAULTS.size), 16, 512)
-  const glyph = clamp(parseNumber(query.glyph, DEFAULTS.glyph), 28, 86)
+  const glyph = clamp(parseNumber(query.glyph, DEFAULTS.glyph), 28, 100)
   const angle = clamp(parseNumber(query.angle, DEFAULTS.angle), 0, 360)
+  const bgMode =
+    query.bg === 'transparent'
+      ? 'transparent'
+      : query.bg === 'solid'
+        ? 'solid'
+        : query.bg === 'gradient'
+          ? 'gradient'
+          : query.bg2
+            ? 'gradient'
+            : 'solid'
   const bg1 = parseHex(query.bg1, DEFAULTS.bg1)
   const bg2 = query.bg2 ? parseHex(query.bg2, bg1) : bg1
   const iconSet = type === 'tabler' ? 'tabler' : 'lucide'
@@ -96,6 +107,7 @@ const parseOptions = (query: Record<string, string>, sizeParam?: string) => {
     text: sanitizeText(query.text, DEFAULTS.text),
     icon: normalizeIconName(iconSet, query.icon, iconFallback),
     fg: parseHex(query.fg, DEFAULTS.fg),
+    bgMode,
     bg1,
     bg2,
     angle,
@@ -105,15 +117,17 @@ const parseOptions = (query: Record<string, string>, sizeParam?: string) => {
 }
 
 const buildSvg = (options: IconOptions) => {
-  const { size, fg, bg1, bg2, angle, type, text, icon, glyph } = options
+  const { size, fg, bgMode, bg1, bg2, angle, type, text, icon, glyph } = options
   const radius = size * 0.22
   const gradientId = 'bg'
-  const hasGradient = bg1 !== bg2
+  const hasGradient = bgMode === 'gradient' && bg1 !== bg2
 
   const defs = hasGradient
     ? `<defs><linearGradient id="${gradientId}" gradientTransform="rotate(${angle} 0.5 0.5)"><stop offset="0%" stop-color="${bg1}"/><stop offset="100%" stop-color="${bg2}"/></linearGradient></defs>`
     : ''
   const fill = hasGradient ? `url(#${gradientId})` : bg1
+  const backgroundMarkup =
+    bgMode === 'transparent' ? '' : `<rect width="${size}" height="${size}" rx="${radius}" fill="${fill}" />`
 
   if (type === 'text') {
     const fontSizeBase = (size * glyph) / 100
@@ -131,7 +145,7 @@ const buildSvg = (options: IconOptions) => {
     return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
   ${defs}
-  <rect width="${size}" height="${size}" rx="${radius}" fill="${fill}" />
+  ${backgroundMarkup}
   <text x="50%" y="50%" fill="${fg}" font-family='${fontFamily}' font-size="${fontSize}" font-weight="700" text-anchor="middle" dominant-baseline="central" letter-spacing="${letterSpacing}">${safeText}</text>
 </svg>`
   }
@@ -146,14 +160,14 @@ const buildSvg = (options: IconOptions) => {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
   ${defs}
-  <rect width="${size}" height="${size}" rx="${radius}" fill="${fill}" />
+  ${backgroundMarkup}
   <g transform="translate(${offset} ${offset}) scale(${scale})" ${iconWrapper}>
     ${iconMarkup}
   </g>
 </svg>`
 }
 
-const FaviconPage = () => {
+const IconPage = () => {
   const defaultParams = new URLSearchParams({
     type: DEFAULTS.type,
     text: DEFAULTS.text,
@@ -165,6 +179,7 @@ const FaviconPage = () => {
   }).toString()
   const getPresetBackground = (bgMode: string, bg1: string, bg2: string, angle: number) => {
     if (bgMode === 'solid') return bg1
+    if (bgMode === 'transparent') return 'transparent'
     return `linear-gradient(${angle}deg, ${bg1}, ${bg2})`
   }
 
@@ -172,8 +187,8 @@ const FaviconPage = () => {
     <main class="page">
       <header class="hero">
         <div class="hero__text">
-          <p class="eyebrow">Favicon Atelier</p>
-          <h1>Craft a favicon that feels like your brand.</h1>
+          <p class="eyebrow">Icon Atelier</p>
+          <h1>Craft an icon that feels like your brand.</h1>
         </div>
       </header>
 
@@ -208,7 +223,7 @@ const FaviconPage = () => {
             <div class="control">
               <label htmlFor="glyphSizeText">Text size</label>
               <div class="range">
-                <input id="glyphSizeText" type="range" min={32} max={82} value={DEFAULTS.glyph} data-field="glyph" />
+                <input id="glyphSizeText" type="range" min={32} max={100} value={DEFAULTS.glyph} data-field="glyph" />
                 <span data-field-value="glyph">{DEFAULTS.glyph}%</span>
               </div>
             </div>
@@ -245,7 +260,7 @@ const FaviconPage = () => {
             <div class="control">
               <label htmlFor="glyphSizeIcon">Icon size</label>
               <div class="range">
-                <input id="glyphSizeIcon" type="range" min={32} max={82} value={DEFAULTS.glyph} data-field="glyph" />
+                <input id="glyphSizeIcon" type="range" min={32} max={100} value={DEFAULTS.glyph} data-field="glyph" />
                 <span data-field-value="glyph">{DEFAULTS.glyph}%</span>
               </div>
             </div>
@@ -278,6 +293,9 @@ const FaviconPage = () => {
             <div class="control">
               <label>Background style</label>
               <div class="segmented" data-bg-mode>
+                <button type="button" class="segmented__btn" data-bg-mode-btn data-bg-mode-value="transparent">
+                  Transparent
+                </button>
                 <button type="button" class="segmented__btn" data-bg-mode-btn data-bg-mode-value="solid">
                   Solid
                 </button>
@@ -298,7 +316,7 @@ const FaviconPage = () => {
                 <input type="text" value={DEFAULTS.fg} data-field="fgText" />
               </div>
             </div>
-            <div class="control">
+            <div class="control" data-bg1-control>
               <label>Background 1</label>
               <div class="color">
                 <input type="color" value={DEFAULTS.bg1} data-field="bg1" />
@@ -335,13 +353,13 @@ const FaviconPage = () => {
         <aside class="panel preview">
           <div class="panel__header">
             <h3>Live preview</h3>
-            <p>Use the URL below directly in your HTML.</p>
+            <p>Use the URL below for direct icon usage.</p>
           </div>
 
           <div class="preview__canvas is-loading" data-preview-canvas>
             <img
               class="preview__image"
-              alt="Favicon preview"
+              alt="Icon preview"
               data-preview
             />
           </div>
@@ -354,18 +372,29 @@ const FaviconPage = () => {
           </div>
 
           <div class="preview__sizes">
-            <p>Common favicon sizes</p>
+            <p>Common icon sizes</p>
             <div class="chip-row">
               {[16, 32, 48, 64, 96, 128, 256].map((size) => (
-                <a class="chip" href="#" data-size-link data-size={size}>
-                  {size}px
-                </a>
+                <div class="chip-group">
+                  <a class="chip" href="#" data-size-link data-size={size}>
+                    {size}px
+                  </a>
+                  <a
+                    class="chip chip--download"
+                    href="#"
+                    data-size-download
+                    data-size={size}
+                    aria-label={`Download ${size}px SVG`}
+                  >
+                    <span class="chip__icon" aria-hidden="true">↓</span>
+                  </a>
+                </div>
               ))}
             </div>
           </div>
 
           <div class="preview__snippet">
-            <p>HTML snippet</p>
+            <p>HTML snippets</p>
             <div class="snippet-list" data-snippet-list></div>
           </div>
         </aside>
@@ -375,7 +404,7 @@ const FaviconPage = () => {
 }
 
 app.get('/', (c) => {
-  return c.render(<FaviconPage />)
+  return c.render(<IconPage />)
 })
 
 app.get('/icon/:size?', (c) => {

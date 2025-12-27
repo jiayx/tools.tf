@@ -21,9 +21,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const bgModeButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-bg-mode-btn]'))
   const presetButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-preset]'))
   const randomBtn = document.querySelector<HTMLButtonElement>('[data-random]')
+  const bg1Control = document.querySelector<HTMLElement>('[data-bg1-control]')
   const bg2Control = document.querySelector<HTMLElement>('[data-bg2-control]')
   const angleControl = document.querySelector<HTMLElement>('[data-angle-control]')
   const sizeLinks = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-size-link]'))
+  const sizeDownloads = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-size-download]'))
 
   if (!preview || !urlInput || !snippetList) return
 
@@ -161,18 +163,43 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  let prevFg = state.fg
+  let didOverrideFg = false
+
   const setBackgroundMode = (mode: string) => {
-    state.bgMode = mode === 'solid' ? 'solid' : 'gradient'
+    const nextMode = mode === 'solid' ? 'solid' : mode === 'transparent' ? 'transparent' : 'gradient'
+    const prevMode = state.bgMode
+    state.bgMode = nextMode
     bgModeButtons.forEach((btn) => {
       const isActive = btn.dataset.bgModeValue === state.bgMode
       btn.classList.toggle('is-active', isActive)
     })
     const isSolid = state.bgMode === 'solid'
-    if (bg2Control) bg2Control.classList.toggle('is-disabled', isSolid)
-    if (angleControl) angleControl.classList.toggle('is-disabled', isSolid)
-    if (fields.bg2) fields.bg2.disabled = isSolid
-    if (fields.bg2Text) fields.bg2Text.disabled = isSolid
-    if (fields.angle) fields.angle.disabled = isSolid
+    const isTransparent = state.bgMode === 'transparent'
+    if (nextMode === 'transparent' && prevMode !== 'transparent') {
+      prevFg = state.fg
+      didOverrideFg = false
+      const luminance = getLuminance(state.fg)
+      if (luminance > 0.72) {
+        const nextFg = '#0f172a'
+        state.fg = nextFg
+        didOverrideFg = true
+        if (fields.fg) fields.fg.value = nextFg
+        if (fields.fgText) fields.fgText.value = nextFg
+      }
+    } else if (prevMode === 'transparent' && nextMode !== 'transparent' && didOverrideFg) {
+      state.fg = prevFg
+      if (fields.fg) fields.fg.value = prevFg
+      if (fields.fgText) fields.fgText.value = prevFg
+    }
+    if (bg1Control) bg1Control.classList.toggle('is-disabled', isTransparent)
+    if (bg2Control) bg2Control.classList.toggle('is-disabled', isSolid || isTransparent)
+    if (angleControl) angleControl.classList.toggle('is-disabled', isSolid || isTransparent)
+    if (fields.bg1) fields.bg1.disabled = isTransparent
+    if (fields.bg1Text) fields.bg1Text.disabled = isTransparent
+    if (fields.bg2) fields.bg2.disabled = isSolid || isTransparent
+    if (fields.bg2Text) fields.bg2Text.disabled = isSolid || isTransparent
+    if (fields.angle) fields.angle.disabled = isSolid || isTransparent
   }
 
   const updateIconSearchPlaceholder = () => {
@@ -213,7 +240,10 @@ document.addEventListener('DOMContentLoaded', () => {
     params.set('type', state.type)
     params.set('fg', state.fg)
     params.set('bg1', state.bg1)
-    if (state.bgMode !== 'solid') {
+    if (state.bgMode === 'transparent') {
+      params.set('bg', 'transparent')
+    }
+    if (state.bgMode === 'gradient') {
       params.set('bg2', state.bg2)
     }
     params.set('angle', String(state.angle))
@@ -313,24 +343,49 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const updateSnippet = (baseUrl: string) => {
-    const lines = [
-      `<link rel="icon" sizes="16x16" type="image/svg+xml" href="${baseUrl}/icon/16?${buildQuery().toString()}" />`,
-      `<link rel="icon" sizes="32x32" type="image/svg+xml" href="${baseUrl}/icon/32?${buildQuery().toString()}" />`,
-      `<link rel="icon" sizes="64x64" type="image/svg+xml" href="${baseUrl}/icon/64?${buildQuery().toString()}" />`,
+    const size = state.size
+    const iconUrl = `${baseUrl}${buildUrl(size)}`
+    const query = buildQuery().toString()
+    const groups = [
+      {
+        title: 'Icon usage',
+        lines: [
+          `<img src="${iconUrl}" alt="Icon" width="${size}" height="${size}" />`,
+          `<div class="brand-icon" style="background-image: url('${iconUrl}'); width: ${size}px; height: ${size}px;"></div>`,
+        ],
+      },
+      {
+        title: 'Favicon (SVG)',
+        lines: [
+          `<link rel="icon" sizes="16x16" type="image/svg+xml" href="${baseUrl}/icon/16?${query}" />`,
+          `<link rel="icon" sizes="32x32" type="image/svg+xml" href="${baseUrl}/icon/32?${query}" />`,
+          `<link rel="icon" sizes="64x64" type="image/svg+xml" href="${baseUrl}/icon/64?${query}" />`,
+        ],
+      },
     ]
+
     snippetList.innerHTML = ''
-    lines.forEach((line) => {
-      const row = document.createElement('div')
-      row.className = 'snippet-row'
-      const code = document.createElement('code')
-      code.textContent = line
-      const button = document.createElement('button')
-      button.type = 'button'
-      button.className = 'snippet-copy'
-      button.dataset.snippetCopy = 'true'
-      button.textContent = 'Copy'
-      row.append(code, button)
-      snippetList.append(row)
+    groups.forEach((group) => {
+      const groupWrap = document.createElement('div')
+      groupWrap.className = 'snippet-group'
+      const title = document.createElement('p')
+      title.className = 'snippet-group__title'
+      title.textContent = group.title
+      groupWrap.append(title)
+      group.lines.forEach((line) => {
+        const row = document.createElement('div')
+        row.className = 'snippet-row'
+        const code = document.createElement('code')
+        code.textContent = line
+        const button = document.createElement('button')
+        button.type = 'button'
+        button.className = 'snippet-copy'
+        button.dataset.snippetCopy = 'true'
+        button.textContent = 'Copy'
+        row.append(code, button)
+        groupWrap.append(row)
+      })
+      snippetList.append(groupWrap)
     })
   }
 
@@ -346,6 +401,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const size = Number(link.dataset.size || 0)
       if (!size) return
       link.href = `${absoluteBase}${buildUrl(size)}`
+    })
+
+    sizeDownloads.forEach((link) => {
+      const size = Number(link.dataset.size || 0)
+      if (!size) return
+      link.href = `${absoluteBase}${buildUrl(size)}`
+      link.setAttribute('download', `icon-${size}.svg`)
+      link.setAttribute('title', `Download ${size}px SVG`)
     })
 
     updateSnippet(absoluteBase)
@@ -372,7 +435,27 @@ document.addEventListener('DOMContentLoaded', () => {
     })
   }
 
+  const debounce = <T extends (...args: unknown[]) => void>(fn: T, wait = 120) => {
+    let timer: number | null = null
+    return (...args: Parameters<T>) => {
+      if (timer) window.clearTimeout(timer)
+      timer = window.setTimeout(() => {
+        fn(...args)
+      }, wait)
+    }
+  }
+
+  const scheduleRender = debounce(() => {
+    updatePreview()
+    updateIconPreview()
+  }, 220)
+
   const applyState = () => {
+    updateLabels()
+    scheduleRender()
+  }
+
+  const applyStateImmediate = () => {
     updateLabels()
     updatePreview()
     updateIconPreview()
@@ -395,7 +478,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fields.bg2Text) fields.bg2Text.value = state.bg2
     if (fields.angle) fields.angle.value = String(state.angle)
 
-    applyState()
+    applyStateImmediate()
   }
 
   const applyRandomPalette = () => {
@@ -423,7 +506,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (state.type !== 'text') {
         syncIconSet()
       }
-      applyState()
+      applyStateImmediate()
     })
   })
 
@@ -431,7 +514,7 @@ document.addEventListener('DOMContentLoaded', () => {
   bgModeButtons.forEach((btn) => {
     btn.addEventListener('click', () => {
       setBackgroundMode(btn.dataset.bgModeValue || 'gradient')
-      applyState()
+      applyStateImmediate()
     })
   })
 
@@ -489,7 +572,7 @@ document.addEventListener('DOMContentLoaded', () => {
         option.classList.toggle('is-selected', isMatch)
       })
     }
-    applyState()
+    applyStateImmediate()
   }
 
   const openIconMenu = () => {
@@ -664,7 +747,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!size) return
       state.size = size
       if (fields.size) fields.size.value = String(size)
-      applyState()
+      applyStateImmediate()
     })
   })
 

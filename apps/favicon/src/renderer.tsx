@@ -8,10 +8,10 @@ export const renderer = jsxRenderer(({ children }) => {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="color-scheme" content="light" />
-        <title>Favicon Atelier · tools.tf</title>
+        <title>Icon Atelier · tools.tf</title>
         <meta
           name="description"
-          content="Create text, Lucide, or Tabler favicon icons with gradients and instant previews."
+          content="Create text, Lucide, or Tabler icons with gradients and instant previews."
         />
         <ViteClient />
         <Link href="/src/style.css" rel="stylesheet" />
