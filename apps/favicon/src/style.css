@@ -269,9 +269,23 @@ select {
 .icon-options {
   max-height: 240px;
   overflow: auto;
-  display: grid;
-  gap: 6px;
   padding-right: 4px;
+  position: relative;
+  --icon-row: 46px;
+}
+
+.icon-options__spacer {
+  height: 0;
+}
+
+.icon-options__list {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .icon-option {
@@ -284,6 +298,8 @@ select {
   background: transparent;
   cursor: pointer;
   text-align: left;
+  box-sizing: border-box;
+  height: 40px;
 }
 
 .icon-option:hover {

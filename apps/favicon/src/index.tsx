@@ -1,6 +1,13 @@
 import { Hono } from 'hono'
 import { renderer } from './renderer'
-import { iconNames, getLucideIconMarkup } from './lucide'
+import {
+  FALLBACK_ICON_MARKUP,
+  ICON_SETS,
+  type IconSetId,
+  getIconMarkup,
+  getIconWrapperAttributes,
+  normalizeIconName,
+} from './icon-registry'
 import { DEFAULTS, PRESETS } from './config'
 
 const app = new Hono()
@@ -26,12 +33,6 @@ const sanitizeText = (value: string | undefined, fallback: string) => {
   if (!value) return fallback
   const trimmed = value.replace(/\s+/g, '').slice(0, 6)
   return trimmed ? trimmed : fallback
-}
-
-const normalizeIconName = (value: string | undefined, fallback: string) => {
-  if (!value) return fallback
-  const normalized = value.trim().toLowerCase()
-  return iconNames.includes(normalized) ? normalized : fallback
 }
 
 const isWideGlyph = (char: string) =>
@@ -63,10 +64,8 @@ const hasWideGlyph = (text: string) => {
 const escapeSvgText = (value: string) =>
   value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
-const fallbackIconMarkup = '<circle cx="12" cy="12" r="9" />'
-
 type IconOptions = {
-  type: 'text' | 'icon'
+  type: 'text' | IconSetId
   text: string
   icon: string
   fg: string
@@ -78,17 +77,24 @@ type IconOptions = {
 }
 
 const parseOptions = (query: Record<string, string>, sizeParam?: string) => {
-  const type = query.type === 'icon' ? 'icon' : 'text'
+  const type =
+    query.type === 'tabler'
+      ? 'tabler'
+      : query.type === 'lucide' || query.type === 'icon'
+        ? 'lucide'
+        : 'text'
   const size = clamp(parseNumber(sizeParam || query.size, DEFAULTS.size), 16, 512)
   const glyph = clamp(parseNumber(query.glyph, DEFAULTS.glyph), 28, 86)
   const angle = clamp(parseNumber(query.angle, DEFAULTS.angle), 0, 360)
   const bg1 = parseHex(query.bg1, DEFAULTS.bg1)
   const bg2 = query.bg2 ? parseHex(query.bg2, bg1) : bg1
+  const iconSet = type === 'tabler' ? 'tabler' : 'lucide'
+  const iconFallback = ICON_SETS[iconSet].defaultIcon || DEFAULTS.icon
 
   return {
     type,
     text: sanitizeText(query.text, DEFAULTS.text),
-    icon: normalizeIconName(query.icon, DEFAULTS.icon),
+    icon: normalizeIconName(iconSet, query.icon, iconFallback),
     fg: parseHex(query.fg, DEFAULTS.fg),
     bg1,
     bg2,
@@ -130,7 +136,9 @@ const buildSvg = (options: IconOptions) => {
 </svg>`
   }
 
-  const iconMarkup = getLucideIconMarkup(icon) ?? fallbackIconMarkup
+  const iconSet = type === 'tabler' ? 'tabler' : 'lucide'
+  const iconMarkup = getIconMarkup(iconSet, icon) ?? FALLBACK_ICON_MARKUP
+  const iconWrapper = getIconWrapperAttributes(iconSet, fg)
   const glyphSize = (size * glyph) / 100
   const scale = glyphSize / 24
   const offset = (size - glyphSize) / 2
@@ -139,7 +147,7 @@ const buildSvg = (options: IconOptions) => {
 <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
   ${defs}
   <rect width="${size}" height="${size}" rx="${radius}" fill="${fill}" />
-  <g transform="translate(${offset} ${offset}) scale(${scale})" fill="none" stroke="${fg}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+  <g transform="translate(${offset} ${offset}) scale(${scale})" ${iconWrapper}>
     ${iconMarkup}
   </g>
 </svg>`
@@ -182,8 +190,11 @@ const FaviconPage = () => {
               <button type="button" class="segmented__btn is-active" data-mode-btn data-mode-value="text">
                 Text
               </button>
-              <button type="button" class="segmented__btn" data-mode-btn data-mode-value="icon">
+              <button type="button" class="segmented__btn" data-mode-btn data-mode-value="lucide">
                 Lucide icon
+              </button>
+              <button type="button" class="segmented__btn" data-mode-btn data-mode-value="tabler">
+                Tabler icon
               </button>
             </div>
           </div>
@@ -205,7 +216,7 @@ const FaviconPage = () => {
 
           <div class="control-group is-hidden" data-icon-controls>
             <div class="control">
-              <label htmlFor="iconSearch">Lucide icon</label>
+              <label htmlFor="iconSearch">Icon</label>
               <div class="icon-dropdown" data-icon-dropdown>
                 <button type="button" class="icon-trigger" data-icon-trigger>
                   <span class="icon-trigger__preview" aria-hidden="true">
@@ -219,16 +230,13 @@ const FaviconPage = () => {
                   </span>
                 </button>
                 <div class="icon-menu is-hidden" data-icon-menu>
-                  <input id="iconSearch" type="text" placeholder="Search lucide icons" data-icon-filter />
+                  <input
+                    id="iconSearch"
+                    type="text"
+                    placeholder={`Search ${ICON_SETS.lucide.label.toLowerCase()} icons`}
+                    data-icon-filter
+                  />
                   <div class="icon-options" data-icon-options>
-                    {iconNames.map((name) => (
-                      <button type="button" class="icon-option" data-icon-option data-icon-name={name}>
-                        <span class="icon-option__preview" aria-hidden="true">
-                          <span data-icon-preview data-icon-name={name}></span>
-                        </span>
-                        <span class="icon-option__name">{name}</span>
-                      </button>
-                    ))}
                   </div>
                 </div>
                 <input type="hidden" data-field="icon" value={DEFAULTS.icon} />

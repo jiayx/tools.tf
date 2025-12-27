@@ -11,7 +11,7 @@ export const renderer = jsxRenderer(({ children }) => {
         <title>Favicon Atelier · tools.tf</title>
         <meta
           name="description"
-          content="Create text or Lucide-inspired favicon icons with gradients and instant previews."
+          content="Create text, Lucide, or Tabler favicon icons with gradients and instant previews."
         />
         <ViteClient />
         <Link href="/src/style.css" rel="stylesheet" />

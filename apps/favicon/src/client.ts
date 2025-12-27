@@ -1,5 +1,6 @@
 import { DEFAULTS, PRESETS } from './config'
-import { getLucideIconMarkup } from './lucide'
+import { buildIconPreviewSvg, ICON_SETS } from './icon-registry'
+import { IconVirtualList } from './icon-virtual-list'
 
 document.addEventListener('DOMContentLoaded', () => {
   const preview = document.querySelector<HTMLImageElement>('[data-preview]')
@@ -12,8 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const iconDropdown = document.querySelector<HTMLElement>('[data-icon-dropdown]')
   const iconTrigger = document.querySelector<HTMLButtonElement>('[data-icon-trigger]')
   const iconMenu = document.querySelector<HTMLElement>('[data-icon-menu]')
-  const iconOptions = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-icon-option]'))
-  const iconPreviews = Array.from(document.querySelectorAll<HTMLElement>('[data-icon-preview]'))
+  const iconOptionsContainer = document.querySelector<HTMLElement>('[data-icon-options]')
   const iconLabel = document.querySelector<HTMLElement>('[data-icon-label]')
   const iconTriggerPreview = document.querySelector<HTMLElement>('[data-icon-trigger-preview]')
   const modeButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-mode-btn]'))
@@ -63,7 +63,11 @@ document.addEventListener('DOMContentLoaded', () => {
     glyph: Number(fields.glyphInputs[0]?.value || DEFAULTS.glyph),
   }
 
-  const state = { ...defaults }
+  const state = {
+    ...defaults,
+    iconLucide: fields.icon?.value || DEFAULTS.icon,
+    iconTabler: ICON_SETS.tabler.defaultIcon || DEFAULTS.icon,
+  }
 
   const presets = PRESETS
 
@@ -141,14 +145,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  const getIconSet = (mode: string) => (mode === 'tabler' ? 'tabler' : 'lucide')
+
   const setActiveMode = (mode: string) => {
-    state.type = mode === 'icon' ? 'icon' : 'text'
+    state.type = mode === 'lucide' || mode === 'tabler' ? mode : 'text'
     modeButtons.forEach((btn) => {
       const isActive = btn.dataset.modeValue === state.type
       btn.classList.toggle('is-active', isActive)
     })
     if (textControls) textControls.classList.toggle('is-hidden', state.type !== 'text')
-    if (iconControls) iconControls.classList.toggle('is-hidden', state.type !== 'icon')
+    if (iconControls) iconControls.classList.toggle('is-hidden', state.type === 'text')
+    if (state.type !== 'text') {
+      state.icon = state.type === 'tabler' ? state.iconTabler : state.iconLucide
+      if (fields.icon) fields.icon.value = state.icon
+    }
   }
 
   const setBackgroundMode = (mode: string) => {
@@ -163,6 +173,39 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fields.bg2) fields.bg2.disabled = isSolid
     if (fields.bg2Text) fields.bg2Text.disabled = isSolid
     if (fields.angle) fields.angle.disabled = isSolid
+  }
+
+  const updateIconSearchPlaceholder = () => {
+    if (!iconFilter) return
+    const label = ICON_SETS[getIconSet(state.type)]?.label || 'Icon'
+    iconFilter.placeholder = `Search ${label.toLowerCase()} icons`
+  }
+
+  const filterIconOptions = () => {
+    const query = iconFilter?.value.trim().toLowerCase() || ''
+    resetIconOptions(query)
+  }
+
+  const syncIconSet = () => {
+    const iconSet = getIconSet(state.type)
+    const fallbackIcon = ICON_SETS[iconSet]?.defaultIcon || DEFAULTS.icon
+    const currentIcon = iconSet === 'tabler' ? state.iconTabler : state.iconLucide
+    const nextIcon = ICON_SETS[iconSet]?.names.includes(currentIcon) ? currentIcon : fallbackIcon
+    if (iconSet === 'tabler') {
+      state.iconTabler = nextIcon
+    } else {
+      state.iconLucide = nextIcon
+    }
+    state.icon = nextIcon
+    if (fields.icon) fields.icon.value = nextIcon
+    if (iconMenu && !iconMenu.classList.contains('is-hidden')) {
+      resetIconOptions(iconFilter?.value.trim().toLowerCase() || '')
+      scrollToSelected()
+    } else {
+      clearIconOptions()
+    }
+    updateIconSearchPlaceholder()
+    setIconSelection(state.icon)
   }
 
   const buildQuery = () => {
@@ -188,52 +231,84 @@ document.addEventListener('DOMContentLoaded', () => {
     return `/icon/${size}?${params.toString()}`
   }
 
-  const buildLucideSvg = (name: string, color: string, size: number) => {
-    const iconMarkup = getLucideIconMarkup(name) ?? '<circle cx="12" cy="12" r="9" />'
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24">
-  <g fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-    ${iconMarkup}
-  </g>
-</svg>`
+  const buildIconSvg = (iconSet: string, name: string, color: string, size: number) => {
+    return buildIconPreviewSvg(iconSet === 'tabler' ? 'tabler' : 'lucide', name, color, size)
   }
 
-  const renderLucidePreview = (target: HTMLElement, name: string, color: string, size: number) => {
-    target.innerHTML = buildLucideSvg(name, color, size)
+  const renderIconPreview = (target: HTMLElement, iconSet: string, name: string, color: string, size: number) => {
+    target.innerHTML = buildIconSvg(iconSet, name, color, size)
   }
 
-  let isRenderingPreviews = false
+  const iconResults: string[] = []
+  const iconRowHeight = iconOptionsContainer
+    ? Number.parseFloat(getComputedStyle(iconOptionsContainer).getPropertyValue('--icon-row')) || 46
+    : 46
 
-  const renderVisiblePreviews = () => {
-    if (isRenderingPreviews) return
-    isRenderingPreviews = true
-    const queue = iconPreviews.filter((preview) => {
-      if (preview.dataset.rendered === 'true') return false
-      const button = preview.closest<HTMLElement>('[data-icon-option]')
-      if (!button || button.classList.contains('is-hidden')) return false
-      return true
-    })
-
-    const paintBatch = () => {
-      const batch = queue.splice(0, 40)
-      batch.forEach((preview) => {
-        const name = preview.dataset.iconName
-        if (!name) return
-        renderLucidePreview(preview, name, '#111827', 20)
-        preview.dataset.rendered = 'true'
-      })
-      if (queue.length) {
-        window.requestAnimationFrame(paintBatch)
-      } else {
-        isRenderingPreviews = false
-      }
+  const createIconOption = (name: string, iconSet: string) => {
+    const button = document.createElement('button')
+    button.type = 'button'
+    button.className = 'icon-option'
+    button.dataset.iconOption = 'true'
+    button.dataset.iconName = name
+    button.dataset.iconSet = iconSet
+    if (name === state.icon && iconSet === getIconSet(state.type)) {
+      button.classList.add('is-selected')
     }
 
-    window.requestAnimationFrame(paintBatch)
+    const previewWrap = document.createElement('span')
+    previewWrap.className = 'icon-option__preview'
+    previewWrap.setAttribute('aria-hidden', 'true')
+
+    const preview = document.createElement('span')
+    preview.dataset.iconPreview = 'true'
+    preview.dataset.iconName = name
+    preview.dataset.iconSet = iconSet
+    preview.innerHTML = buildIconSvg(iconSet, name, '#111827', 20)
+    previewWrap.append(preview)
+
+    const label = document.createElement('span')
+    label.className = 'icon-option__name'
+    label.textContent = name
+
+    button.append(previewWrap, label)
+    return button
+  }
+
+  const iconVirtualList =
+    iconOptionsContainer
+      ? new IconVirtualList({
+          container: iconOptionsContainer,
+          rowHeight: iconRowHeight,
+          overscan: 8,
+          renderRow: (name, iconSet) => createIconOption(name, iconSet),
+        })
+      : null
+
+  const resetIconOptions = (query: string) => {
+    if (!iconVirtualList) return
+    const iconSet = getIconSet(state.type)
+    const names = ICON_SETS[iconSet]?.names || []
+    const results = query ? names.filter((name) => name.includes(query)) : names
+    iconResults.length = 0
+    iconResults.push(...results)
+    iconVirtualList.setItems(iconResults, iconSet)
+  }
+
+  const clearIconOptions = () => {
+    if (!iconVirtualList) return
+    iconResults.length = 0
+    iconVirtualList.clear()
+  }
+
+  const scrollToSelected = () => {
+    if (!iconVirtualList) return
+    if (state.type === 'text') return
+    iconVirtualList.scrollToName(state.icon)
   }
 
   const updateIconPreview = () => {
     if (!iconTriggerPreview) return
-    renderLucidePreview(iconTriggerPreview, state.icon, '#111827', 20)
+    renderIconPreview(iconTriggerPreview, getIconSet(state.type), state.icon, '#111827', 20)
     if (iconLabel) iconLabel.textContent = state.icon
   }
 
@@ -343,9 +418,13 @@ document.addEventListener('DOMContentLoaded', () => {
   modeButtons.forEach((btn) => {
     btn.addEventListener('click', () => {
       setActiveMode(btn.dataset.modeValue || 'text')
+      if (state.type !== 'text') {
+        syncIconSet()
+      }
       applyState()
     })
   })
+
 
   bgModeButtons.forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -397,9 +476,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const setIconSelection = (name: string) => {
     state.icon = name
     if (fields.icon) fields.icon.value = name
-    iconOptions.forEach((option) => {
-      option.classList.toggle('is-selected', option.dataset.iconName === name)
-    })
+    if (getIconSet(state.type) === 'tabler') {
+      state.iconTabler = name
+    } else {
+      state.iconLucide = name
+    }
+    if (iconOptionsContainer) {
+      Array.from(iconOptionsContainer.querySelectorAll<HTMLButtonElement>('[data-icon-option]')).forEach((option) => {
+        const isMatch = option.dataset.iconName === name && option.dataset.iconSet === getIconSet(state.type)
+        option.classList.toggle('is-selected', isMatch)
+      })
+    }
     applyState()
   }
 
@@ -408,7 +495,8 @@ document.addEventListener('DOMContentLoaded', () => {
     iconMenu.classList.remove('is-hidden')
     iconDropdown.classList.add('is-open')
     iconFilter?.focus()
-    renderVisiblePreviews()
+    resetIconOptions(iconFilter?.value.trim().toLowerCase() || '')
+    scrollToSelected()
   }
 
   const closeIconMenu = () => {
@@ -416,7 +504,7 @@ document.addEventListener('DOMContentLoaded', () => {
     iconMenu.classList.add('is-hidden')
     iconDropdown.classList.remove('is-open')
     if (iconFilter) iconFilter.value = ''
-    iconOptions.forEach((option) => option.classList.remove('is-hidden'))
+    clearIconOptions()
   }
 
   iconTrigger?.addEventListener('click', () => {
@@ -429,26 +517,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   })
 
-  iconOptions.forEach((option) => {
-    option.addEventListener('click', () => {
-      const name = option.dataset.iconName
-      if (!name) return
-      setIconSelection(name)
-      if (iconFilter) iconFilter.value = ''
-      iconOptions.forEach((item) => item.classList.remove('is-hidden'))
-      closeIconMenu()
-    })
+  iconOptionsContainer?.addEventListener('click', (event) => {
+    const target = event.target as HTMLElement | null
+    if (!target) return
+    const option = target.closest<HTMLButtonElement>('[data-icon-option]')
+    if (!option) return
+    const name = option.dataset.iconName
+    const iconSet = option.dataset.iconSet
+    if (!name || iconSet !== getIconSet(state.type)) return
+    setIconSelection(name)
+    if (iconFilter) iconFilter.value = ''
+    filterIconOptions()
+    closeIconMenu()
   })
 
   if (iconFilter) {
     iconFilter.addEventListener('input', () => {
-      const query = iconFilter.value.trim().toLowerCase()
-      iconOptions.forEach((option) => {
-        const name = option.dataset.iconName || ''
-        const matches = !query || name.includes(query)
-        option.classList.toggle('is-hidden', !matches)
-      })
-      renderVisiblePreviews()
+      filterIconOptions()
     })
 
     iconFilter.addEventListener('focus', () => {
@@ -577,12 +662,7 @@ document.addEventListener('DOMContentLoaded', () => {
     })
   })
 
-  iconOptions.forEach((option) => {
-    option.classList.toggle('is-selected', option.dataset.iconName === state.icon)
-  })
-  if (iconLabel) iconLabel.textContent = state.icon
-
   setActiveMode(state.type)
   setBackgroundMode(state.bgMode)
-  applyState()
+  syncIconSet()
 })

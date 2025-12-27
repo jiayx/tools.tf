@@ -1,4 +1,5 @@
-import iconNodes from 'lucide-static/icon-nodes.json';
+import iconNodes from 'lucide-static/icon-nodes.json'
+import { createIconIndex } from './icon-index'
 
 const extractInnerSvg = (iconData: any) => {
   return iconData.map(([tag, attrs]: [string, Record<string, string>]) => {
@@ -13,12 +14,8 @@ const iconEntries = Object.entries(iconNodes)
   .map(([name, svg]) => {
     return [name, extractInnerSvg(svg)] as const
   })
-  .filter(([name]) => Boolean(name))
 
-const iconMap = new Map(iconEntries)
+const { iconNames, getIconMarkup } = createIconIndex(iconEntries)
 
-export const iconNames = iconEntries
-  .map(([name]) => name)
-  .sort((a, b) => a.localeCompare(b))
-
-export const getLucideIconMarkup = (name: string) => iconMap.get(name)
+export { iconNames }
+export const getLucideIconMarkup = getIconMarkup
