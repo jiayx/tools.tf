@@ -6,7 +6,4 @@ const iconEntries = Object.entries(icons.icons)
     return [name, svg.body] as const
   })
 
-const { iconNames, getIconMarkup } = createIconIndex(iconEntries)
-
-export { iconNames }
-export const getTablerIconMarkup = getIconMarkup
+export const [ tablerIconNames, getTablerIconMarkup ] = createIconIndex(iconEntries)

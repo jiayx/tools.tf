@@ -1,5 +1,5 @@
-import { iconNames as lucideIconNames, getLucideIconMarkup } from './lucide'
-import { iconNames as tablerIconNames, getTablerIconMarkup } from './tabler'
+import { lucideIconNames, getLucideIconMarkup } from './lucide'
+import { tablerIconNames, getTablerIconMarkup } from './tabler'
 
 export const FALLBACK_ICON_MARKUP = '<circle cx="12" cy="12" r="9" />'
 

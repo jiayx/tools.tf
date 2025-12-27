@@ -1,7 +1,7 @@
-export type IconIndex = {
-  iconNames: string[]
+export type IconIndex = [
+  iconNames: string[],
   getIconMarkup: (name: string) => string | undefined
-}
+]
 
 export const createIconIndex = (entries: Array<readonly [string, string]>): IconIndex => {
   const filtered = entries.filter(([name]) => Boolean(name))
@@ -10,8 +10,8 @@ export const createIconIndex = (entries: Array<readonly [string, string]>): Icon
     .map(([name]) => name)
     .sort((a, b) => a.localeCompare(b))
 
-  return {
+  return [
     iconNames,
-    getIconMarkup: (name) => iconMap.get(name),
-  }
+    (name: string) => iconMap.get(name),
+  ]
 }

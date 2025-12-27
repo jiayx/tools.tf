@@ -6,8 +6,8 @@ const extractInnerSvg = (iconData: any) => {
     const attrString = Object.entries(attrs)
         .map(([key, val]) => `${key}="${val}"`)
         .join(" ");
-        return `<${tag} ${attrString} />`;
-  }).join(" ");
+        return `<${tag} ${attrString} />`
+  }).join(" ")
 }
 
 const iconEntries = Object.entries(iconNodes)
@@ -15,7 +15,4 @@ const iconEntries = Object.entries(iconNodes)
     return [name, extractInnerSvg(svg)] as const
   })
 
-const { iconNames, getIconMarkup } = createIconIndex(iconEntries)
-
-export { iconNames }
-export const getLucideIconMarkup = getIconMarkup
+export const [ lucideIconNames, getLucideIconMarkup ] = createIconIndex(iconEntries)
