@@ -1,9 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
   const preview = document.querySelector<HTMLImageElement>('[data-preview]')
   const urlInput = document.querySelector<HTMLInputElement>('[data-url]')
-  const snippet = document.querySelector<HTMLElement>('[data-snippet]')
+  const snippetList = document.querySelector<HTMLElement>('[data-snippet-list]')
   const copyBtn = document.querySelector<HTMLButtonElement>('[data-copy]')
-  const copyStatus = document.querySelector<HTMLElement>('[data-copy-status]')
   const resetBtn = document.querySelector<HTMLButtonElement>('[data-reset]')
   const textControls = document.querySelector<HTMLElement>('[data-text-controls]')
   const iconControls = document.querySelector<HTMLElement>('[data-icon-controls]')
@@ -14,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const sizeLinks = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-size-link]'))
   const sizePreviews = Array.from(document.querySelectorAll<HTMLElement>('[data-size-preview]'))
 
-  if (!preview || !urlInput || !snippet) return
+  if (!preview || !urlInput || !snippetList) return
 
   const fields = {
     text: document.querySelector<HTMLInputElement>('[data-field="text"]'),
@@ -113,11 +112,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const updateSnippet = (baseUrl: string) => {
     const lines = [
-      `<link rel="icon" type="image/svg+xml" href="${baseUrl}/icon/32?${buildQuery().toString()}" sizes="32x32" />`,
-      `<link rel="icon" type="image/svg+xml" href="${baseUrl}/icon/16?${buildQuery().toString()}" sizes="16x16" />`,
-      `<link rel="icon" type="image/svg+xml" href="${baseUrl}/icon/64?${buildQuery().toString()}" sizes="64x64" />`,
+      `<link rel="icon" sizes="16x16" type="image/svg+xml" href="${baseUrl}/icon/16?${buildQuery().toString()}" />`,
+      `<link rel="icon" sizes="32x32" type="image/svg+xml" href="${baseUrl}/icon/32?${buildQuery().toString()}" />`,
+      `<link rel="icon" sizes="64x64" type="image/svg+xml" href="${baseUrl}/icon/64?${buildQuery().toString()}" />`,
     ]
-    snippet.textContent = lines.join('\n')
+    snippetList.innerHTML = ''
+    lines.forEach((line) => {
+      const row = document.createElement('div')
+      row.className = 'snippet-row'
+      const code = document.createElement('code')
+      code.textContent = line
+      const button = document.createElement('button')
+      button.type = 'button'
+      button.className = 'snippet-copy'
+      button.dataset.snippetCopy = 'true'
+      button.textContent = 'Copy'
+      row.append(code, button)
+      snippetList.append(row)
+    })
   }
 
   const updatePreview = () => {
@@ -303,27 +315,50 @@ document.addEventListener('DOMContentLoaded', () => {
     applyState()
   })
 
-  if (copyBtn && copyStatus) {
+  if (copyBtn) {
     let timer: number | null = null
-
-    const setStatus = (text: string) => {
-      copyStatus.textContent = text
+    const resetCopyText = () => {
       if (timer) window.clearTimeout(timer)
       timer = window.setTimeout(() => {
-        copyStatus.textContent = 'Copy'
-      }, 1600)
+        copyBtn.textContent = 'Copy'
+      }, 1200)
     }
 
     copyBtn.addEventListener('click', async () => {
       try {
         await navigator.clipboard.writeText(urlInput.value)
-        setStatus('Copied!')
+        copyBtn.textContent = 'Copied'
+        resetCopyText()
       } catch (err) {
         console.error(err)
-        setStatus('Copy failed')
+        copyBtn.textContent = 'Failed'
+        resetCopyText()
       }
     })
   }
+
+  snippetList.addEventListener('click', async (event) => {
+    const target = event.target as HTMLElement | null
+    if (!target || !(target instanceof HTMLButtonElement)) return
+    if (!target.dataset.snippetCopy) return
+    const row = target.closest('.snippet-row')
+    const code = row?.querySelector('code')
+    const text = code?.textContent
+    if (!text) return
+    try {
+      await navigator.clipboard.writeText(text)
+      target.textContent = 'Copied'
+      window.setTimeout(() => {
+        if (target) target.textContent = 'Copy'
+      }, 1200)
+    } catch (err) {
+      console.error(err)
+      target.textContent = 'Failed'
+      window.setTimeout(() => {
+        if (target) target.textContent = 'Copy'
+      }, 1200)
+    }
+  })
 
   sizeLinks.forEach((link) => {
     link.addEventListener('click', (event) => {

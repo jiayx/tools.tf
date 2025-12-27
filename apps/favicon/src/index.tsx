@@ -313,9 +313,6 @@ const FaviconPage = () => {
             <button type="button" data-copy>
               Copy
             </button>
-            <span class="copy-status" data-copy-status>
-              Copy
-            </span>
           </div>
 
           <div class="preview__sizes">
@@ -340,9 +337,7 @@ const FaviconPage = () => {
 
           <div class="preview__snippet">
             <p>HTML snippet</p>
-            <pre>
-              <code data-snippet></code>
-            </pre>
+            <div class="snippet-list" data-snippet-list></div>
           </div>
         </aside>
       </section>
