@@ -198,6 +198,135 @@ select {
   background: #f8f9ff;
 }
 
+.icon-dropdown {
+  position: relative;
+}
+
+.icon-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--panel-border);
+  background: #f8f9ff;
+  padding: 10px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.icon-trigger__preview {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #eef2ff;
+  border: 1px solid var(--panel-border);
+  display: grid;
+  place-items: center;
+}
+
+.icon-trigger__preview [data-icon-trigger-preview] {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+
+.icon-trigger__preview svg {
+  width: 16px;
+  height: 16px;
+}
+
+.icon-trigger__label {
+  flex: 1;
+  text-align: left;
+  font-size: 14px;
+}
+
+.icon-trigger__caret {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.icon-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  padding: 10px;
+  box-shadow: var(--shadow-soft);
+  z-index: 10;
+  display: grid;
+  gap: 10px;
+}
+
+.icon-menu.is-hidden {
+  display: none;
+}
+
+.icon-options {
+  max-height: 240px;
+  overflow: auto;
+  display: grid;
+  gap: 6px;
+  padding-right: 4px;
+}
+
+.icon-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.icon-option:hover {
+  background: #f1f5ff;
+  border-color: #c7d2fe;
+}
+
+.icon-option.is-selected {
+  background: #e0e7ff;
+  border-color: #a5b4fc;
+}
+
+.icon-option.is-hidden {
+  display: none;
+}
+
+.icon-option__preview {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  background: #eef2ff;
+  border: 1px solid var(--panel-border);
+  display: grid;
+  place-items: center;
+}
+
+.icon-option__preview [data-icon-preview] {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+
+.icon-option__preview svg {
+  width: 16px;
+  height: 16px;
+}
+
+.icon-option__name {
+  font-size: 13px;
+  color: var(--ink);
+}
+
 input[type="text"]:focus,
 select:focus {
   outline: 2px solid rgba(99, 102, 241, 0.4);
@@ -503,6 +632,12 @@ pre {
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 1200px) {
+  .page {
+    padding: 20px 16px;
   }
 }
 

@@ -10,9 +10,7 @@ const extractInnerSvg = (iconData: any) => {
 }
 
 const iconEntries = Object.entries(iconNodes)
-  .map(([path, svg]) => {
-
-    const name = path.split('/').pop()?.replace('.svg', '') ?? ''
+  .map(([name, svg]) => {
     return [name, extractInnerSvg(svg)] as const
   })
   .filter(([name]) => Boolean(name))

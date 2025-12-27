@@ -1,12 +1,21 @@
 import { DEFAULTS, PRESETS } from './config'
+import { getLucideIconMarkup } from './lucide'
 
 document.addEventListener('DOMContentLoaded', () => {
   const preview = document.querySelector<HTMLImageElement>('[data-preview]')
   const urlInput = document.querySelector<HTMLInputElement>('[data-url]')
   const snippetList = document.querySelector<HTMLElement>('[data-snippet-list]')
   const copyBtn = document.querySelector<HTMLButtonElement>('[data-copy]')
+  const iconFilter = document.querySelector<HTMLInputElement>('[data-icon-filter]')
   const textControls = document.querySelector<HTMLElement>('[data-text-controls]')
   const iconControls = document.querySelector<HTMLElement>('[data-icon-controls]')
+  const iconDropdown = document.querySelector<HTMLElement>('[data-icon-dropdown]')
+  const iconTrigger = document.querySelector<HTMLButtonElement>('[data-icon-trigger]')
+  const iconMenu = document.querySelector<HTMLElement>('[data-icon-menu]')
+  const iconOptions = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-icon-option]'))
+  const iconPreviews = Array.from(document.querySelectorAll<HTMLElement>('[data-icon-preview]'))
+  const iconLabel = document.querySelector<HTMLElement>('[data-icon-label]')
+  const iconTriggerPreview = document.querySelector<HTMLElement>('[data-icon-trigger-preview]')
   const modeButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-mode-btn]'))
   const bgModeButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-bg-mode-btn]'))
   const presetButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-preset]'))
@@ -20,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const fields = {
     text: document.querySelector<HTMLInputElement>('[data-field="text"]'),
-    icon: document.querySelector<HTMLSelectElement>('[data-field="icon"]'),
+    icon: document.querySelector<HTMLInputElement>('[data-field="icon"]'),
     fg: document.querySelector<HTMLInputElement>('[data-field="fg"]'),
     fgText: document.querySelector<HTMLInputElement>('[data-field="fgText"]'),
     bg1: document.querySelector<HTMLInputElement>('[data-field="bg1"]'),
@@ -179,6 +188,25 @@ document.addEventListener('DOMContentLoaded', () => {
     return `/icon/${size}?${params.toString()}`
   }
 
+  const buildLucideSvg = (name: string, color: string, size: number) => {
+    const iconMarkup = getLucideIconMarkup(name) ?? '<circle cx="12" cy="12" r="9" />'
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24">
+  <g fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    ${iconMarkup}
+  </g>
+</svg>`
+  }
+
+  const renderLucidePreview = (target: HTMLElement, name: string, color: string, size: number) => {
+    target.innerHTML = buildLucideSvg(name, color, size)
+  }
+
+  const updateIconPreview = () => {
+    if (!iconTriggerPreview) return
+    renderLucidePreview(iconTriggerPreview, state.icon, '#111827', 20)
+    if (iconLabel) iconLabel.textContent = state.icon
+  }
+
   const updateSnippet = (baseUrl: string) => {
     const lines = [
       `<link rel="icon" sizes="16x16" type="image/svg+xml" href="${baseUrl}/icon/16?${buildQuery().toString()}" />`,
@@ -240,6 +268,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const applyState = () => {
     updateLabels()
     updatePreview()
+    updateIconPreview()
   }
 
   const applyPalette = (palette: { bgMode: string; fg: string; bg1: string; bg2: string; angle: number }) => {
@@ -335,9 +364,69 @@ document.addEventListener('DOMContentLoaded', () => {
     })
   }
 
-  fields.icon?.addEventListener('change', (event) => {
-    state.icon = (event.target as HTMLSelectElement).value
+  const setIconSelection = (name: string) => {
+    state.icon = name
+    if (fields.icon) fields.icon.value = name
+    iconOptions.forEach((option) => {
+      option.classList.toggle('is-selected', option.dataset.iconName === name)
+    })
     applyState()
+  }
+
+  const openIconMenu = () => {
+    if (!iconMenu || !iconDropdown) return
+    iconMenu.classList.remove('is-hidden')
+    iconDropdown.classList.add('is-open')
+    iconFilter?.focus()
+  }
+
+  const closeIconMenu = () => {
+    if (!iconMenu || !iconDropdown) return
+    iconMenu.classList.add('is-hidden')
+    iconDropdown.classList.remove('is-open')
+    if (iconFilter) iconFilter.value = ''
+    iconOptions.forEach((option) => option.classList.remove('is-hidden'))
+  }
+
+  iconTrigger?.addEventListener('click', () => {
+    if (!iconMenu || !iconDropdown) return
+    const isOpen = !iconMenu.classList.contains('is-hidden')
+    if (isOpen) {
+      closeIconMenu()
+    } else {
+      openIconMenu()
+    }
+  })
+
+  iconOptions.forEach((option) => {
+    option.addEventListener('click', () => {
+      const name = option.dataset.iconName
+      if (!name) return
+      setIconSelection(name)
+      if (iconFilter) iconFilter.value = ''
+      iconOptions.forEach((item) => item.classList.remove('is-hidden'))
+      closeIconMenu()
+    })
+  })
+
+  if (iconFilter) {
+    iconFilter.addEventListener('input', () => {
+      const query = iconFilter.value.trim().toLowerCase()
+      iconOptions.forEach((option) => {
+        const name = option.dataset.iconName || ''
+        const matches = !query || name.includes(query)
+        option.classList.toggle('is-hidden', !matches)
+      })
+    })
+
+    iconFilter.addEventListener('focus', () => {
+      openIconMenu()
+    })
+  }
+
+  document.addEventListener('click', (event) => {
+    if (!iconDropdown) return
+    if (!iconDropdown.contains(event.target as Node)) closeIconMenu()
   })
 
   fields.glyphInputs.forEach((input) => {
@@ -455,6 +544,17 @@ document.addEventListener('DOMContentLoaded', () => {
       window.open(link.href, '_blank')
     })
   })
+
+  iconPreviews.forEach((preview) => {
+    const name = preview.dataset.iconName
+    if (!name) return
+    renderLucidePreview(preview, name, '#111827', 20)
+  })
+
+  iconOptions.forEach((option) => {
+    option.classList.toggle('is-selected', option.dataset.iconName === state.icon)
+  })
+  if (iconLabel) iconLabel.textContent = state.icon
 
   setActiveMode(state.type)
   setBackgroundMode(state.bgMode)

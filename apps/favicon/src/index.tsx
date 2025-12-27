@@ -205,14 +205,34 @@ const FaviconPage = () => {
 
           <div class="control-group is-hidden" data-icon-controls>
             <div class="control">
-              <label htmlFor="iconSelect">Lucide icon</label>
-              <select id="iconSelect" data-field="icon">
-                {iconNames.map((name) => (
-                  <option value={name} selected={name === DEFAULTS.icon}>
-                    {name}
-                  </option>
-                ))}
-              </select>
+              <label htmlFor="iconSearch">Lucide icon</label>
+              <div class="icon-dropdown" data-icon-dropdown>
+                <button type="button" class="icon-trigger" data-icon-trigger>
+                  <span class="icon-trigger__preview" aria-hidden="true">
+                    <span data-icon-trigger-preview></span>
+                  </span>
+                  <span class="icon-trigger__label" data-icon-label>
+                    {DEFAULTS.icon}
+                  </span>
+                  <span class="icon-trigger__caret" aria-hidden="true">
+                    ▾
+                  </span>
+                </button>
+                <div class="icon-menu is-hidden" data-icon-menu>
+                  <input id="iconSearch" type="text" placeholder="Search lucide icons" data-icon-filter />
+                  <div class="icon-options" data-icon-options>
+                    {iconNames.map((name) => (
+                      <button type="button" class="icon-option" data-icon-option data-icon-name={name}>
+                        <span class="icon-option__preview" aria-hidden="true">
+                          <span data-icon-preview data-icon-name={name}></span>
+                        </span>
+                        <span class="icon-option__name">{name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <input type="hidden" data-field="icon" value={DEFAULTS.icon} />
+              </div>
             </div>
             <div class="control">
               <label htmlFor="glyphSizeIcon">Icon size</label>
