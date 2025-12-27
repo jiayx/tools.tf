@@ -106,7 +106,7 @@ const parseOptions = (query: Record<string, string>, sizeParam?: string) => {
 
 const buildSvg = (options: IconOptions) => {
   const { size, fg, bg1, bg2, angle, type, text, icon, glyph } = options
-  const radius = Math.round(size * 0.22)
+  const radius = size * 0.22
   const gradientId = 'bg'
   const hasGradient = bg1 !== bg2
 
@@ -338,12 +338,11 @@ const FaviconPage = () => {
             <p>Use the URL below directly in your HTML.</p>
           </div>
 
-          <div class="preview__canvas">
+          <div class="preview__canvas is-loading" data-preview-canvas>
             <img
               class="preview__image"
               alt="Favicon preview"
               data-preview
-              src={`/icon/${DEFAULTS.size}?${defaultParams}`}
             />
           </div>
 

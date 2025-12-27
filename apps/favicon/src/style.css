@@ -146,7 +146,6 @@ body::after {
   font-size: 22px;
 }
 
-
 .panel__header p {
   margin: 0 0 20px;
   color: var(--muted);
@@ -157,7 +156,6 @@ body::after {
   flex-direction: column;
   gap: 18px;
 }
-
 
 .control-group {
   display: grid;
@@ -482,12 +480,35 @@ select:focus {
   overflow: hidden;
 }
 
+.preview__canvas.is-loading::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, #eef1f8 30%, #f8f9ff 50%, #eef1f8 70%);
+  background-size: 200% 100%;
+  animation: preview-shimmer 1.25s infinite;
+}
+
+.preview__canvas.is-loading .preview__image {
+  opacity: 0;
+}
+
+@keyframes preview-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
 .preview__image {
   width: 220px;
   height: 220px;
   border-radius: 22%;
   box-shadow: var(--shadow);
-  background: #fff;
+  background: transparent;
+  overflow: hidden;
 }
 
 .preview__url {

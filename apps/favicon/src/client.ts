@@ -4,6 +4,7 @@ import { IconVirtualList } from './icon-virtual-list'
 
 document.addEventListener('DOMContentLoaded', () => {
   const preview = document.querySelector<HTMLImageElement>('[data-preview]')
+  const previewCanvas = document.querySelector<HTMLElement>('[data-preview-canvas]')
   const urlInput = document.querySelector<HTMLInputElement>('[data-url]')
   const snippetList = document.querySelector<HTMLElement>('[data-snippet-list]')
   const copyBtn = document.querySelector<HTMLButtonElement>('[data-copy]')
@@ -348,6 +349,15 @@ document.addEventListener('DOMContentLoaded', () => {
     })
 
     updateSnippet(absoluteBase)
+  }
+
+  const handlePreviewLoad = () => {
+    previewCanvas?.classList.remove('is-loading')
+  }
+
+  preview.addEventListener('load', handlePreviewLoad)
+  if (preview.complete && preview.naturalWidth > 0) {
+    handlePreviewLoad()
   }
 
   const updateLabels = () => {
