@@ -365,15 +365,6 @@ const FaviconPage = () => {
             </div>
           </div>
 
-          <div class="preview__grid">
-            {[16, 32, 48, 64].map((size) => (
-              <div class="thumb" data-size-preview data-size={size}>
-                <img alt={`${size} favicon`} />
-                <span>{size}px</span>
-              </div>
-            ))}
-          </div>
-
           <div class="preview__snippet">
             <p>HTML snippet</p>
             <div class="snippet-list" data-snippet-list></div>

@@ -23,7 +23,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const bg2Control = document.querySelector<HTMLElement>('[data-bg2-control]')
   const angleControl = document.querySelector<HTMLElement>('[data-angle-control]')
   const sizeLinks = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-size-link]'))
-  const sizePreviews = Array.from(document.querySelectorAll<HTMLElement>('[data-size-preview]'))
 
   if (!preview || !urlInput || !snippetList) return
 
@@ -348,13 +347,6 @@ document.addEventListener('DOMContentLoaded', () => {
       link.href = `${absoluteBase}${buildUrl(size)}`
     })
 
-    sizePreviews.forEach((item) => {
-      const size = Number(item.dataset.size || 0)
-      const img = item.querySelector('img')
-      if (!size || !img) return
-      img.src = buildUrl(size)
-    })
-
     updateSnippet(absoluteBase)
   }
 
@@ -658,7 +650,11 @@ document.addEventListener('DOMContentLoaded', () => {
   sizeLinks.forEach((link) => {
     link.addEventListener('click', (event) => {
       event.preventDefault()
-      window.open(link.href, '_blank')
+      const size = Number(link.dataset.size || 0)
+      if (!size) return
+      state.size = size
+      if (fields.size) fields.size.value = String(size)
+      applyState()
     })
   })
 
