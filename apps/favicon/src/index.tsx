@@ -253,22 +253,6 @@ const FaviconPage = () => {
 
           <div class="control-group">
             <div class="control">
-              <label>Background style</label>
-              <div class="segmented" data-bg-mode>
-                <button type="button" class="segmented__btn" data-bg-mode-btn data-bg-mode-value="solid">
-                  Solid
-                </button>
-                <button
-                  type="button"
-                  class="segmented__btn is-active"
-                  data-bg-mode-btn
-                  data-bg-mode-value="gradient"
-                >
-                  Gradient
-                </button>
-              </div>
-            </div>
-            <div class="control">
               <label>Theme presets</label>
               <div class="preset-row">
                 {PRESETS.map((preset, index) => {
@@ -288,6 +272,22 @@ const FaviconPage = () => {
                 <button type="button" class="preset-chip preset-chip--random" data-random>
                   <span class="preset-swatch preset-swatch--rainbow"></span>
                   Random
+                </button>
+              </div>
+            </div>
+            <div class="control">
+              <label>Background style</label>
+              <div class="segmented" data-bg-mode>
+                <button type="button" class="segmented__btn" data-bg-mode-btn data-bg-mode-value="solid">
+                  Solid
+                </button>
+                <button
+                  type="button"
+                  class="segmented__btn is-active"
+                  data-bg-mode-btn
+                  data-bg-mode-value="gradient"
+                >
+                  Gradient
                 </button>
               </div>
             </div>
