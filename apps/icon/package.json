@@ -1,5 +1,5 @@
 {
-  "name": "favicon",
+  "name": "icon",
   "type": "module",
   "scripts": {
     "dev": "vite",

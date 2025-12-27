@@ -355,7 +355,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ],
       },
       {
-        title: 'Favicon (SVG)',
+        title: 'Favicon',
         lines: [
           `<link rel="icon" sizes="16x16" type="image/svg+xml" href="${baseUrl}/icon/16?${query}" />`,
           `<link rel="icon" sizes="32x32" type="image/svg+xml" href="${baseUrl}/icon/32?${query}" />`,
