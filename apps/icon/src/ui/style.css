@@ -264,6 +264,20 @@ select {
   display: none;
 }
 
+.icon-menu.is-loading .icon-options {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.icon-menu.is-loading .icon-options::before {
+  content: "Loading icons...";
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6366f1;
+  padding: 6px 10px 10px;
+}
+
 .icon-options {
   max-height: 240px;
   overflow: auto;

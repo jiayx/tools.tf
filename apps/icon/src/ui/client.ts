@@ -77,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   let downloadFormat: 'svg' | 'png' | 'jpeg' | 'webp' = 'svg'
+  let iconLoadToken = 0
 
   const presets = PRESETS
 
@@ -222,6 +223,19 @@ document.addEventListener('DOMContentLoaded', () => {
     iconFilter.placeholder = `Search ${label.toLowerCase()} icons`
   }
 
+  const setIconLoading = (isLoading: boolean) => {
+    if (!iconMenu) return
+    iconMenu.classList.toggle('is-loading', isLoading)
+    if (iconFilter) {
+      iconFilter.disabled = isLoading
+      if (isLoading) {
+        iconFilter.placeholder = 'Loading icons...'
+      } else {
+        updateIconSearchPlaceholder()
+      }
+    }
+  }
+
   const filterIconOptions = () => {
     const query = iconFilter?.value.trim().toLowerCase() || ''
     void resetIconOptions(query)
@@ -232,7 +246,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const fallbackIcon = ICON_SET_META[iconSet]?.defaultIcon || DEFAULTS.icon
     const currentIcon =
       iconSet === 'tabler' ? state.iconTabler : iconSet === 'logos' ? state.iconLogos : state.iconLucide
+    const token = ++iconLoadToken
+    if (!getIconSetData(iconSet)) {
+      setIconLoading(true)
+    }
     const data = await ensureIconSet(iconSet)
+    if (token !== iconLoadToken || getIconSet(state.type) !== iconSet) return
     const nextIcon = data.names.includes(currentIcon) ? currentIcon : fallbackIcon
     if (iconSet === 'tabler') {
       state.iconTabler = nextIcon
@@ -249,6 +268,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       clearIconOptions()
     }
+    setIconLoading(false)
+    iconVirtualList?.refresh()
     updateIconSearchPlaceholder()
     setIconSelection(state.icon)
   }
@@ -321,7 +342,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const buildIconSvg = (iconSet: IconSetId, name: string, color: string, size: number) => {
     const data = getIconSetData(iconSet)
-    const iconMarkup = data?.getMarkup(name) ?? FALLBACK_ICON_MARKUP
+    if (!data) {
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24"></svg>`
+    }
+    const iconMarkup = data.getMarkup(name) ?? FALLBACK_ICON_MARKUP
     const wrapper = getIconWrapperAttributes(ICON_SET_META[iconSet].renderMode, color)
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24">
   <g ${wrapper}>
@@ -382,12 +406,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const resetIconOptions = async (query: string) => {
     if (!iconVirtualList) return
     const iconSet = getIconSet(state.type)
+    const token = ++iconLoadToken
+    if (!getIconSetData(iconSet)) {
+      setIconLoading(true)
+    }
     const data = await ensureIconSet(iconSet)
+    if (token !== iconLoadToken || getIconSet(state.type) !== iconSet) return
     const names = data.names || []
     const results = query ? names.filter((name) => name.includes(query)) : names
     iconResults.length = 0
     iconResults.push(...results)
     iconVirtualList.setItems(iconResults, iconSet)
+    iconVirtualList.refresh()
+    setIconLoading(false)
   }
 
   const clearIconOptions = () => {
