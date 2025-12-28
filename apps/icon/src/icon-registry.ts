@@ -1,37 +1,29 @@
 import { lucideIconNames, getLucideIconMarkup } from './lucide'
 import { tablerIconNames, getTablerIconMarkup } from './tabler'
 import { logosIconNames, getLogosIconMarkup } from './logos'
+import { ICON_SET_META, type IconSetId } from './icon-types'
+export type { IconSetId } from './icon-types'
 
 export const FALLBACK_ICON_MARKUP = '<circle cx="12" cy="12" r="9" />'
 
 export const ICON_SETS = {
   lucide: {
-    id: 'lucide',
-    label: 'Lucide',
-    defaultIcon: 'sparkles',
+    ...ICON_SET_META.lucide,
     names: lucideIconNames,
     getMarkup: getLucideIconMarkup,
-    renderMode: 'stroke',
   },
   tabler: {
-    id: 'tabler',
-    label: 'Tabler',
-    defaultIcon: 'star',
+    ...ICON_SET_META.tabler,
     names: tablerIconNames,
     getMarkup: getTablerIconMarkup,
-    renderMode: 'currentColor',
   },
   logos: {
-    id: 'logos',
-    label: 'Logos',
-    defaultIcon: 'google-gmail',
+    ...ICON_SET_META.logos,
     names: logosIconNames,
     getMarkup: getLogosIconMarkup,
-    renderMode: 'currentColor',
   },
-}
+} as const
 
-export type IconSetId = keyof typeof ICON_SETS
 export type IconSet = (typeof ICON_SETS)[IconSetId]
 
 export const ICON_SET_LIST: IconSet[] = Object.values(ICON_SETS)

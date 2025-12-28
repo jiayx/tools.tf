@@ -1,5 +1,6 @@
 import { DEFAULTS, PRESETS } from './config'
-import { buildIconPreviewSvg, ICON_SETS } from './icon-registry'
+import { ICON_SET_META, getIconSetData, getIconWrapperAttributes, loadIconSet } from './icon-registry-client'
+import type { IconSetId } from './icon-types'
 import { IconVirtualList } from './icon-virtual-list'
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -29,6 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const formatButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-format-btn]'))
 
   if (!preview || !urlInput || !snippetList) return
+
+  const FALLBACK_ICON_MARKUP = '<circle cx="12" cy="12" r="9" />'
 
   const fields = {
     text: document.querySelector<HTMLInputElement>('[data-field="text"]'),
@@ -69,8 +72,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const state = {
     ...defaults,
     iconLucide: fields.icon?.value || DEFAULTS.icon,
-    iconTabler: ICON_SETS.tabler.defaultIcon || DEFAULTS.icon,
-    iconLogos: ICON_SETS.logos.defaultIcon || DEFAULTS.icon,
+    iconTabler: ICON_SET_META.tabler.defaultIcon || DEFAULTS.icon,
+    iconLogos: ICON_SET_META.logos.defaultIcon || DEFAULTS.icon,
   }
 
   let downloadFormat: 'svg' | 'png' | 'jpeg' | 'webp' = 'svg'
@@ -151,7 +154,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  const getIconSet = (mode: string) => (mode === 'tabler' ? 'tabler' : mode === 'logos' ? 'logos' : 'lucide')
+  const getIconSet = (mode: string): IconSetId =>
+    mode === 'tabler' ? 'tabler' : mode === 'logos' ? 'logos' : 'lucide'
+
+  const ensureIconSet = async (iconSet: IconSetId) => {
+    const cached = getIconSetData(iconSet)
+    if (cached) return cached
+    return await loadIconSet(iconSet)
+  }
 
   const setActiveMode = (mode: string) => {
     state.type = mode === 'lucide' || mode === 'tabler' || mode === 'logos' ? mode : 'text'
@@ -208,21 +218,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const updateIconSearchPlaceholder = () => {
     if (!iconFilter) return
-    const label = ICON_SETS[getIconSet(state.type)]?.label || 'Icon'
+    const label = ICON_SET_META[getIconSet(state.type)]?.label || 'Icon'
     iconFilter.placeholder = `Search ${label.toLowerCase()} icons`
   }
 
   const filterIconOptions = () => {
     const query = iconFilter?.value.trim().toLowerCase() || ''
-    resetIconOptions(query)
+    void resetIconOptions(query)
   }
 
-  const syncIconSet = () => {
+  const syncIconSet = async () => {
     const iconSet = getIconSet(state.type)
-    const fallbackIcon = ICON_SETS[iconSet]?.defaultIcon || DEFAULTS.icon
+    const fallbackIcon = ICON_SET_META[iconSet]?.defaultIcon || DEFAULTS.icon
     const currentIcon =
       iconSet === 'tabler' ? state.iconTabler : iconSet === 'logos' ? state.iconLogos : state.iconLucide
-    const nextIcon = ICON_SETS[iconSet]?.names.includes(currentIcon) ? currentIcon : fallbackIcon
+    const data = await ensureIconSet(iconSet)
+    const nextIcon = data.names.includes(currentIcon) ? currentIcon : fallbackIcon
     if (iconSet === 'tabler') {
       state.iconTabler = nextIcon
     } else if (iconSet === 'logos') {
@@ -233,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
     state.icon = nextIcon
     if (fields.icon) fields.icon.value = nextIcon
     if (iconMenu && !iconMenu.classList.contains('is-hidden')) {
-      resetIconOptions(iconFilter?.value.trim().toLowerCase() || '')
+      await resetIconOptions(iconFilter?.value.trim().toLowerCase() || '')
       scrollToSelected()
     } else {
       clearIconOptions()
@@ -308,12 +319,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  const buildIconSvg = (iconSet: string, name: string, color: string, size: number) => {
-    const resolved = iconSet === 'tabler' ? 'tabler' : iconSet === 'logos' ? 'logos' : 'lucide'
-    return buildIconPreviewSvg(resolved, name, color, size)
+  const buildIconSvg = (iconSet: IconSetId, name: string, color: string, size: number) => {
+    const data = getIconSetData(iconSet)
+    const iconMarkup = data?.getMarkup(name) ?? FALLBACK_ICON_MARKUP
+    const wrapper = getIconWrapperAttributes(ICON_SET_META[iconSet].renderMode, color)
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24">
+  <g ${wrapper}>
+    ${iconMarkup}
+  </g>
+</svg>`
   }
 
-  const renderIconPreview = (target: HTMLElement, iconSet: string, name: string, color: string, size: number) => {
+  const renderIconPreview = (target: HTMLElement, iconSet: IconSetId, name: string, color: string, size: number) => {
     target.innerHTML = buildIconSvg(iconSet, name, color, size)
   }
 
@@ -322,7 +339,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ? Number.parseFloat(getComputedStyle(iconOptionsContainer).getPropertyValue('--icon-row')) || 46
     : 46
 
-  const createIconOption = (name: string, iconSet: string) => {
+  const createIconOption = (name: string, iconSet: IconSetId) => {
     const button = document.createElement('button')
     button.type = 'button'
     button.className = 'icon-option'
@@ -362,10 +379,11 @@ document.addEventListener('DOMContentLoaded', () => {
         })
       : null
 
-  const resetIconOptions = (query: string) => {
+  const resetIconOptions = async (query: string) => {
     if (!iconVirtualList) return
     const iconSet = getIconSet(state.type)
-    const names = ICON_SETS[iconSet]?.names || []
+    const data = await ensureIconSet(iconSet)
+    const names = data.names || []
     const results = query ? names.filter((name) => name.includes(query)) : names
     iconResults.length = 0
     iconResults.push(...results)
@@ -386,7 +404,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const updateIconPreview = () => {
     if (!iconTriggerPreview) return
-    renderIconPreview(iconTriggerPreview, getIconSet(state.type), state.icon, '#111827', 20)
+    const iconSet = getIconSet(state.type)
+    if (!getIconSetData(iconSet)) {
+      void ensureIconSet(iconSet).then(() => {
+        renderIconPreview(iconTriggerPreview, iconSet, state.icon, '#111827', 20)
+      })
+    } else {
+      renderIconPreview(iconTriggerPreview, iconSet, state.icon, '#111827', 20)
+    }
     if (iconLabel) iconLabel.textContent = state.icon
   }
 
@@ -560,7 +585,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', () => {
       setActiveMode(btn.dataset.modeValue || 'text')
       if (state.type !== 'text') {
-        syncIconSet()
+        void syncIconSet()
       }
       applyStateImmediate()
     })
@@ -638,8 +663,9 @@ document.addEventListener('DOMContentLoaded', () => {
     iconMenu.classList.remove('is-hidden')
     iconDropdown.classList.add('is-open')
     iconFilter?.focus()
-    resetIconOptions(iconFilter?.value.trim().toLowerCase() || '')
-    scrollToSelected()
+    void resetIconOptions(iconFilter?.value.trim().toLowerCase() || '').then(() => {
+      scrollToSelected()
+    })
   }
 
   const closeIconMenu = () => {
@@ -833,5 +859,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setActiveMode(state.type)
   setBackgroundMode(state.bgMode)
-  syncIconSet()
+  void syncIconSet()
 })
