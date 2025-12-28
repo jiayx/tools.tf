@@ -24,7 +24,7 @@ export const ICON_SETS = {
   logos: {
     id: 'logos',
     label: 'Logos',
-    defaultIcon: 'github-icon',
+    defaultIcon: 'google-gmail',
     names: logosIconNames,
     getMarkup: getLogosIconMarkup,
     renderMode: 'currentColor',

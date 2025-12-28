@@ -244,11 +244,13 @@ document.addEventListener('DOMContentLoaded', () => {
     params.set('type', state.type)
     params.set('fg', state.fg)
     params.set('bg', state.bgMode)
-    params.set('bg1', state.bg1)
+    if (state.bgMode !== 'transparent') {
+      params.set('bg1', state.bg1)
+    }
     if (state.bgMode === 'gradient') {
       params.set('bg2', state.bg2)
+      params.set('angle', String(state.angle))
     }
-    params.set('angle', String(state.angle))
     params.set('glyph', String(state.glyph))
     if (state.type === 'text') {
       params.set('text', state.text)
