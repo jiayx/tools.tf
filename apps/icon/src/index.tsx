@@ -7,7 +7,7 @@ import {
   getIconMarkup,
   getIconWrapperAttributes,
   normalizeIconName,
-} from './icon-registry'
+} from './registry/icon-registry'
 import { DEFAULTS, PRESETS } from './config'
 
 const app = new Hono()

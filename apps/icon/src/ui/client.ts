@@ -1,6 +1,6 @@
-import { DEFAULTS, PRESETS } from './config'
-import { ICON_SET_META, getIconSetData, getIconWrapperAttributes, loadIconSet } from './icon-registry-client'
-import type { IconSetId } from './icon-types'
+import { DEFAULTS, PRESETS } from '../config'
+import { ICON_SET_META, getIconSetData, getIconWrapperAttributes, loadIconSet } from '../registry/icon-registry-client'
+import type { IconSetId } from '../registry/icon-types'
 import { IconVirtualList } from './icon-virtual-list'
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -371,7 +371,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const iconVirtualList =
     iconOptionsContainer
-      ? new IconVirtualList({
+      ? new IconVirtualList<IconSetId>({
           container: iconOptionsContainer,
           rowHeight: iconRowHeight,
           overscan: 8,

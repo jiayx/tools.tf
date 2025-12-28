@@ -1,6 +1,6 @@
-import { lucideIconNames, getLucideIconMarkup } from './lucide'
-import { tablerIconNames, getTablerIconMarkup } from './tabler'
-import { logosIconNames, getLogosIconMarkup } from './logos'
+import { lucideIconNames, getLucideIconMarkup } from '../icons/lucide'
+import { tablerIconNames, getTablerIconMarkup } from '../icons/tabler'
+import { logosIconNames, getLogosIconMarkup } from '../icons/logos'
 import { ICON_SET_META, type IconSetId } from './icon-types'
 export type { IconSetId } from './icon-types'
 

@@ -14,12 +14,12 @@ export const renderer = jsxRenderer(({ children }) => {
           content="Create text, Lucide, Tabler, or Logos icons with gradients and instant previews."
         />
         <ViteClient />
-        <Link href="/src/style.css" rel="stylesheet" />
+        <Link href="/src/ui/style.css" rel="stylesheet" />
         <link rel="icon" type="image/svg+xml" href="https://icon.tools.tf/icon/32?type=tabler&fg=%236366f1&bg1=%23111827&bg=transparent&angle=140&glyph=100&icon=icons" sizes="32x32" />
       </head>
       <body>
         {children}
-        <Script type="module" src="/src/client.ts" />
+        <Script type="module" src="/src/ui/client.ts" />
       </body>
     </html>
   )

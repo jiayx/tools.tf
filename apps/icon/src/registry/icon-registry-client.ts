@@ -8,15 +8,15 @@ type IconSetData = {
 
 const loaders: Record<IconSetId, () => Promise<IconSetData>> = {
   lucide: async () => {
-    const mod = await import('./lucide')
+    const mod = await import('../icons/lucide')
     return { names: mod.lucideIconNames, getMarkup: mod.getLucideIconMarkup }
   },
   tabler: async () => {
-    const mod = await import('./tabler')
+    const mod = await import('../icons/tabler')
     return { names: mod.tablerIconNames, getMarkup: mod.getTablerIconMarkup }
   },
   logos: async () => {
-    const mod = await import('./logos')
+    const mod = await import('../icons/logos')
     return { names: mod.logosIconNames, getMarkup: mod.getLogosIconMarkup }
   },
 }

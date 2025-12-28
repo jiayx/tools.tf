@@ -1,27 +1,28 @@
-type IconVirtualListOptions = {
+type IconVirtualListOptions<T = string> = {
   container: HTMLElement
   rowHeight: number
   overscan?: number
-  renderRow: (name: string, iconSet: string) => HTMLElement
+  renderRow: (name: string, group: T) => HTMLElement
 }
 
-export class IconVirtualList {
+export class IconVirtualList<T = string> {
   private container: HTMLElement
   private spacer: HTMLDivElement
   private list: HTMLDivElement
   private rowHeight: number
   private overscan: number
-  private renderRow: IconVirtualListOptions['renderRow']
+  private renderRow: IconVirtualListOptions<T>['renderRow']
   private names: string[] = []
-  private iconSet = 'lucide'
+  private group: T
   private lastStart = -1
   private lastEnd = -1
 
-  constructor(options: IconVirtualListOptions) {
+  constructor(options: IconVirtualListOptions<T>) {
     this.container = options.container
     this.rowHeight = options.rowHeight
     this.overscan = options.overscan ?? 6
     this.renderRow = options.renderRow
+    this.group = undefined as unknown as T
 
     this.spacer = document.createElement('div')
     this.spacer.className = 'icon-options__spacer'
@@ -33,9 +34,9 @@ export class IconVirtualList {
     this.container.addEventListener('scroll', this.onScroll)
   }
 
-  setItems(names: string[], iconSet: string) {
+  setItems(names: string[], group: T) {
     this.names = names
-    this.iconSet = iconSet
+    this.group = group
     this.lastStart = -1
     this.lastEnd = -1
     this.spacer.style.height = `${this.names.length * this.rowHeight}px`
@@ -88,7 +89,7 @@ export class IconVirtualList {
 
     const fragment = document.createDocumentFragment()
     for (let i = startIndex; i < endIndex; i += 1) {
-      fragment.append(this.renderRow(this.names[i], this.iconSet))
+      fragment.append(this.renderRow(this.names[i], this.group))
     }
     this.list.innerHTML = ''
     this.list.append(fragment)
