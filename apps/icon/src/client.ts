@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const angleControl = document.querySelector<HTMLElement>('[data-angle-control]')
   const sizeLinks = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-size-link]'))
   const sizeDownloads = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-size-download]'))
+  const formatButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-format-btn]'))
 
   if (!preview || !urlInput || !snippetList) return
 
@@ -71,6 +72,8 @@ document.addEventListener('DOMContentLoaded', () => {
     iconTabler: ICON_SETS.tabler.defaultIcon || DEFAULTS.icon,
     iconLogos: ICON_SETS.logos.defaultIcon || DEFAULTS.icon,
   }
+
+  let downloadFormat: 'svg' | 'png' | 'jpeg' | 'webp' = 'svg'
 
   const presets = PRESETS
 
@@ -265,6 +268,46 @@ document.addEventListener('DOMContentLoaded', () => {
     return `/icon/${size}?${params.toString()}`
   }
 
+  const downloadRaster = async (size: number, format: 'png' | 'jpeg' | 'webp') => {
+    const svgUrl = buildUrl(size)
+    try {
+      const response = await fetch(svgUrl)
+      const svgText = await response.text()
+      const normalizedSvgText =
+        format === 'jpeg' ? svgText.replace(/rx="[^"]*"/g, 'rx="0"') : svgText
+      const svgBlob = new Blob([normalizedSvgText], { type: 'image/svg+xml' })
+      const svgObjectUrl = URL.createObjectURL(svgBlob)
+
+      const img = new Image()
+      img.decoding = 'async'
+      img.src = svgObjectUrl
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve()
+        img.onerror = () => reject(new Error('Failed to load SVG'))
+      })
+
+      const canvas = document.createElement('canvas')
+      canvas.width = size
+      canvas.height = size
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+      if (format === 'jpeg' && state.bgMode === 'transparent') {
+        ctx.fillStyle = '#ffffff'
+        ctx.fillRect(0, 0, size, size)
+      }
+      ctx.drawImage(img, 0, 0, size, size)
+      URL.revokeObjectURL(svgObjectUrl)
+
+      const dataUrl = canvas.toDataURL(`image/${format}`, 0.92)
+      const link = document.createElement('a')
+      link.href = dataUrl
+      link.download = `icon-${size}.${format}`
+      link.click()
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
   const buildIconSvg = (iconSet: string, name: string, color: string, size: number) => {
     const resolved = iconSet === 'tabler' ? 'tabler' : iconSet === 'logos' ? 'logos' : 'lucide'
     return buildIconPreviewSvg(resolved, name, color, size)
@@ -406,14 +449,22 @@ document.addEventListener('DOMContentLoaded', () => {
       const size = Number(link.dataset.size || 0)
       if (!size) return
       link.href = `${absoluteBase}${buildUrl(size)}`
+      const isSelected = size === state.size
+      link.classList.toggle('is-selected', isSelected)
+      link.closest<HTMLElement>('.chip-group')?.classList.toggle('is-selected', isSelected)
     })
 
     sizeDownloads.forEach((link) => {
       const size = Number(link.dataset.size || 0)
       if (!size) return
       link.href = `${absoluteBase}${buildUrl(size)}`
-      link.setAttribute('download', `icon-${size}.svg`)
-      link.setAttribute('title', `Download ${size}px SVG`)
+      link.setAttribute('title', `Download ${size}px ${downloadFormat.toUpperCase()}`)
+      link.setAttribute('aria-label', `Download ${size}px ${downloadFormat.toUpperCase()}`)
+      if (downloadFormat === 'svg') {
+        link.setAttribute('download', `icon-${size}.svg`)
+      } else {
+        link.removeAttribute('download')
+      }
     })
 
     updateSnippet(absoluteBase)
@@ -754,6 +805,28 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!size) return
       state.size = size
       if (fields.size) fields.size.value = String(size)
+      applyStateImmediate()
+    })
+  })
+
+  sizeDownloads.forEach((link) => {
+    link.addEventListener('click', async (event) => {
+      if (downloadFormat === 'svg') return
+      event.preventDefault()
+      const size = Number(link.dataset.size || 0)
+      if (!size) return
+      await downloadRaster(size, downloadFormat)
+    })
+  })
+
+  formatButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const format = btn.dataset.format
+      if (format !== 'svg' && format !== 'png' && format !== 'jpeg' && format !== 'webp') return
+      downloadFormat = format
+      formatButtons.forEach((item) => {
+        item.classList.toggle('is-active', item.dataset.format === downloadFormat)
+      })
       applyStateImmediate()
     })
   })

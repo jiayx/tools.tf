@@ -544,6 +544,23 @@ select:focus {
   font-weight: 600;
 }
 
+.preview__sizes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.segmented--compact {
+  padding: 2px;
+  border-radius: 999px;
+}
+
+.segmented--compact .segmented__btn {
+  font-size: 11px;
+  padding: 4px 8px;
+}
+
 .chip-row {
   display: flex;
   flex-wrap: wrap;
@@ -566,33 +583,47 @@ select:focus {
 
 .chip {
   text-decoration: none;
-  font-size: 12px;
-  padding: 6px 10px;
+  font-size: 11px;
+  padding: 5px 9px;
   border-radius: 999px;
   background: transparent;
   color: var(--ink);
   border: 0;
 }
 
-.chip:hover {
-  color: #1e1b4b;
-}
-
 .chip--download {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  min-width: 26px;
   font-size: 11px;
-  padding: 5px 9px;
-  border-left: 1px dashed #c7d2fe;
-  padding-left: 10px;
+  padding: 5px 6px;
+  border-left: 1px solid #d8e1f4;
   color: #4338ca;
   background: #eef2ff;
 }
 
-.chip--download:hover {
+.chip-group:hover .chip {
+  color: #1e1b4b;
+}
+
+.chip-group:hover .chip--download {
   color: #312e81;
   background: #e0e7ff;
+}
+
+.chip-group.is-selected {
+  border-color: #818cf8;
+  background: #eef2ff;
+}
+
+.chip-group.is-selected .chip {
+  color: #312e81;
+}
+
+.chip-group.is-selected .chip--download {
+  background: #e0e7ff;
+  color: #312e81;
 }
 
 .chip__icon {

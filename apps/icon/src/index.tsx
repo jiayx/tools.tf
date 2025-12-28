@@ -368,7 +368,23 @@ const IconPage = () => {
           </div>
 
           <div class="preview__sizes">
-            <p>Common icon sizes</p>
+            <div class="preview__sizes-header">
+              <p>Common icon sizes</p>
+              <div class="segmented segmented--compact" data-download-format>
+                <button type="button" class="segmented__btn is-active" data-format-btn data-format="svg">
+                  SVG
+                </button>
+                <button type="button" class="segmented__btn" data-format-btn data-format="png">
+                  PNG
+                </button>
+                <button type="button" class="segmented__btn" data-format-btn data-format="jpeg">
+                  JPEG
+                </button>
+                <button type="button" class="segmented__btn" data-format-btn data-format="webp">
+                  WebP
+                </button>
+              </div>
+            </div>
             <div class="chip-row">
               {[16, 32, 48, 64, 96, 128, 256].map((size) => (
                 <div class="chip-group">
