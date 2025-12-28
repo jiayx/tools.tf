@@ -1,5 +1,6 @@
 import { lucideIconNames, getLucideIconMarkup } from './lucide'
 import { tablerIconNames, getTablerIconMarkup } from './tabler'
+import { logosIconNames, getLogosIconMarkup } from './logos'
 
 export const FALLBACK_ICON_MARKUP = '<circle cx="12" cy="12" r="9" />'
 
@@ -18,6 +19,14 @@ export const ICON_SETS = {
     defaultIcon: 'star',
     names: tablerIconNames,
     getMarkup: getTablerIconMarkup,
+    renderMode: 'currentColor',
+  },
+  logos: {
+    id: 'logos',
+    label: 'Logos',
+    defaultIcon: 'github-icon',
+    names: logosIconNames,
+    getMarkup: getLogosIconMarkup,
     renderMode: 'currentColor',
   },
 }

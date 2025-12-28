@@ -11,7 +11,7 @@ export const renderer = jsxRenderer(({ children }) => {
         <title>Icon Atelier · tools.tf</title>
         <meta
           name="description"
-          content="Create text, Lucide, or Tabler icons with gradients and instant previews."
+          content="Create text, Lucide, Tabler, or Logos icons with gradients and instant previews."
         />
         <ViteClient />
         <Link href="/src/style.css" rel="stylesheet" />

@@ -12,6 +12,7 @@ export default defineConfig({
             manualChunks(id) {
               if (id.includes('lucide-static')) return 'lucide-icons'
               if (id.includes('@iconify-json/tabler')) return 'tabler-icons'
+              if (id.includes('@iconify-json/logos')) return 'logos-icons'
             }
           }
         }

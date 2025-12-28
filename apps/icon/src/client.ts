@@ -69,6 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ...defaults,
     iconLucide: fields.icon?.value || DEFAULTS.icon,
     iconTabler: ICON_SETS.tabler.defaultIcon || DEFAULTS.icon,
+    iconLogos: ICON_SETS.logos.defaultIcon || DEFAULTS.icon,
   }
 
   const presets = PRESETS
@@ -147,10 +148,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  const getIconSet = (mode: string) => (mode === 'tabler' ? 'tabler' : 'lucide')
+  const getIconSet = (mode: string) => (mode === 'tabler' ? 'tabler' : mode === 'logos' ? 'logos' : 'lucide')
 
   const setActiveMode = (mode: string) => {
-    state.type = mode === 'lucide' || mode === 'tabler' ? mode : 'text'
+    state.type = mode === 'lucide' || mode === 'tabler' || mode === 'logos' ? mode : 'text'
     modeButtons.forEach((btn) => {
       const isActive = btn.dataset.modeValue === state.type
       btn.classList.toggle('is-active', isActive)
@@ -158,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (textControls) textControls.classList.toggle('is-hidden', state.type !== 'text')
     if (iconControls) iconControls.classList.toggle('is-hidden', state.type === 'text')
     if (state.type !== 'text') {
-      state.icon = state.type === 'tabler' ? state.iconTabler : state.iconLucide
+      state.icon = state.type === 'tabler' ? state.iconTabler : state.type === 'logos' ? state.iconLogos : state.iconLucide
       if (fields.icon) fields.icon.value = state.icon
     }
   }
@@ -216,10 +217,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const syncIconSet = () => {
     const iconSet = getIconSet(state.type)
     const fallbackIcon = ICON_SETS[iconSet]?.defaultIcon || DEFAULTS.icon
-    const currentIcon = iconSet === 'tabler' ? state.iconTabler : state.iconLucide
+    const currentIcon =
+      iconSet === 'tabler' ? state.iconTabler : iconSet === 'logos' ? state.iconLogos : state.iconLucide
     const nextIcon = ICON_SETS[iconSet]?.names.includes(currentIcon) ? currentIcon : fallbackIcon
     if (iconSet === 'tabler') {
       state.iconTabler = nextIcon
+    } else if (iconSet === 'logos') {
+      state.iconLogos = nextIcon
     } else {
       state.iconLucide = nextIcon
     }
@@ -239,10 +243,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams()
     params.set('type', state.type)
     params.set('fg', state.fg)
+    params.set('bg', state.bgMode)
     params.set('bg1', state.bg1)
-    if (state.bgMode === 'transparent') {
-      params.set('bg', 'transparent')
-    }
     if (state.bgMode === 'gradient') {
       params.set('bg2', state.bg2)
     }
@@ -262,7 +264,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const buildIconSvg = (iconSet: string, name: string, color: string, size: number) => {
-    return buildIconPreviewSvg(iconSet === 'tabler' ? 'tabler' : 'lucide', name, color, size)
+    const resolved = iconSet === 'tabler' ? 'tabler' : iconSet === 'logos' ? 'logos' : 'lucide'
+    return buildIconPreviewSvg(resolved, name, color, size)
   }
 
   const renderIconPreview = (target: HTMLElement, iconSet: string, name: string, color: string, size: number) => {
@@ -563,6 +566,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fields.icon) fields.icon.value = name
     if (getIconSet(state.type) === 'tabler') {
       state.iconTabler = name
+    } else if (getIconSet(state.type) === 'logos') {
+      state.iconLogos = name
     } else {
       state.iconLucide = name
     }

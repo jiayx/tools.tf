@@ -78,28 +78,21 @@ type IconOptions = {
 }
 
 const parseOptions = (query: Record<string, string>, sizeParam?: string) => {
-  const type =
-    query.type === 'tabler'
-      ? 'tabler'
-      : query.type === 'lucide' || query.type === 'icon'
-        ? 'lucide'
-        : 'text'
+  const rawType = (query.type || '').toLowerCase()
+  const allowedTypes = ['text', 'lucide', 'tabler', 'logos']
+  const type = allowedTypes.includes(rawType) ? (rawType as IconOptions['type']) : 'text'
+
   const size = clamp(parseNumber(sizeParam || query.size, DEFAULTS.size), 16, 512)
   const glyph = clamp(parseNumber(query.glyph, DEFAULTS.glyph), 28, 100)
   const angle = clamp(parseNumber(query.angle, DEFAULTS.angle), 0, 360)
-  const bgMode =
-    query.bg === 'transparent'
-      ? 'transparent'
-      : query.bg === 'solid'
-        ? 'solid'
-        : query.bg === 'gradient'
-          ? 'gradient'
-          : query.bg2
-            ? 'gradient'
-            : 'solid'
+
+  const rawBgMode = (query.bg || '').toLowerCase()
+  const allowedBgModes = ['solid', 'gradient', 'transparent']
+  const bgMode = allowedBgModes.includes(rawBgMode) ? (rawBgMode as IconOptions['bgMode']) : 'solid'
+
   const bg1 = parseHex(query.bg1, DEFAULTS.bg1)
   const bg2 = query.bg2 ? parseHex(query.bg2, bg1) : bg1
-  const iconSet = type === 'tabler' ? 'tabler' : 'lucide'
+  const iconSet = type === 'tabler' ? 'tabler' : type === 'logos' ? 'logos' : 'lucide'
   const iconFallback = ICON_SETS[iconSet].defaultIcon || DEFAULTS.icon
 
   return {
@@ -150,7 +143,7 @@ const buildSvg = (options: IconOptions) => {
 </svg>`
   }
 
-  const iconSet = type === 'tabler' ? 'tabler' : 'lucide'
+  const iconSet = type === 'tabler' ? 'tabler' : type === 'logos' ? 'logos' : 'lucide'
   const iconMarkup = getIconMarkup(iconSet, icon) ?? FALLBACK_ICON_MARKUP
   const iconWrapper = getIconWrapperAttributes(iconSet, fg)
   const glyphSize = (size * glyph) / 100
@@ -210,6 +203,9 @@ const IconPage = () => {
               </button>
               <button type="button" class="segmented__btn" data-mode-btn data-mode-value="tabler">
                 Tabler icon
+              </button>
+              <button type="button" class="segmented__btn" data-mode-btn data-mode-value="logos">
+                Logos
               </button>
             </div>
           </div>
