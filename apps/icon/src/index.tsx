@@ -8,6 +8,9 @@ import {
 } from './registry/icon-registry'
 import { ICON_SET_META } from './registry/icon-types'
 import { DEFAULTS, PRESETS } from './config'
+import { resolveIconSet } from './shared/parse'
+import { buildBackgroundParts, buildIconSvg } from './shared/svg'
+import { parseIconQuery } from './shared/query'
 import { KVNamespace } from '@cloudflare/workers-types'
 
 const app = new Hono<{ Bindings: { KV: KVNamespace } }>()
@@ -78,28 +81,25 @@ type IconOptions = {
 }
 
 const parseOptions = (query: Record<string, string>, sizeParam?: string) => {
-  const rawType = (query.type || '').toLowerCase()
-  const allowedTypes = ['text', 'lucide', 'tabler', 'logos']
-  const type = allowedTypes.includes(rawType) ? (rawType as IconOptions['type']) : 'text'
+  const parsed = parseIconQuery(query)
+  const type = parsed.type
 
   const size = clamp(parseNumber(sizeParam || query.size, DEFAULTS.size), 16, 512)
   const glyph = clamp(parseNumber(query.glyph, DEFAULTS.glyph), 28, 100)
   const angle = clamp(parseNumber(query.angle, DEFAULTS.angle), 0, 360)
 
-  const rawBgMode = (query.bg || '').toLowerCase()
-  const allowedBgModes = ['solid', 'gradient', 'transparent']
-  const bgMode = allowedBgModes.includes(rawBgMode) ? (rawBgMode as IconOptions['bgMode']) : 'solid'
+  const bgMode = parsed.bgMode
 
   const bg1 = parseHex(query.bg1, DEFAULTS.bg1)
   const bg2 = query.bg2 ? parseHex(query.bg2, bg1) : bg1
-  const iconSet = type === 'tabler' ? 'tabler' : type === 'logos' ? 'logos' : 'lucide'
+  const iconSet = resolveIconSet(type)
   const iconFallback = ICON_SET_META[iconSet].defaultIcon || DEFAULTS.icon
 
   return {
     type,
-    text: sanitizeText(query.text, DEFAULTS.text),
-    icon: (query.icon || '').trim().toLowerCase() || iconFallback,
-    fg: parseHex(query.fg, DEFAULTS.fg),
+    text: sanitizeText(parsed.text, DEFAULTS.text),
+    icon: (parsed.icon || '').trim().toLowerCase() || iconFallback,
+    fg: parseHex(parsed.fg, DEFAULTS.fg),
     bgMode,
     bg1,
     bg2,
@@ -111,16 +111,7 @@ const parseOptions = (query: Record<string, string>, sizeParam?: string) => {
 
 const buildSvg = async (options: IconOptions, kv?: KVNamespace) => {
   const { size, fg, bgMode, bg1, bg2, angle, type, text, icon, glyph } = options
-  const radius = size * 0.22
-  const gradientId = 'bg'
-  const hasGradient = bgMode === 'gradient' && bg1 !== bg2
-
-  const defs = hasGradient
-    ? `<defs><linearGradient id="${gradientId}" gradientTransform="rotate(${angle} 0.5 0.5)"><stop offset="0%" stop-color="${bg1}"/><stop offset="100%" stop-color="${bg2}"/></linearGradient></defs>`
-    : ''
-  const fill = hasGradient ? `url(#${gradientId})` : bg1
-  const backgroundMarkup =
-    bgMode === 'transparent' ? '' : `<rect width="${size}" height="${size}" rx="${radius}" fill="${fill}" />`
+  const { defs, backgroundMarkup } = buildBackgroundParts({ size, bgMode, bg1, bg2, angle })
 
   if (type === 'text') {
     const fontSizeBase = (size * glyph) / 100
@@ -143,22 +134,11 @@ const buildSvg = async (options: IconOptions, kv?: KVNamespace) => {
 </svg>`
   }
 
-  const iconSet = type === 'tabler' ? 'tabler' : type === 'logos' ? 'logos' : 'lucide'
+  const iconSet = resolveIconSet(type)
   const data = await loadIconSetData(iconSet, kv)
   const iconMarkup = data.getMarkup(icon) ?? FALLBACK_ICON_MARKUP
   const iconWrapper = getIconWrapperAttributes(iconSet, fg)
-  const glyphSize = (size * glyph) / 100
-  const scale = glyphSize / 24
-  const offset = (size - glyphSize) / 2
-
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-  ${defs}
-  ${backgroundMarkup}
-  <g transform="translate(${offset} ${offset}) scale(${scale})" ${iconWrapper}>
-    ${iconMarkup}
-  </g>
-</svg>`
+  return buildIconSvg({ size, glyph, iconMarkup, wrapper: iconWrapper, defs, backgroundMarkup })
 }
 
 const IconPage = () => {

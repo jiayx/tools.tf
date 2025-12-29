@@ -2,6 +2,10 @@ import { DEFAULTS, PRESETS } from '../config'
 import { ICON_SET_META, getIconSetData, getIconWrapperAttributes, loadIconSet } from '../registry/icon-registry-client'
 import type { IconSetId } from '../registry/icon-types'
 import { IconVirtualList } from './icon-virtual-list'
+import { parseBgMode, parseIconMode, resolveIconSet } from '../shared/parse'
+import type { IconQueryState } from '../shared/query'
+import { buildIconQuery } from '../shared/query'
+import { buildIconSvg as buildIconSvgMarkup } from '../shared/svg'
 
 document.addEventListener('DOMContentLoaded', () => {
   const preview = document.querySelector<HTMLImageElement>('[data-preview]')
@@ -56,7 +60,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const initialBg1 = fields.bg1?.value || DEFAULTS.bg1
   const initialBg2 = fields.bg2?.value || DEFAULTS.bg2
 
-  const defaults = {
+  const defaults: IconQueryState & {
+    size: number,
+  } = {
     type: 'text',
     bgMode: initialBg1 === initialBg2 ? 'solid' : 'gradient',
     text: fields.text?.value || DEFAULTS.text,
@@ -155,8 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  const getIconSet = (mode: string): IconSetId =>
-    mode === 'tabler' ? 'tabler' : mode === 'logos' ? 'logos' : 'lucide'
+  const getIconSet = (mode: string): IconSetId => resolveIconSet(parseIconMode(mode))
 
   const ensureIconSet = async (iconSet: IconSetId) => {
     const cached = getIconSetData(iconSet)
@@ -165,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const setActiveMode = (mode: string) => {
-    state.type = mode === 'lucide' || mode === 'tabler' || mode === 'logos' ? mode : 'text'
+    state.type = parseIconMode(mode)
     modeButtons.forEach((btn) => {
       const isActive = btn.dataset.modeValue === state.type
       btn.classList.toggle('is-active', isActive)
@@ -182,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let didOverrideFg = false
 
   const setBackgroundMode = (mode: string) => {
-    const nextMode = mode === 'solid' ? 'solid' : mode === 'transparent' ? 'transparent' : 'gradient'
+    const nextMode = parseBgMode(mode)
     const prevMode = state.bgMode
     state.bgMode = nextMode
     bgModeButtons.forEach((btn) => {
@@ -274,26 +279,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setIconSelection(state.icon)
   }
 
-  const buildQuery = () => {
-    const params = new URLSearchParams()
-    params.set('type', state.type)
-    params.set('fg', state.fg)
-    params.set('bg', state.bgMode)
-    if (state.bgMode !== 'transparent') {
-      params.set('bg1', state.bg1)
-    }
-    if (state.bgMode === 'gradient') {
-      params.set('bg2', state.bg2)
-      params.set('angle', String(state.angle))
-    }
-    params.set('glyph', String(state.glyph))
-    if (state.type === 'text') {
-      params.set('text', state.text)
-    } else {
-      params.set('icon', state.icon)
-    }
-    return params
-  }
+  const buildQuery = () => buildIconQuery(state)
 
   const buildUrl = (size: number) => {
     const params = buildQuery()
@@ -347,11 +333,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const iconMarkup = data.getMarkup(name) ?? FALLBACK_ICON_MARKUP
     const wrapper = getIconWrapperAttributes(ICON_SET_META[iconSet].renderMode, color)
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24">
-  <g ${wrapper}>
-    ${iconMarkup}
-  </g>
-</svg>`
+    return buildIconSvgMarkup({ size, glyph: 100, iconMarkup, wrapper, includeXmlDeclaration: false })
   }
 
   const renderIconPreview = (target: HTMLElement, iconSet: IconSetId, name: string, color: string, size: number) => {
