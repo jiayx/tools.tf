@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const bgModeButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-bg-mode-btn]'))
   const presetButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-preset]'))
   const randomBtn = document.querySelector<HTMLButtonElement>('[data-random]')
+  const fgControl = document.querySelector<HTMLElement>('[data-fg-control]')
   const bg1Control = document.querySelector<HTMLElement>('[data-bg1-control]')
   const bg2Control = document.querySelector<HTMLElement>('[data-bg2-control]')
   const angleControl = document.querySelector<HTMLElement>('[data-angle-control]')
@@ -177,6 +178,10 @@ document.addEventListener('DOMContentLoaded', () => {
     })
     if (textControls) textControls.classList.toggle('is-hidden', state.type !== 'text')
     if (iconControls) iconControls.classList.toggle('is-hidden', state.type === 'text')
+    const isLogos = state.type === 'logos'
+    if (fgControl) fgControl.classList.toggle('is-disabled', isLogos)
+    if (fields.fg) fields.fg.disabled = isLogos
+    if (fields.fgText) fields.fgText.disabled = isLogos
     if (state.type !== 'text') {
       state.icon = state.type === 'tabler' ? state.iconTabler : state.type === 'logos' ? state.iconLogos : state.iconLucide
       if (fields.icon) fields.icon.value = state.icon

@@ -286,7 +286,7 @@ const IconPage = () => {
                 </button>
               </div>
             </div>
-            <div class="control">
+            <div class="control" data-fg-control>
               <label>Foreground</label>
               <div class="color">
                 <input type="color" value={DEFAULTS.fg} data-field="fg" />
