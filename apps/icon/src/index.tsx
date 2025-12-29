@@ -161,7 +161,9 @@ const IconPage = () => {
     <main class="page">
       <header class="hero">
         <div class="hero__text">
-          <p class="eyebrow">Icon Atelier</p>
+          <p class="eyebrow">
+            <a href="/" class="eyebrow__link">Icon Atelier</a>
+          </p>
           <h1>Craft an icon that feels like your brand.</h1>
         </div>
       </header>
@@ -392,6 +394,11 @@ const IconPage = () => {
           </div>
         </aside>
       </section>
+      <footer class="footer">
+        <p>
+          © 2025 <a href="https://www.tools.tf" target="_blank" rel="noreferrer">tools.tf</a>
+        </p>
+      </footer>
     </main>
   )
 }
