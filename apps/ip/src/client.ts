@@ -12,8 +12,8 @@ const btn = document.querySelector('[data-copy-ip]');
 
   const setStatus = (text: string) => {
     status.textContent = text;
-    clearTimeout(timer);
-    timer = setTimeout(resetText, 1800);
+    window.clearTimeout(timer);
+    timer = window.setTimeout(resetText, 1800);
   };
 
   btn.addEventListener('click', async () => {
