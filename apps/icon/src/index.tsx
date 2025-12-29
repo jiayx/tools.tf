@@ -2,15 +2,15 @@ import { Hono } from 'hono'
 import { renderer } from './renderer'
 import {
   FALLBACK_ICON_MARKUP,
-  ICON_SETS,
   type IconSetId,
-  getIconMarkup,
   getIconWrapperAttributes,
-  normalizeIconName,
+  loadIconSetData,
 } from './registry/icon-registry'
+import { ICON_SET_META } from './registry/icon-types'
 import { DEFAULTS, PRESETS } from './config'
+import { KVNamespace } from '@cloudflare/workers-types'
 
-const app = new Hono()
+const app = new Hono<{ Bindings: { KV: KVNamespace } }>()
 
 app.use(renderer)
 
@@ -93,12 +93,12 @@ const parseOptions = (query: Record<string, string>, sizeParam?: string) => {
   const bg1 = parseHex(query.bg1, DEFAULTS.bg1)
   const bg2 = query.bg2 ? parseHex(query.bg2, bg1) : bg1
   const iconSet = type === 'tabler' ? 'tabler' : type === 'logos' ? 'logos' : 'lucide'
-  const iconFallback = ICON_SETS[iconSet].defaultIcon || DEFAULTS.icon
+  const iconFallback = ICON_SET_META[iconSet].defaultIcon || DEFAULTS.icon
 
   return {
     type,
     text: sanitizeText(query.text, DEFAULTS.text),
-    icon: normalizeIconName(iconSet, query.icon, iconFallback),
+    icon: (query.icon || '').trim().toLowerCase() || iconFallback,
     fg: parseHex(query.fg, DEFAULTS.fg),
     bgMode,
     bg1,
@@ -109,7 +109,7 @@ const parseOptions = (query: Record<string, string>, sizeParam?: string) => {
   } satisfies IconOptions
 }
 
-const buildSvg = (options: IconOptions) => {
+const buildSvg = async (options: IconOptions, kv?: KVNamespace) => {
   const { size, fg, bgMode, bg1, bg2, angle, type, text, icon, glyph } = options
   const radius = size * 0.22
   const gradientId = 'bg'
@@ -144,7 +144,8 @@ const buildSvg = (options: IconOptions) => {
   }
 
   const iconSet = type === 'tabler' ? 'tabler' : type === 'logos' ? 'logos' : 'lucide'
-  const iconMarkup = getIconMarkup(iconSet, icon) ?? FALLBACK_ICON_MARKUP
+  const data = await loadIconSetData(iconSet, kv)
+  const iconMarkup = data.getMarkup(icon) ?? FALLBACK_ICON_MARKUP
   const iconWrapper = getIconWrapperAttributes(iconSet, fg)
   const glyphSize = (size * glyph) / 100
   const scale = glyphSize / 24
@@ -244,7 +245,7 @@ const IconPage = () => {
                   <input
                     id="iconSearch"
                     type="text"
-                    placeholder={`Search ${ICON_SETS.lucide.label.toLowerCase()} icons`}
+                    placeholder={`Search ${ICON_SET_META.lucide.label.toLowerCase()} icons`}
                     data-icon-filter
                   />
                   <div class="icon-options" data-icon-options>
@@ -419,9 +420,9 @@ app.get('/', (c) => {
   return c.render(<IconPage />)
 })
 
-app.get('/icon/:size?', (c) => {
+app.get('/icon/:size?', async (c) => {
   const options = parseOptions(c.req.query(), c.req.param('size'))
-  const svg = buildSvg(options)
+  const svg = await buildSvg(options, c.env.KV)
   return c.body(svg, 200, {
     'Content-Type': 'image/svg+xml; charset=utf-8',
     'Cache-Control': 'public, max-age=3600',
