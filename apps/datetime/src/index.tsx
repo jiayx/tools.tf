@@ -17,13 +17,6 @@ app.get('/', (c) => {
 
       <section className="grid">
         <section className="card form-card">
-          <div className="card-head">
-            <div>
-              <p className="label">转换器</p>
-              <h2>描述 → 你的当地时间</h2>
-            </div>
-            {/* <span className="pill">实时计算</span> */}
-          </div>
           <form id="converter-form" className="form">
             <label className="field">
               <span>原始时区（对方所在）</span>
@@ -58,12 +51,6 @@ app.get('/', (c) => {
         </section>
 
         <section className="card result-card">
-          <div className="card-head">
-            <div>
-              <p className="label">结果</p>
-              <h2>你的当地时间</h2>
-            </div>
-          </div>
           <div id="result" className="result">
             <p className="muted">等待输入...</p>
           </div>

@@ -189,6 +189,11 @@ function getChrono() {
   return chrono
 }
 
+function makeSemanticNow(offsetMinutes: number) {
+  const now = new Date();
+  return new Date(now.getTime() + offsetMinutes * 60 * 1000);
+}
+
 function convert() {
   if (!input || !sourceSelect || !targetSelect) return
   const text = input.value.trim()
@@ -199,18 +204,18 @@ function convert() {
 
   const sourceZone = sourceSelect.value
   const targetZone = targetSelect.value
-  const referenceDate = new Date()
-  let sourceOffset = 0
 
+  let sourceOffset = 0
   try {
-    sourceOffset = getOffsetMinutes(sourceZone, referenceDate)
+    sourceOffset = getOffsetMinutes(sourceZone)
   } catch (e) {
     setError('原始时区无效，请重新选择')
     return
   }
 
   const chronoInstance = getChrono()
-  const results = chronoInstance.parse(text, { instant: referenceDate, timezone: sourceOffset })
+
+  const results = chronoInstance.parse(text, { instant: makeSemanticNow(sourceOffset), timezone: sourceOffset })
   const parsed = results[0]
   if (!parsed) {
     setError('没有解析出时间，试试补充日期或时间段')
