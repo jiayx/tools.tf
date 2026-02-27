@@ -1,0 +1,24 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "todo",
+	"compatibility_date": "2026-02-16",
+	"main": "./src/index.tsx",
+	"ai": {
+		"binding": "AI"
+	},
+	"observability": {
+		"logs": {
+			"enabled": true,
+			"head_sampling_rate": 1,
+			"invocation_logs": true,
+			"persist": true
+		}
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "todo-db",
+			"database_id": "b98646e5-67bc-4a6c-9db1-fbaed304e187"
+		}
+	]
+}
