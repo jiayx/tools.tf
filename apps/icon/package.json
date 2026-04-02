@@ -9,8 +9,8 @@
     "cf-typegen": "wrangler types --env-interface CloudflareBindings"
   },
   "dependencies": {
-    "@iconify-json/logos": "^1.2.10",
-    "@iconify-json/tabler": "^1.2.25",
+    "@iconify-json/logos": "^1.2.11",
+    "@iconify-json/tabler": "^1.2.33",
     "hono": "^4.11.1",
     "lucide-static": "^0.542.0"
   },

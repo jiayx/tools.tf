@@ -1,6 +1,5 @@
 import type { IconRenderMode, IconSetId, IconSetData } from './icon-types'
 import { ICON_SET_META } from './icon-types'
-import type { IconifyJSON } from '@iconify/types'
 import { buildIndexFromJson, fetchIconifyJson } from './iconify-utils'
 
 const CDN_ONLY = import.meta.env.VITE_ICONIFY_CDN_ONLY === 'true'
