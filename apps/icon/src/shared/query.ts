@@ -10,7 +10,8 @@ export type IconQueryState = {
   bg1: string
   bg2: string
   angle: number
-  glyph: number
+  textGlyph: number
+  iconGlyph: number
   radius: number
 }
 
@@ -24,7 +25,8 @@ export const parseIconQuery = (query: Record<string, string>): IconQueryState =>
     bg1: query.bg1 || '',
     bg2: query.bg2 || '',
     angle: Number(query.angle || 0),
-    glyph: Number(query.glyph || 0),
+    textGlyph: Number(query.textGlyph || query.glyph || 0),
+    iconGlyph: Number(query.iconGlyph || query.glyph || 0),
     radius: Number(query.radius || 0),
   }
 }
@@ -41,7 +43,8 @@ export const buildIconQuery = (state: IconQueryState) => {
     params.set('bg2', state.bg2)
     params.set('angle', String(state.angle))
   }
-  params.set('glyph', String(state.glyph))
+  params.set('textGlyph', String(state.textGlyph))
+  params.set('iconGlyph', String(state.iconGlyph))
   params.set('radius', String(state.radius))
   if (state.type === 'text') {
     params.set('text', state.text)

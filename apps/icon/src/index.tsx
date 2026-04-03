@@ -48,7 +48,8 @@ type IconOptions = {
   bg2: string
   angle: number
   size: number
-  glyph: number
+  textGlyph: number
+  iconGlyph: number
   radius: number
 }
 
@@ -61,7 +62,8 @@ const parseOptions = (query: Record<string, string>, sizeParam?: string) => {
   const radius = clamp(parseNumber(query.radius, DEFAULTS.radius), 0, 50)
 
   const bgMode = parsed.bgMode
-  const glyph = clamp(parseNumber(query.glyph, DEFAULTS.glyph), type === 'text' ? 1 : 32, 100)
+  const textGlyph = clamp(parseNumber(query.textGlyph || query.glyph, DEFAULTS.textGlyph), 1, 100)
+  const iconGlyph = clamp(parseNumber(query.iconGlyph || query.glyph, DEFAULTS.iconGlyph), 32, 100)
 
   const bg1 = parseHex(query.bg1, DEFAULTS.bg1)
   const bg2 = query.bg2 ? parseHex(query.bg2, bg1) : bg1
@@ -78,24 +80,25 @@ const parseOptions = (query: Record<string, string>, sizeParam?: string) => {
     bg2,
     angle,
     size,
-    glyph,
+    textGlyph,
+    iconGlyph,
     radius,
   } satisfies IconOptions
 }
 
 const buildSvg = async (options: IconOptions, kv?: KVNamespace) => {
-  const { size, fg, bgMode, bg1, bg2, angle, type, text, icon, glyph, radius } = options
+  const { size, fg, bgMode, bg1, bg2, angle, type, text, icon, textGlyph, iconGlyph, radius } = options
   const { defs, backgroundMarkup, clipPath } = buildBackgroundParts({ size, bgMode, bg1, bg2, angle, radius })
 
   if (type === 'text') {
-    return buildTextSvg({ size, glyph, text, fg, defs, backgroundMarkup, clipPath })
+    return buildTextSvg({ size, glyph: textGlyph, text, fg, defs, backgroundMarkup, clipPath })
   }
 
   const iconSet = resolveIconSet(type)
   const data = await loadIconSetData(iconSet, kv)
   const iconMarkup = data.getMarkup(icon) ?? FALLBACK_ICON_MARKUP
   const iconWrapper = getIconWrapperAttributes(iconSet, fg)
-  return buildIconSvg({ size, glyph, iconMarkup, wrapper: iconWrapper, defs, backgroundMarkup, clipPath })
+  return buildIconSvg({ size, glyph: iconGlyph, iconMarkup, wrapper: iconWrapper, defs, backgroundMarkup, clipPath })
 }
 
 const IconPage = () => {
@@ -106,7 +109,8 @@ const IconPage = () => {
     bg1: DEFAULTS.bg1,
     bg2: DEFAULTS.bg2,
     angle: String(DEFAULTS.angle),
-    glyph: String(DEFAULTS.glyph),
+    textGlyph: String(DEFAULTS.textGlyph),
+    iconGlyph: String(DEFAULTS.iconGlyph),
     radius: String(DEFAULTS.radius),
   }).toString()
   const getPresetBackground = (bgMode: string, bg1: string, bg2: string, angle: number) => {
@@ -165,10 +169,10 @@ const IconPage = () => {
             <div class="control">
               <div class="control__head">
                 <label htmlFor="glyphSizeText">Text size</label>
-                <span class="control__value" data-field-value="glyph">{DEFAULTS.glyph}%</span>
+                <span class="control__value" data-field-value="textGlyph">{DEFAULTS.textGlyph}%</span>
               </div>
               <div class="range">
-                <input id="glyphSizeText" type="range" min={1} max={100} value={DEFAULTS.glyph} data-field="glyph" />
+                <input id="glyphSizeText" type="range" min={1} max={100} value={DEFAULTS.textGlyph} data-field="textGlyph" />
               </div>
             </div>
             <div data-radius-anchor="text"></div>
@@ -215,10 +219,10 @@ const IconPage = () => {
             <div class="control">
               <div class="control__head">
                 <label htmlFor="glyphSizeIcon">Icon size</label>
-                <span class="control__value" data-field-value="glyph">{DEFAULTS.glyph}%</span>
+                <span class="control__value" data-field-value="iconGlyph">{DEFAULTS.iconGlyph}%</span>
               </div>
               <div class="range">
-                <input id="glyphSizeIcon" type="range" min={32} max={100} value={DEFAULTS.glyph} data-field="glyph" />
+                <input id="glyphSizeIcon" type="range" min={32} max={100} value={DEFAULTS.iconGlyph} data-field="iconGlyph" />
               </div>
             </div>
             <div data-radius-anchor="icon"></div>

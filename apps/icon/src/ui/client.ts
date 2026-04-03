@@ -54,13 +54,15 @@ document.addEventListener('DOMContentLoaded', () => {
     angle: document.querySelector<HTMLInputElement>('[data-field="angle"]'),
     size: document.querySelector<HTMLInputElement>('[data-field="size"]'),
     radius: document.querySelector<HTMLInputElement>('[data-field="radius"]'),
-    glyphInputs: Array.from(document.querySelectorAll<HTMLInputElement>('[data-field="glyph"]')),
+    textGlyph: document.querySelector<HTMLInputElement>('[data-field="textGlyph"]'),
+    iconGlyph: document.querySelector<HTMLInputElement>('[data-field="iconGlyph"]'),
   }
 
   const valueLabels = {
     angle: Array.from(document.querySelectorAll<HTMLElement>('[data-field-value="angle"]')),
     size: Array.from(document.querySelectorAll<HTMLElement>('[data-field-value="size"]')),
-    glyph: Array.from(document.querySelectorAll<HTMLElement>('[data-field-value="glyph"]')),
+    textGlyph: Array.from(document.querySelectorAll<HTMLElement>('[data-field-value="textGlyph"]')),
+    iconGlyph: Array.from(document.querySelectorAll<HTMLElement>('[data-field-value="iconGlyph"]')),
     radius: Array.from(document.querySelectorAll<HTMLElement>('[data-field-value="radius"]')),
   }
 
@@ -79,7 +81,8 @@ document.addEventListener('DOMContentLoaded', () => {
     bg2: initialBg2,
     angle: Number(fields.angle?.value || DEFAULTS.angle),
     size: Number(fields.size?.value || DEFAULTS.size),
-    glyph: Number(fields.glyphInputs[0]?.value || DEFAULTS.glyph),
+    textGlyph: Number(fields.textGlyph?.value || DEFAULTS.textGlyph),
+    iconGlyph: Number(fields.iconGlyph?.value || DEFAULTS.iconGlyph),
     radius: Number(fields.radius?.value || DEFAULTS.radius),
   }
 
@@ -221,6 +224,76 @@ document.addEventListener('DOMContentLoaded', () => {
     })
   }
 
+  const syncFieldValue = (field: HTMLInputElement | null, value: string) => {
+    if (field) field.value = value
+  }
+
+  const syncPaletteFields = () => {
+    syncFieldValue(fields.fg, state.fg)
+    syncFieldValue(fields.fgText, state.fg)
+    syncFieldValue(fields.bg1, state.bg1)
+    syncFieldValue(fields.bg1Text, state.bg1)
+    syncFieldValue(fields.bg2, state.bg2)
+    syncFieldValue(fields.bg2Text, state.bg2)
+    syncFieldValue(fields.angle, String(state.angle))
+  }
+
+  const syncCoreFields = () => {
+    syncFieldValue(fields.text, state.text)
+    syncFieldValue(fields.icon, state.icon)
+    syncPaletteFields()
+    syncFieldValue(fields.size, String(state.size))
+    syncFieldValue(fields.radius, String(state.radius))
+    syncFieldValue(fields.textGlyph, String(state.textGlyph))
+    syncFieldValue(fields.iconGlyph, String(state.iconGlyph))
+  }
+
+  const getPreviewBackground = (size: number) =>
+    buildBackgroundParts({
+      size,
+      bgMode: state.bgMode,
+      bg1: state.bg1,
+      bg2: state.bg2,
+      angle: state.angle,
+      radius: state.radius,
+    })
+
+  const buildTextPreviewSvg = (size: number) => {
+    const { defs, backgroundMarkup, clipPath } = getPreviewBackground(size)
+    return buildTextSvg({
+      size,
+      glyph: state.textGlyph,
+      text: state.text,
+      fg: state.fg,
+      defs,
+      backgroundMarkup,
+      clipPath,
+      includeXmlDeclaration: false,
+    })
+  }
+
+  const buildIconPreviewSvg = async (size: number) => {
+    const iconSet = getIconSet(state.type)
+    let data = getIconSetData(iconSet)
+    if (!data) {
+      data = await ensureIconSet(iconSet)
+      if (getIconSet(state.type) !== iconSet) return null
+    }
+    const { defs, backgroundMarkup, clipPath } = getPreviewBackground(size)
+    const iconMarkup = data.getMarkup(state.icon) ?? FALLBACK_ICON_MARKUP
+    const wrapper = getIconWrapperAttributes(ICON_SET_META[iconSet].renderMode, state.fg)
+    return buildIconSvgMarkup({
+      size,
+      glyph: state.iconGlyph,
+      iconMarkup,
+      wrapper,
+      defs,
+      backgroundMarkup,
+      clipPath,
+      includeXmlDeclaration: false,
+    })
+  }
+
   const setBackgroundMode = (mode: string) => {
     const nextMode = parseBgMode(mode)
     const prevMode = state.bgMode
@@ -243,16 +316,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const nextFg = '#0f172a'
         state.fg = nextFg
         didOverrideFg = true
-        if (fields.fg) fields.fg.value = nextFg
-        if (fields.fgText) fields.fgText.value = nextFg
+        syncFieldValue(fields.fg, nextFg)
+        syncFieldValue(fields.fgText, nextFg)
       }
     } else if (prevMode === 'transparent' && nextMode !== 'transparent') {
       state.radius = prevRadius
-      if (fields.radius) fields.radius.value = String(prevRadius)
+      syncFieldValue(fields.radius, String(prevRadius))
       if (didOverrideFg) {
         state.fg = prevFg
-        if (fields.fg) fields.fg.value = prevFg
-        if (fields.fgText) fields.fgText.value = prevFg
+        syncFieldValue(fields.fg, prevFg)
+        syncFieldValue(fields.fgText, prevFg)
       }
     }
     setControlDisabled(bg1Control, [fields.bg1, fields.bg1Text], isTransparent)
@@ -552,48 +625,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const updatePreviewImage = async () => {
     const renderToken = ++previewRenderToken
     const previewSize = 256
-    const { defs, backgroundMarkup, clipPath } = buildBackgroundParts({
-      size: previewSize,
-      bgMode: state.bgMode,
-      bg1: state.bg1,
-      bg2: state.bg2,
-      angle: state.angle,
-      radius: state.radius,
-    })
 
     if (state.type === 'text') {
       if (renderToken !== previewRenderToken) return
-      setPreviewSource(buildTextSvg({
-        size: previewSize,
-        glyph: state.glyph,
-        text: state.text,
-        fg: state.fg,
-        defs,
-        backgroundMarkup,
-        clipPath,
-        includeXmlDeclaration: false,
-      }))
+      setPreviewSource(buildTextPreviewSvg(previewSize))
       return
     }
 
-    const iconSet = getIconSet(state.type)
-    let data = getIconSetData(iconSet)
-    if (!data) {
-      data = await ensureIconSet(iconSet)
-      if (renderToken !== previewRenderToken || getIconSet(state.type) !== iconSet) return
-    }
-    const iconMarkup = data.getMarkup(state.icon) ?? FALLBACK_ICON_MARKUP
-    const wrapper = getIconWrapperAttributes(ICON_SET_META[iconSet].renderMode, state.fg)
-    setPreviewSource(buildIconSvgMarkup({
-      size: previewSize,
-      glyph: state.glyph,
-      iconMarkup,
-      wrapper,
-      defs,
-      backgroundMarkup,
-      clipPath,
-      includeXmlDeclaration: false,
-    }))
+    const svg = await buildIconPreviewSvg(previewSize)
+    if (!svg || renderToken !== previewRenderToken) return
+    setPreviewSource(svg)
   }
 
   const schedulePreviewRender = () => {
@@ -616,8 +657,11 @@ document.addEventListener('DOMContentLoaded', () => {
     valueLabels.size.forEach((label) => {
       label.textContent = `${state.size}px`
     })
-    valueLabels.glyph.forEach((label) => {
-      label.textContent = `${state.glyph}%`
+    valueLabels.textGlyph.forEach((label) => {
+      label.textContent = `${state.textGlyph}%`
+    })
+    valueLabels.iconGlyph.forEach((label) => {
+      label.textContent = `${state.iconGlyph}%`
     })
     valueLabels.radius.forEach((label) => {
       label.textContent = `${state.radius}%`
@@ -662,14 +706,7 @@ document.addEventListener('DOMContentLoaded', () => {
     state.angle = palette.angle
 
     setBackgroundMode(state.bgMode)
-
-    if (fields.fg) fields.fg.value = state.fg
-    if (fields.fgText) fields.fgText.value = state.fg
-    if (fields.bg1) fields.bg1.value = state.bg1
-    if (fields.bg1Text) fields.bg1Text.value = state.bg1
-    if (fields.bg2) fields.bg2.value = state.bg2
-    if (fields.bg2Text) fields.bg2Text.value = state.bg2
-    if (fields.angle) fields.angle.value = String(state.angle)
+    syncPaletteFields()
 
     applyStateImmediate()
   }
@@ -698,21 +735,7 @@ document.addEventListener('DOMContentLoaded', () => {
     prevRadius = initialState.radius
     didOverrideFg = false
     downloadFormat = 'svg'
-
-    if (fields.text) fields.text.value = initialState.text
-    if (fields.icon) fields.icon.value = initialState.icon
-    if (fields.fg) fields.fg.value = initialState.fg
-    if (fields.fgText) fields.fgText.value = initialState.fg
-    if (fields.bg1) fields.bg1.value = initialState.bg1
-    if (fields.bg1Text) fields.bg1Text.value = initialState.bg1
-    if (fields.bg2) fields.bg2.value = initialState.bg2
-    if (fields.bg2Text) fields.bg2Text.value = initialState.bg2
-    if (fields.angle) fields.angle.value = String(initialState.angle)
-    if (fields.size) fields.size.value = String(initialState.size)
-    if (fields.radius) fields.radius.value = String(initialState.radius)
-    fields.glyphInputs.forEach((input) => {
-      input.value = String(initialState.glyph)
-    })
+    syncCoreFields()
 
     formatButtons.forEach((item) => {
       item.classList.toggle('is-active', item.dataset.format === downloadFormat)
@@ -864,14 +887,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!iconDropdown.contains(event.target as Node)) closeIconMenu()
   })
 
-  fields.glyphInputs.forEach((input) => {
-    input.addEventListener('input', (event) => {
-      state.glyph = Number((event.target as HTMLInputElement).value)
-      fields.glyphInputs.forEach((glyphInput) => {
-        if (glyphInput !== event.target) glyphInput.value = String(state.glyph)
-      })
-      applyState()
-    })
+  fields.textGlyph?.addEventListener('input', (event) => {
+    state.textGlyph = Number((event.target as HTMLInputElement).value)
+    applyState()
+  })
+
+  fields.iconGlyph?.addEventListener('input', (event) => {
+    state.iconGlyph = Number((event.target as HTMLInputElement).value)
+    applyState()
   })
 
   fields.angle?.addEventListener('input', (event) => {
