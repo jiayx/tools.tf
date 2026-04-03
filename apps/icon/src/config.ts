@@ -17,7 +17,7 @@ export const DEFAULTS = {
   bg2: '#6366f1',
   angle: 140,
   size: 128,
-  glyph: 64,
+  glyph: 100,
   radius: 22,
 }
 

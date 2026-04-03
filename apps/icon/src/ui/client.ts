@@ -5,10 +5,10 @@ import { IconVirtualList } from './icon-virtual-list'
 import { parseBgMode, parseIconMode, resolveIconSet } from '../shared/parse'
 import type { IconQueryState } from '../shared/query'
 import { buildIconQuery } from '../shared/query'
-import { buildIconSvg as buildIconSvgMarkup } from '../shared/svg'
+import { buildBackgroundParts, buildIconSvg as buildIconSvgMarkup, buildTextSvg } from '../shared/svg'
 
 document.addEventListener('DOMContentLoaded', () => {
-  const preview = document.querySelector<HTMLImageElement>('[data-preview]')
+  const preview = document.querySelector<HTMLElement>('[data-preview]')
   const previewCanvas = document.querySelector<HTMLElement>('[data-preview-canvas]')
   const urlInput = document.querySelector<HTMLInputElement>('[data-url]')
   const snippetList = document.querySelector<HTMLElement>('[data-snippet-list]')
@@ -94,6 +94,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let downloadFormat: 'svg' | 'png' | 'jpeg' | 'webp' = 'svg'
   let iconLoadToken = 0
+  let previewRenderFrame: number | null = null
+  let previewRenderToken = 0
 
   const presets = PRESETS
 
@@ -512,10 +514,7 @@ document.addEventListener('DOMContentLoaded', () => {
     })
   }
 
-  const updatePreview = () => {
-    const previewSize = 256
-    preview.src = buildUrl(previewSize)
-
+  const updatePreviewMeta = () => {
     const absoluteBase = window.location.origin
     const url = `${absoluteBase}${buildUrl(state.size)}`
     urlInput.value = url
@@ -545,18 +544,69 @@ document.addEventListener('DOMContentLoaded', () => {
     updateSnippet(absoluteBase)
   }
 
-  const handlePreviewLoad = () => {
+  const setPreviewSource = (svg: string) => {
+    preview.innerHTML = svg
     previewCanvas?.classList.remove('is-loading')
+  }
+
+  const updatePreviewImage = async () => {
+    const renderToken = ++previewRenderToken
+    const previewSize = 256
+    const { defs, backgroundMarkup, clipPath } = buildBackgroundParts({
+      size: previewSize,
+      bgMode: state.bgMode,
+      bg1: state.bg1,
+      bg2: state.bg2,
+      angle: state.angle,
+      radius: state.radius,
+    })
+
+    if (state.type === 'text') {
+      if (renderToken !== previewRenderToken) return
+      setPreviewSource(buildTextSvg({
+        size: previewSize,
+        glyph: state.glyph,
+        text: state.text,
+        fg: state.fg,
+        defs,
+        backgroundMarkup,
+        clipPath,
+        includeXmlDeclaration: false,
+      }))
+      return
+    }
+
+    const iconSet = getIconSet(state.type)
+    let data = getIconSetData(iconSet)
+    if (!data) {
+      data = await ensureIconSet(iconSet)
+      if (renderToken !== previewRenderToken || getIconSet(state.type) !== iconSet) return
+    }
+    const iconMarkup = data.getMarkup(state.icon) ?? FALLBACK_ICON_MARKUP
+    const wrapper = getIconWrapperAttributes(ICON_SET_META[iconSet].renderMode, state.fg)
+    setPreviewSource(buildIconSvgMarkup({
+      size: previewSize,
+      glyph: state.glyph,
+      iconMarkup,
+      wrapper,
+      defs,
+      backgroundMarkup,
+      clipPath,
+      includeXmlDeclaration: false,
+    }))
+  }
+
+  const schedulePreviewRender = () => {
+    if (previewRenderFrame !== null) return
+    previewRenderFrame = window.requestAnimationFrame(() => {
+      previewRenderFrame = null
+      void updatePreviewImage()
+    })
   }
 
   const updatePreviewRadius = () => {
     if (!previewCanvas) return
     previewCanvas.style.setProperty('--preview-radius-percent', `${state.radius}%`)
-  }
-
-  preview.addEventListener('load', handlePreviewLoad)
-  if (preview.complete && preview.naturalWidth > 0) {
-    handlePreviewLoad()
   }
 
   const updateLabels = () => {
@@ -585,20 +635,22 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const scheduleRender = debounce(() => {
-    updatePreview()
+    updatePreviewMeta()
     updateIconPreview()
   }, 220)
 
   const applyState = () => {
     updatePreviewRadius()
     updateLabels()
+    schedulePreviewRender()
     scheduleRender()
   }
 
   const applyStateImmediate = () => {
     updatePreviewRadius()
     updateLabels()
-    updatePreview()
+    schedulePreviewRender()
+    updatePreviewMeta()
     updateIconPreview()
   }
 

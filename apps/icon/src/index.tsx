@@ -9,7 +9,7 @@ import {
 import { ICON_SET_META } from './registry/icon-types'
 import { DEFAULTS, PRESETS } from './config'
 import { resolveIconSet } from './shared/parse'
-import { buildBackgroundParts, buildIconSvg } from './shared/svg'
+import { buildBackgroundParts, buildIconSvg, buildTextSvg } from './shared/svg'
 import { parseIconQuery } from './shared/query'
 import { KVNamespace } from '@cloudflare/workers-types'
 
@@ -38,35 +38,6 @@ const sanitizeText = (value: string | undefined, fallback: string) => {
   return trimmed ? trimmed : fallback
 }
 
-const isWideGlyph = (char: string) =>
-  /[\u1100-\u115F\u2E80-\uA4CF\uAC00-\uD7A3\uF900-\uFAFF\uFE10-\uFE19\uFE30-\uFE6F\uFF01-\uFF60\uFFE0-\uFFE6]/.test(
-    char
-  )
-
-const measureTextUnits = (text: string) => {
-  let units = 0
-  for (const char of text) {
-    if (isWideGlyph(char)) {
-      units += 1
-    } else if (/[0-9A-Za-z]/.test(char)) {
-      units += 0.62
-    } else {
-      units += 0.8
-    }
-  }
-  return Math.max(units, 1)
-}
-
-const hasWideGlyph = (text: string) => {
-  for (const char of text) {
-    if (isWideGlyph(char)) return true
-  }
-  return false
-}
-
-const escapeSvgText = (value: string) =>
-  value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-
 type IconOptions = {
   type: 'text' | IconSetId
   text: string
@@ -86,11 +57,11 @@ const parseOptions = (query: Record<string, string>, sizeParam?: string) => {
   const type = parsed.type
 
   const size = clamp(parseNumber(sizeParam || query.size, DEFAULTS.size), 16, 512)
-  const glyph = clamp(parseNumber(query.glyph, DEFAULTS.glyph), 28, 100)
   const angle = clamp(parseNumber(query.angle, DEFAULTS.angle), 0, 360)
   const radius = clamp(parseNumber(query.radius, DEFAULTS.radius), 0, 50)
 
   const bgMode = parsed.bgMode
+  const glyph = clamp(parseNumber(query.glyph, DEFAULTS.glyph), type === 'text' ? 1 : 32, 100)
 
   const bg1 = parseHex(query.bg1, DEFAULTS.bg1)
   const bg2 = query.bg2 ? parseHex(query.bg2, bg1) : bg1
@@ -117,26 +88,7 @@ const buildSvg = async (options: IconOptions, kv?: KVNamespace) => {
   const { defs, backgroundMarkup, clipPath } = buildBackgroundParts({ size, bgMode, bg1, bg2, angle, radius })
 
   if (type === 'text') {
-    const fontSizeBase = (size * glyph) / 100
-    const textUnits = measureTextUnits(text)
-    const targetWidth = size * 0.66
-    const targetHeight = size * 0.62
-    const fittedWidth = targetWidth / textUnits
-    const heightFactor = hasWideGlyph(text) ? 1 : 0.78
-    const fittedHeight = targetHeight / heightFactor
-    const fontSize = Math.max(Math.min(fontSizeBase, fittedWidth, fittedHeight), size * 0.18)
-    const fontFamily =
-      'Space Grotesk, Segoe UI, PingFang SC, Noto Sans SC, Helvetica Neue, sans-serif'
-    const letterSpacing = textUnits > 3.4 ? '0.01em' : '0.02em'
-    const safeText = escapeSvgText(text)
-    return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-  ${defs}
-  ${backgroundMarkup}
-  <g ${clipPath}>
-    <text x="50%" y="50%" fill="${fg}" font-family='${fontFamily}' font-size="${fontSize}" font-weight="700" text-anchor="middle" dominant-baseline="central" letter-spacing="${letterSpacing}">${safeText}</text>
-  </g>
-</svg>`
+    return buildTextSvg({ size, glyph, text, fg, defs, backgroundMarkup, clipPath })
   }
 
   const iconSet = resolveIconSet(type)
@@ -204,32 +156,36 @@ const IconPage = () => {
             </div>
           </div>
 
-          <div class="control-group" data-text-controls>
-            <div class="control">
+          <div class="control-group control-group--paired" data-text-controls>
+            <div class="control control--full">
               <label htmlFor="textInput">Text</label>
               <input id="textInput" type="text" maxlength={6} value={DEFAULTS.text} data-field="text" />
               <span class="helper">Keep it short: up to 6 characters.</span>
             </div>
             <div class="control">
-              <label htmlFor="glyphSizeText">Text size</label>
+              <div class="control__head">
+                <label htmlFor="glyphSizeText">Text size</label>
+                <span class="control__value" data-field-value="glyph">{DEFAULTS.glyph}%</span>
+              </div>
               <div class="range">
-                <input id="glyphSizeText" type="range" min={32} max={100} value={DEFAULTS.glyph} data-field="glyph" />
-                <span data-field-value="glyph">{DEFAULTS.glyph}%</span>
+                <input id="glyphSizeText" type="range" min={1} max={100} value={DEFAULTS.glyph} data-field="glyph" />
               </div>
             </div>
             <div data-radius-anchor="text"></div>
           </div>
 
           <div class="control" data-radius-control>
-            <label htmlFor="radiusRange">Corner radius</label>
+            <div class="control__head">
+              <label htmlFor="radiusRange">Corner radius</label>
+              <span class="control__value" data-field-value="radius">{DEFAULTS.radius}%</span>
+            </div>
             <div class="range">
               <input id="radiusRange" type="range" min={0} max={50} value={DEFAULTS.radius} data-field="radius" />
-              <span data-field-value="radius">{DEFAULTS.radius}%</span>
             </div>
           </div>
 
-          <div class="control-group is-hidden" data-icon-controls>
-            <div class="control">
+          <div class="control-group control-group--paired is-hidden" data-icon-controls>
+            <div class="control control--full">
               <label htmlFor="iconSearch">Icon</label>
               <div class="icon-dropdown" data-icon-dropdown>
                 <button type="button" class="icon-trigger" data-icon-trigger>
@@ -257,10 +213,12 @@ const IconPage = () => {
               </div>
             </div>
             <div class="control">
-              <label htmlFor="glyphSizeIcon">Icon size</label>
+              <div class="control__head">
+                <label htmlFor="glyphSizeIcon">Icon size</label>
+                <span class="control__value" data-field-value="glyph">{DEFAULTS.glyph}%</span>
+              </div>
               <div class="range">
                 <input id="glyphSizeIcon" type="range" min={32} max={100} value={DEFAULTS.glyph} data-field="glyph" />
-                <span data-field-value="glyph">{DEFAULTS.glyph}%</span>
               </div>
             </div>
             <div data-radius-anchor="icon"></div>
@@ -357,11 +315,7 @@ const IconPage = () => {
           </div>
 
           <div class="preview__canvas is-loading" data-preview-canvas>
-            <img
-              class="preview__image"
-              alt="Icon preview"
-              data-preview
-            />
+            <div class="preview__image" data-preview aria-label="Icon preview"></div>
           </div>
 
           <div class="preview__url">
