@@ -155,6 +155,29 @@ body::after {
   font-size: 22px;
 }
 
+.panel__header-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.panel__reset {
+  border: 1px solid var(--panel-border);
+  background: #f8f9ff;
+  color: var(--ink);
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.panel__reset:hover {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+}
+
 .panel__header p {
   margin: 0 0 20px;
   color: var(--muted);
@@ -496,19 +519,23 @@ select:focus {
 }
 
 .preview__canvas {
+  --preview-size: 220px;
   position: relative;
-  border-radius: 24px;
-  background: #f4f6ff;
   padding: 28px;
   display: grid;
   place-items: center;
-  overflow: hidden;
+  background: transparent;
 }
 
 .preview__canvas.is-loading::before {
   content: "";
   position: absolute;
-  inset: 0;
+  width: var(--preview-size);
+  height: var(--preview-size);
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: var(--preview-radius-percent, 22%);
   background: linear-gradient(110deg, #eef1f8 30%, #f8f9ff 50%, #eef1f8 70%);
   background-size: 200% 100%;
   animation: preview-shimmer 1.25s infinite;
@@ -528,12 +555,23 @@ select:focus {
 }
 
 .preview__image {
-  width: 220px;
-  height: 220px;
-  border-radius: 22%;
-  box-shadow: var(--shadow);
+  width: var(--preview-size);
+  height: var(--preview-size);
+  border-radius: var(--preview-radius-percent, 22%);
+  filter: drop-shadow(0 24px 45px rgba(17, 24, 39, 0.14));
   background: transparent;
   overflow: hidden;
+}
+
+.preview__canvas.is-transparent .preview__image {
+  background-color: #ffffff;
+  background-image:
+    linear-gradient(45deg, #e5e7eb 25%, transparent 25%),
+    linear-gradient(-45deg, #e5e7eb 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #e5e7eb 75%),
+    linear-gradient(-45deg, transparent 75%, #e5e7eb 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
 }
 
 .preview__url {

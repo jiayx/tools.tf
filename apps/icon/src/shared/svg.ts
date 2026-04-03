@@ -4,19 +4,29 @@ type BackgroundOptions = {
   bg1: string
   bg2: string
   angle: number
+  radius: number
 }
 
-export const buildBackgroundParts = ({ size, bgMode, bg1, bg2, angle }: BackgroundOptions) => {
+export const buildBackgroundParts = ({ size, bgMode, bg1, bg2, angle, radius }: BackgroundOptions) => {
   const gradientId = 'bg'
+  const clipPathId = 'clip'
   const hasGradient = bgMode === 'gradient' && bg1 !== bg2
-  const defs = hasGradient
-    ? `<defs><linearGradient id="${gradientId}" gradientTransform="rotate(${angle} 0.5 0.5)"><stop offset="0%" stop-color="${bg1}"/><stop offset="100%" stop-color="${bg2}"/></linearGradient></defs>`
-    : ''
   const fill = hasGradient ? `url(#${gradientId})` : bg1
-  const radius = size * 0.22
+  const cornerRadius = (size * radius) / 100
+  const defsParts: string[] = []
+  if (hasGradient) {
+    defsParts.push(
+      `<linearGradient id="${gradientId}" gradientTransform="rotate(${angle} 0.5 0.5)"><stop offset="0%" stop-color="${bg1}"/><stop offset="100%" stop-color="${bg2}"/></linearGradient>`
+    )
+  }
+  if (bgMode !== 'transparent') {
+    defsParts.push(`<clipPath id="${clipPathId}"><rect width="${size}" height="${size}" rx="${cornerRadius}" /></clipPath>`)
+  }
+  const defs = defsParts.length > 0 ? `<defs>${defsParts.join('')}</defs>` : ''
   const backgroundMarkup =
-    bgMode === 'transparent' ? '' : `<rect width="${size}" height="${size}" rx="${radius}" fill="${fill}" />`
-  return { defs, backgroundMarkup }
+    bgMode === 'transparent' ? '' : `<rect width="${size}" height="${size}" rx="${cornerRadius}" fill="${fill}" />`
+  const clipPath = bgMode === 'transparent' ? '' : `clip-path="url(#${clipPathId})"`
+  return { defs, backgroundMarkup, clipPath }
 }
 
 type IconSvgOptions = {
@@ -26,6 +36,7 @@ type IconSvgOptions = {
   wrapper: string
   defs?: string
   backgroundMarkup?: string
+  clipPath?: string
   includeXmlDeclaration?: boolean
 }
 
@@ -36,6 +47,7 @@ export const buildIconSvg = ({
   wrapper,
   defs = '',
   backgroundMarkup = '',
+  clipPath = '',
   includeXmlDeclaration = true,
 }: IconSvgOptions) => {
   const glyphSize = (size * glyph) / 100
@@ -45,8 +57,10 @@ export const buildIconSvg = ({
   return `${xml}<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
   ${defs}
   ${backgroundMarkup}
-  <g transform="translate(${offset} ${offset}) scale(${scale})" ${wrapper}>
-    ${iconMarkup}
+  <g ${clipPath}>
+    <g transform="translate(${offset} ${offset}) scale(${scale})" ${wrapper}>
+      ${iconMarkup}
+    </g>
   </g>
 </svg>`
 }

@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const urlInput = document.querySelector<HTMLInputElement>('[data-url]')
   const snippetList = document.querySelector<HTMLElement>('[data-snippet-list]')
   const copyBtn = document.querySelector<HTMLButtonElement>('[data-copy]')
+  const resetBtn = document.querySelector<HTMLButtonElement>('[data-reset]')
   const iconFilter = document.querySelector<HTMLInputElement>('[data-icon-filter]')
   const textControls = document.querySelector<HTMLElement>('[data-text-controls]')
   const iconControls = document.querySelector<HTMLElement>('[data-icon-controls]')
@@ -30,6 +31,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const bg1Control = document.querySelector<HTMLElement>('[data-bg1-control]')
   const bg2Control = document.querySelector<HTMLElement>('[data-bg2-control]')
   const angleControl = document.querySelector<HTMLElement>('[data-angle-control]')
+  const radiusControl = document.querySelector<HTMLElement>('[data-radius-control]')
+  const textRadiusAnchor = document.querySelector<HTMLElement>('[data-radius-anchor="text"]')
+  const iconRadiusAnchor = document.querySelector<HTMLElement>('[data-radius-anchor="icon"]')
   const sizeLinks = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-size-link]'))
   const sizeDownloads = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-size-download]'))
   const formatButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-format-btn]'))
@@ -49,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
     bg2Text: document.querySelector<HTMLInputElement>('[data-field="bg2Text"]'),
     angle: document.querySelector<HTMLInputElement>('[data-field="angle"]'),
     size: document.querySelector<HTMLInputElement>('[data-field="size"]'),
+    radius: document.querySelector<HTMLInputElement>('[data-field="radius"]'),
     glyphInputs: Array.from(document.querySelectorAll<HTMLInputElement>('[data-field="glyph"]')),
   }
 
@@ -56,6 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
     angle: Array.from(document.querySelectorAll<HTMLElement>('[data-field-value="angle"]')),
     size: Array.from(document.querySelectorAll<HTMLElement>('[data-field-value="size"]')),
     glyph: Array.from(document.querySelectorAll<HTMLElement>('[data-field-value="glyph"]')),
+    radius: Array.from(document.querySelectorAll<HTMLElement>('[data-field-value="radius"]')),
   }
 
   const initialBg1 = fields.bg1?.value || DEFAULTS.bg1
@@ -74,6 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
     angle: Number(fields.angle?.value || DEFAULTS.angle),
     size: Number(fields.size?.value || DEFAULTS.size),
     glyph: Number(fields.glyphInputs[0]?.value || DEFAULTS.glyph),
+    radius: Number(fields.radius?.value || DEFAULTS.radius),
   }
 
   const state = {
@@ -82,6 +89,8 @@ document.addEventListener('DOMContentLoaded', () => {
     iconTabler: ICON_SET_META.tabler.defaultIcon || DEFAULTS.icon,
     iconLogos: ICON_SET_META.logos.defaultIcon || DEFAULTS.icon,
   }
+
+  const initialState = { ...state }
 
   let downloadFormat: 'svg' | 'png' | 'jpeg' | 'webp' = 'svg'
   let iconLoadToken = 0
@@ -170,8 +179,15 @@ document.addEventListener('DOMContentLoaded', () => {
     return await loadIconSet(iconSet)
   }
 
+  const placeRadiusControl = (mode: string) => {
+    if (!radiusControl) return
+    const anchor = mode === 'text' ? textRadiusAnchor : iconRadiusAnchor
+    anchor?.insertAdjacentElement('afterend', radiusControl)
+  }
+
   const setActiveMode = (mode: string) => {
     state.type = parseIconMode(mode)
+    placeRadiusControl(state.type)
     modeButtons.forEach((btn) => {
       const isActive = btn.dataset.modeValue === state.type
       btn.classList.toggle('is-active', isActive)
@@ -189,7 +205,19 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   let prevFg = state.fg
+  let prevRadius = state.radius
   let didOverrideFg = false
+
+  const setControlDisabled = (
+    control: HTMLElement | null,
+    inputs: Array<HTMLInputElement | null>,
+    disabled: boolean
+  ) => {
+    control?.classList.toggle('is-disabled', disabled)
+    inputs.forEach((input) => {
+      if (input) input.disabled = disabled
+    })
+  }
 
   const setBackgroundMode = (mode: string) => {
     const nextMode = parseBgMode(mode)
@@ -201,7 +229,11 @@ document.addEventListener('DOMContentLoaded', () => {
     })
     const isSolid = state.bgMode === 'solid'
     const isTransparent = state.bgMode === 'transparent'
+    previewCanvas?.classList.toggle('is-transparent', isTransparent)
     if (nextMode === 'transparent' && prevMode !== 'transparent') {
+      prevRadius = state.radius
+      state.radius = 0
+      if (fields.radius) fields.radius.value = '0'
       prevFg = state.fg
       didOverrideFg = false
       const luminance = getLuminance(state.fg)
@@ -212,19 +244,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (fields.fg) fields.fg.value = nextFg
         if (fields.fgText) fields.fgText.value = nextFg
       }
-    } else if (prevMode === 'transparent' && nextMode !== 'transparent' && didOverrideFg) {
-      state.fg = prevFg
-      if (fields.fg) fields.fg.value = prevFg
-      if (fields.fgText) fields.fgText.value = prevFg
+    } else if (prevMode === 'transparent' && nextMode !== 'transparent') {
+      state.radius = prevRadius
+      if (fields.radius) fields.radius.value = String(prevRadius)
+      if (didOverrideFg) {
+        state.fg = prevFg
+        if (fields.fg) fields.fg.value = prevFg
+        if (fields.fgText) fields.fgText.value = prevFg
+      }
     }
-    if (bg1Control) bg1Control.classList.toggle('is-disabled', isTransparent)
-    if (bg2Control) bg2Control.classList.toggle('is-disabled', isSolid || isTransparent)
-    if (angleControl) angleControl.classList.toggle('is-disabled', isSolid || isTransparent)
-    if (fields.bg1) fields.bg1.disabled = isTransparent
-    if (fields.bg1Text) fields.bg1Text.disabled = isTransparent
-    if (fields.bg2) fields.bg2.disabled = isSolid || isTransparent
-    if (fields.bg2Text) fields.bg2Text.disabled = isSolid || isTransparent
-    if (fields.angle) fields.angle.disabled = isSolid || isTransparent
+    setControlDisabled(bg1Control, [fields.bg1, fields.bg1Text], isTransparent)
+    setControlDisabled(bg2Control, [fields.bg2, fields.bg2Text], isSolid || isTransparent)
+    setControlDisabled(angleControl, [fields.angle], isSolid || isTransparent)
+    setControlDisabled(radiusControl, [fields.radius], isTransparent)
   }
 
   const updateIconSearchPlaceholder = () => {
@@ -517,6 +549,11 @@ document.addEventListener('DOMContentLoaded', () => {
     previewCanvas?.classList.remove('is-loading')
   }
 
+  const updatePreviewRadius = () => {
+    if (!previewCanvas) return
+    previewCanvas.style.setProperty('--preview-radius-percent', `${state.radius}%`)
+  }
+
   preview.addEventListener('load', handlePreviewLoad)
   if (preview.complete && preview.naturalWidth > 0) {
     handlePreviewLoad()
@@ -531,6 +568,9 @@ document.addEventListener('DOMContentLoaded', () => {
     })
     valueLabels.glyph.forEach((label) => {
       label.textContent = `${state.glyph}%`
+    })
+    valueLabels.radius.forEach((label) => {
+      label.textContent = `${state.radius}%`
     })
   }
 
@@ -550,11 +590,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }, 220)
 
   const applyState = () => {
+    updatePreviewRadius()
     updateLabels()
     scheduleRender()
   }
 
   const applyStateImmediate = () => {
+    updatePreviewRadius()
     updateLabels()
     updatePreview()
     updateIconPreview()
@@ -598,6 +640,39 @@ document.addEventListener('DOMContentLoaded', () => {
     })
   }
 
+  const resetState = () => {
+    Object.assign(state, initialState)
+    prevFg = initialState.fg
+    prevRadius = initialState.radius
+    didOverrideFg = false
+    downloadFormat = 'svg'
+
+    if (fields.text) fields.text.value = initialState.text
+    if (fields.icon) fields.icon.value = initialState.icon
+    if (fields.fg) fields.fg.value = initialState.fg
+    if (fields.fgText) fields.fgText.value = initialState.fg
+    if (fields.bg1) fields.bg1.value = initialState.bg1
+    if (fields.bg1Text) fields.bg1Text.value = initialState.bg1
+    if (fields.bg2) fields.bg2.value = initialState.bg2
+    if (fields.bg2Text) fields.bg2Text.value = initialState.bg2
+    if (fields.angle) fields.angle.value = String(initialState.angle)
+    if (fields.size) fields.size.value = String(initialState.size)
+    if (fields.radius) fields.radius.value = String(initialState.radius)
+    fields.glyphInputs.forEach((input) => {
+      input.value = String(initialState.glyph)
+    })
+
+    formatButtons.forEach((item) => {
+      item.classList.toggle('is-active', item.dataset.format === downloadFormat)
+    })
+
+    if (iconFilter) iconFilter.value = ''
+    closeIconMenu()
+    setActiveMode(initialState.type)
+    setBackgroundMode(initialState.bgMode)
+    applyStateImmediate()
+  }
+
 
   modeButtons.forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -628,6 +703,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   randomBtn?.addEventListener('click', () => {
     applyRandomPalette()
+  })
+
+  resetBtn?.addEventListener('click', () => {
+    resetState()
   })
 
   if (fields.text) {
@@ -750,6 +829,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   fields.size?.addEventListener('input', (event) => {
     state.size = Number((event.target as HTMLInputElement).value)
+    applyState()
+  })
+
+  fields.radius?.addEventListener('input', (event) => {
+    state.radius = Number((event.target as HTMLInputElement).value)
     applyState()
   })
 

@@ -18,6 +18,7 @@ export const DEFAULTS = {
   angle: 140,
   size: 128,
   glyph: 64,
+  radius: 22,
 }
 
 export const PRESETS: Preset[] = [

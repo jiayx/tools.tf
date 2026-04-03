@@ -78,6 +78,7 @@ type IconOptions = {
   angle: number
   size: number
   glyph: number
+  radius: number
 }
 
 const parseOptions = (query: Record<string, string>, sizeParam?: string) => {
@@ -87,6 +88,7 @@ const parseOptions = (query: Record<string, string>, sizeParam?: string) => {
   const size = clamp(parseNumber(sizeParam || query.size, DEFAULTS.size), 16, 512)
   const glyph = clamp(parseNumber(query.glyph, DEFAULTS.glyph), 28, 100)
   const angle = clamp(parseNumber(query.angle, DEFAULTS.angle), 0, 360)
+  const radius = clamp(parseNumber(query.radius, DEFAULTS.radius), 0, 50)
 
   const bgMode = parsed.bgMode
 
@@ -106,12 +108,13 @@ const parseOptions = (query: Record<string, string>, sizeParam?: string) => {
     angle,
     size,
     glyph,
+    radius,
   } satisfies IconOptions
 }
 
 const buildSvg = async (options: IconOptions, kv?: KVNamespace) => {
-  const { size, fg, bgMode, bg1, bg2, angle, type, text, icon, glyph } = options
-  const { defs, backgroundMarkup } = buildBackgroundParts({ size, bgMode, bg1, bg2, angle })
+  const { size, fg, bgMode, bg1, bg2, angle, type, text, icon, glyph, radius } = options
+  const { defs, backgroundMarkup, clipPath } = buildBackgroundParts({ size, bgMode, bg1, bg2, angle, radius })
 
   if (type === 'text') {
     const fontSizeBase = (size * glyph) / 100
@@ -130,7 +133,9 @@ const buildSvg = async (options: IconOptions, kv?: KVNamespace) => {
 <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
   ${defs}
   ${backgroundMarkup}
-  <text x="50%" y="50%" fill="${fg}" font-family='${fontFamily}' font-size="${fontSize}" font-weight="700" text-anchor="middle" dominant-baseline="central" letter-spacing="${letterSpacing}">${safeText}</text>
+  <g ${clipPath}>
+    <text x="50%" y="50%" fill="${fg}" font-family='${fontFamily}' font-size="${fontSize}" font-weight="700" text-anchor="middle" dominant-baseline="central" letter-spacing="${letterSpacing}">${safeText}</text>
+  </g>
 </svg>`
   }
 
@@ -138,7 +143,7 @@ const buildSvg = async (options: IconOptions, kv?: KVNamespace) => {
   const data = await loadIconSetData(iconSet, kv)
   const iconMarkup = data.getMarkup(icon) ?? FALLBACK_ICON_MARKUP
   const iconWrapper = getIconWrapperAttributes(iconSet, fg)
-  return buildIconSvg({ size, glyph, iconMarkup, wrapper: iconWrapper, defs, backgroundMarkup })
+  return buildIconSvg({ size, glyph, iconMarkup, wrapper: iconWrapper, defs, backgroundMarkup, clipPath })
 }
 
 const IconPage = () => {
@@ -150,6 +155,7 @@ const IconPage = () => {
     bg2: DEFAULTS.bg2,
     angle: String(DEFAULTS.angle),
     glyph: String(DEFAULTS.glyph),
+    radius: String(DEFAULTS.radius),
   }).toString()
   const getPresetBackground = (bgMode: string, bg1: string, bg2: string, angle: number) => {
     if (bgMode === 'solid') return bg1
@@ -171,7 +177,12 @@ const IconPage = () => {
       <section class="studio">
         <form class="panel controls" data-form>
           <div class="panel__header">
-            <h3>Build your mark</h3>
+            <div class="panel__header-main">
+              <h3>Build your mark</h3>
+              <button type="button" class="panel__reset" data-reset>
+                Reset
+              </button>
+            </div>
             <p>Pick a style, then refine colors and scale.</p>
           </div>
 
@@ -205,6 +216,15 @@ const IconPage = () => {
                 <input id="glyphSizeText" type="range" min={32} max={100} value={DEFAULTS.glyph} data-field="glyph" />
                 <span data-field-value="glyph">{DEFAULTS.glyph}%</span>
               </div>
+            </div>
+            <div data-radius-anchor="text"></div>
+          </div>
+
+          <div class="control" data-radius-control>
+            <label htmlFor="radiusRange">Corner radius</label>
+            <div class="range">
+              <input id="radiusRange" type="range" min={0} max={50} value={DEFAULTS.radius} data-field="radius" />
+              <span data-field-value="radius">{DEFAULTS.radius}%</span>
             </div>
           </div>
 
@@ -243,6 +263,7 @@ const IconPage = () => {
                 <span data-field-value="glyph">{DEFAULTS.glyph}%</span>
               </div>
             </div>
+            <div data-radius-anchor="icon"></div>
           </div>
 
           <div class="control-group">
