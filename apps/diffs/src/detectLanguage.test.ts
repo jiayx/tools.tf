@@ -278,7 +278,7 @@ fi
 
   it('detects YAML frontmatter style content', () => {
     const source = `---
-title: Diffs
+title: Diff
 layout: page
 published: true
 `

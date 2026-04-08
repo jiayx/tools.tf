@@ -57,7 +57,7 @@ const diffOptions: FileDiffOptions<undefined> = {
 
 const countLines = (value: string) => value === '' ? 0 : value.split('\n').length
 
-export function DiffsApp() {
+export function DiffApp() {
   const [leftText, setLeftText] = useState(SAMPLE_LEFT)
   const [rightText, setRightText] = useState(SAMPLE_RIGHT)
   // 'auto' = follow detection; anything else = user override
@@ -116,7 +116,7 @@ export function DiffsApp() {
     <main className="page">
       <header className="page-header">
         <div className="page-header__title">
-          <span className="eyebrow">Diffs</span>
+          <span className="eyebrow">Diff</span>
           <span className="page-header__desc">把两段文本丢进来，立刻看清每一处变化。</span>
         </div>
         <div className="toolbar">
