@@ -204,6 +204,18 @@ const DEFAULT_CONFIG: QrConfig = {
   margin: 16,
 }
 
+function encodeQrData(data: string) {
+  const source = data || 'https://tools.tf'
+  const bytes = new TextEncoder().encode(source)
+  let encoded = ''
+
+  for (const byte of bytes) {
+    encoded += String.fromCharCode(byte)
+  }
+
+  return encoded
+}
+
 function buildQrOptions(cfg: QrConfig) {
   const gradient = cfg.useGradient
     ? {
@@ -221,7 +233,7 @@ function buildQrOptions(cfg: QrConfig) {
     width: 320,
     height: 320,
     margin: cfg.margin,
-    data: cfg.data || 'https://tools.tf',
+    data: encodeQrData(cfg.data),
     image: cfg.logoUrl || undefined,
     imageOptions: {
       crossOrigin: 'anonymous',
@@ -254,8 +266,10 @@ function buildQrOptions(cfg: QrConfig) {
 
 export function QrApp() {
   const [cfg, setCfg] = useState<QrConfig>(DEFAULT_CONFIG)
+  const [inputValue, setInputValue] = useState<string>(DEFAULT_CONFIG.data)
   const [activePreset, setActivePreset] = useState<number>(1) // Ocean
   const [downloadSize, setDownloadSize] = useState<number>(320)
+  const [isComposing, setIsComposing] = useState(false)
   const qrRef = useRef<QRCodeStyling | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -283,6 +297,11 @@ export function QrApp() {
   const update = (patch: Partial<QrConfig>) => {
     setActivePreset(-1)
     setCfg((prev) => ({ ...prev, ...patch }))
+  }
+
+  const commitData = (value: string) => {
+    setActivePreset(-1)
+    setCfg((prev) => ({ ...prev, data: value }))
   }
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -327,8 +346,21 @@ export function QrApp() {
               className="input"
               rows={3}
               placeholder="输入文字或链接..."
-              value={cfg.data}
-              onChange={(e) => update({ data: e.target.value })}
+              value={inputValue}
+              onChange={(e) => {
+                const nextValue = e.target.value
+                setInputValue(nextValue)
+                if (!isComposing) {
+                  commitData(nextValue)
+                }
+              }}
+              onCompositionStart={() => setIsComposing(true)}
+              onCompositionEnd={(e) => {
+                const nextValue = e.currentTarget.value
+                setIsComposing(false)
+                setInputValue(nextValue)
+                commitData(nextValue)
+              }}
             />
           </section>
 

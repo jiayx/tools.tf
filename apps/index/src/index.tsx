@@ -58,7 +58,13 @@ const tools: Tool[] = [
 ]
 
 const ToolCard = ({ tool }: { tool: Tool }) => (
-  <a class="tool-card" href={tool.url} style={`--accent: ${tool.accent}`}>
+  <a
+    class="tool-card"
+    href={tool.url}
+    target="_blank"
+    rel="noopener"
+    style={`--accent: ${tool.accent}`}
+  >
     <div class="tool-card__icon">
       <img src={tool.icon} alt="" width="48" height="48" />
     </div>
