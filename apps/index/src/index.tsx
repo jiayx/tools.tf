@@ -47,6 +47,14 @@ const tools: Tool[] = [
     icon: 'https://icon.tools.tf/icon/48?type=tabler&fg=%231946ae&bg=transparent&iconGlyph=80&icon=timezone',
     accent: '#1946ae',
   },
+  {
+    name: 'QR Code',
+    tagline: '生成美观的二维码',
+    description: '输入文字或链接，自定义颜色、渐变、点阵风格，一键生成好看的二维码并下载。',
+    url: 'https://qr.tools.tf',
+    icon: 'https://icon.tools.tf/icon/48?type=lucide&fg=%23f59e0b&bg=transparent&iconGlyph=80&icon=qr-code',
+    accent: '#f59e0b',
+  },
 ]
 
 const ToolCard = ({ tool }: { tool: Tool }) => (

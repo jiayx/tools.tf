@@ -204,6 +204,46 @@ importers:
         specifier: ^4.17.0
         version: 4.53.0(@cloudflare/workers-types@4.20251228.0)
 
+  apps/qr:
+    dependencies:
+      hono:
+        specifier: ^4.11.1
+        version: 4.11.1
+      qr-code-styling:
+        specifier: ^1.9.2
+        version: 1.9.2
+      react:
+        specifier: ^19.1.1
+        version: 19.2.4
+      react-dom:
+        specifier: ^19.1.1
+        version: 19.2.4(react@19.2.4)
+    devDependencies:
+      '@cloudflare/vite-plugin':
+        specifier: ^1.17.1
+        version: 1.17.1(vite@7.3.0(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.31.1))(workerd@1.20251210.0)(wrangler@4.54.0(@cloudflare/workers-types@4.20251228.0))
+      '@types/react':
+        specifier: ^19.2.14
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@19.2.14)
+      '@vitejs/plugin-react':
+        specifier: ^5.0.3
+        version: 5.1.4(vite@7.3.0(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.31.1))
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.3
+      vite:
+        specifier: npm:vite@7.3.0
+        version: 7.3.0(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.31.1)
+      vite-ssr-components:
+        specifier: ^0.5.1
+        version: 0.5.2
+      wrangler:
+        specifier: ^4.54.0
+        version: 4.54.0(@cloudflare/workers-types@4.20251228.0)
+
   apps/todo:
     dependencies:
       '@tanstack/react-router':
@@ -1625,6 +1665,13 @@ packages:
 
   property-information@7.1.0:
     resolution: {integrity: sha512-TwEZ+X+yCJmYfL7TPUOcvBZ4QfoT5YenQiJuX//0th53DE6w0xxLEtfK3iyryQFddXuvkIk51EEgrJQ0WJkOmQ==}
+
+  qr-code-styling@1.9.2:
+    resolution: {integrity: sha512-RgJaZJ1/RrXJ6N0j7a+pdw3zMBmzZU4VN2dtAZf8ZggCfRB5stEQ3IoDNGaNhYY3nnZKYlYSLl5YkfWN5dPutg==}
+    engines: {node: '>=18.18.0'}
+
+  qrcode-generator@1.5.2:
+    resolution: {integrity: sha512-pItrW0Z9HnDBnFmgiNrY1uxRdri32Uh9EjNYLPVC2zZ3ZRIIEqBoDgm4DkvDwNNDHTK7FNkmr8zAa77BYc9xNw==}
 
   react-dom@19.2.4:
     resolution: {integrity: sha512-AXJdLo8kgMbimY95O2aKQqsz2iWi9jMgKJhRBAxECE4IFxfcazB2LmzloIoibJI3C12IlY20+KFaLv+71bUJeQ==}
@@ -3194,6 +3241,12 @@ snapshots:
       source-map-js: 1.2.1
 
   property-information@7.1.0: {}
+
+  qr-code-styling@1.9.2:
+    dependencies:
+      qrcode-generator: 1.5.2
+
+  qrcode-generator@1.5.2: {}
 
   react-dom@19.2.4(react@19.2.4):
     dependencies:
