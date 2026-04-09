@@ -1,0 +1,24 @@
+{
+  "name": "datetime",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build": "vite build",
+    "preview": "$npm_execpath run build && vite preview",
+    "deploy": "$npm_execpath run build && wrangler deploy",
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings"
+  },
+  "dependencies": {
+    "chrono-node": "^2.9.0",
+    "hono": "^4.10.7"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.17.1",
+    "vite": "npm:^7.3.0",
+    "vite-ssr-components": "^0.5.1",
+    "vitest": "^3.2.4",
+    "wrangler": "^4.54.0"
+  }
+}
