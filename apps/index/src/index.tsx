@@ -55,6 +55,14 @@ const tools: Tool[] = [
     icon: 'https://icon.tools.tf/icon/48?type=lucide&fg=%23f59e0b&bg=transparent&iconGlyph=80&icon=qr-code',
     accent: '#f59e0b',
   },
+  {
+    name: '密码生成器',
+    tagline: '生成安全随机密码',
+    description: '在浏览器本地生成安全随机密码，支持自定义长度、字符类型，一键复制，不上传任何服务器。',
+    url: 'https://password.tools.tf',
+    icon: 'https://icon.tools.tf/icon/48?type=lucide&fg=%2310b981&bg=transparent&iconGlyph=80&icon=key-round',
+    accent: '#10b981',
+  },
 ]
 
 const ToolCard = ({ tool }: { tool: Tool }) => (

@@ -1,0 +1,363 @@
+:root {
+  color-scheme: light;
+  --bg: #f4f7fb;
+  --ink: #111827;
+  --muted: #667085;
+  --panel: rgba(255, 255, 255, 0.95);
+  --panel-border: rgba(148, 163, 184, 0.2);
+  --shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+  --shadow-soft: 0 4px 16px rgba(15, 23, 42, 0.06);
+  --accent: #10b981;
+  --accent-soft: #d1fae5;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  font-family: Inter, "Segoe UI", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(16, 185, 129, 0.08), transparent 30%),
+    radial-gradient(circle at top right, rgba(5, 150, 105, 0.06), transparent 28%),
+    linear-gradient(180deg, #ecfdf5 0%, var(--bg) 100%);
+  min-height: 100vh;
+}
+
+button, textarea, input, select {
+  font: inherit;
+}
+
+/* ── Page Layout ─────────────────────────────── */
+
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+@media (max-width: 700px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Header ─────────────────────────────────── */
+
+.page-header {
+  margin-bottom: 28px;
+}
+
+.eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.page-header__name {
+  font-size: 28px;
+  font-weight: 800;
+  margin: 0 0 6px;
+  color: var(--ink);
+}
+
+.page-header__desc {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* ── Panel ───────────────────────────────────── */
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.section {
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.section:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.section:first-child {
+  padding-top: 0;
+}
+
+.section--action {
+  display: flex;
+  justify-content: center;
+}
+
+/* ── Form Elements ────────────────────────────── */
+
+.field-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.field-label-value {
+  font-weight: 400;
+  color: var(--ink);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 12px;
+  margin-left: 4px;
+}
+
+/* ── Slider ──────────────────────────────────── */
+
+.slider {
+  width: 100%;
+  cursor: pointer;
+  height: 4px;
+  margin: 4px 0 2px;
+  accent-color: var(--accent);
+}
+
+.slider-hints {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+/* ── Toggle group ────────────────────────────── */
+
+.toggle-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toggle-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  transition: background 0.12s;
+}
+
+.toggle-item:hover {
+  background: rgba(16, 185, 129, 0.06);
+}
+
+.toggle-item input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.toggle-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  flex: 1;
+}
+
+.toggle-item--divider {
+  border-top: 1px solid rgba(148, 163, 184, 0.15);
+  margin-top: 4px;
+  padding-top: 4px;
+}
+
+.toggle-example {
+  font-size: 12px;
+  color: var(--muted);
+  font-family: monospace;
+  background: rgba(148, 163, 184, 0.12);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* ── Regenerate button ───────────────────────── */
+
+.regenerate-btn {
+  width: 100%;
+  padding: 11px 0;
+  border: 1.5px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.14s, color 0.14s;
+}
+
+.regenerate-btn:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* ── Preview area ────────────────────────────── */
+
+.preview-area {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── Strength bar ────────────────────────────── */
+
+.strength-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.strength-bar {
+  flex: 1;
+  height: 6px;
+  background: rgba(148, 163, 184, 0.2);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.strength-bar__fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.3s ease, background 0.3s ease;
+}
+
+.strength-label {
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 28px;
+  text-align: right;
+}
+
+/* ── Password list ───────────────────────────── */
+
+.password-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.password-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  box-shadow: var(--shadow-soft);
+  transition: border-color 0.15s;
+}
+
+.password-item:hover {
+  border-color: var(--accent);
+}
+
+.password-text {
+  flex: 1;
+  font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  word-break: break-all;
+  user-select: all;
+}
+
+.copy-btn {
+  flex-shrink: 0;
+  padding: 5px 14px;
+  border: 1.5px solid var(--panel-border);
+  border-radius: 20px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+
+.copy-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.copy-btn.copied {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: #065f46;
+}
+
+/* ── Copy all button ─────────────────────────── */
+
+.copy-all-btn {
+  align-self: flex-start;
+  padding: 8px 20px;
+  border: 1.5px solid var(--panel-border);
+  border-radius: 20px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.copy-all-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.copy-all-btn.copied {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: #065f46;
+}
+
+/* ── Hint text ───────────────────────────────── */
+
+.hint-text {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0;
+}
