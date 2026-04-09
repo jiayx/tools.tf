@@ -14,6 +14,12 @@ export const renderer = jsxRenderer(({ children }) => {
         />
         <ViteClient />
         <Link href="/src/style.css" rel="stylesheet" />
+        <link
+          rel="icon"
+          sizes="64x64"
+          type="image/svg+xml"
+          href="https://icon.tools.tf/icon/64?type=tabler&fg=%230e4ee1&bg=transparent&textGlyph=100&iconGlyph=100&radius=0&icon=location-star"
+        />
       </head>
       <body>
         {children}

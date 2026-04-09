@@ -375,7 +375,7 @@ const IconPage = () => {
       </section>
       <footer class="footer">
         <p>
-          © 2025 <a href="https://www.tools.tf" target="_blank" rel="noreferrer">tools.tf</a>
+          © 2026 <a href="https://www.tools.tf" target="_blank" rel="noreferrer">tools.tf</a>
         </p>
       </footer>
     </main>
