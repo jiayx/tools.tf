@@ -63,6 +63,14 @@ const tools: Tool[] = [
     icon: 'https://icon.tools.tf/icon/48?type=lucide&fg=%2310b981&bg=transparent&iconGlyph=80&icon=key-round',
     accent: '#10b981',
   },
+  {
+    name: 'JSON 格式化',
+    tagline: '格式化、校验与高亮',
+    description: '粘贴 JSON，自动格式化、语法高亮、错误提示，支持折叠、压缩与一键复制。',
+    url: 'https://json.tools.tf',
+    icon: 'https://icon.tools.tf/icon/48?type=lucide&fg=%238b5cf6&bg=transparent&iconGlyph=80&icon=braces',
+    accent: '#8b5cf6',
+  },
 ]
 
 const ToolCard = ({ tool }: { tool: Tool }) => (
