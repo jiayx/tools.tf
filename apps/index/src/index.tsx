@@ -44,7 +44,7 @@ const tools: Tool[] = [
     tagline: 'Temporary sharing rooms',
     description: 'Create a 6-digit room for instant file drops and lightweight chat, with media previews and automatic 24-hour expiry.',
     url: 'https://drop.tools.tf',
-    icon: 'https://icon.tools.tf/icon/48?type=lucide&fg=%2338bdf8&bg=transparent&iconGlyph=80&icon=cloud-upload',
+    icon: 'https://icon.tools.tf/icon/48?type=tabler&fg=%2338bdf8&bg=transparent&iconGlyph=80&icon=transfer',
     accent: '#38bdf8',
   },
   {
