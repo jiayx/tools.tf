@@ -289,9 +289,9 @@ importers:
       hono:
         specifier: ^4.11.1
         version: 4.11.1
-      qr-code-styling:
-        specifier: ^1.9.2
-        version: 1.9.2
+      qr-code-styling-worker:
+        specifier: workspace:*
+        version: link:../../packages/qr-code-styling-worker
       react:
         specifier: ^19.1.1
         version: 19.2.4
@@ -375,6 +375,12 @@ importers:
       wrangler:
         specifier: ^4.54.0
         version: 4.54.0(@cloudflare/workers-types@4.20251228.0)
+
+  packages/qr-code-styling-worker:
+    dependencies:
+      qr-code-styling:
+        specifier: ^1.9.2
+        version: 1.9.2
 
 packages:
 
@@ -2164,8 +2170,8 @@ snapshots:
 
   '@babel/generator@7.28.5':
     dependencies:
-      '@babel/parser': 7.28.5
-      '@babel/types': 7.28.5
+      '@babel/parser': 7.29.0
+      '@babel/types': 7.29.0
       '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.31
       jsesc: 3.1.0
@@ -2239,9 +2245,9 @@ snapshots:
 
   '@babel/template@7.27.2':
     dependencies:
-      '@babel/code-frame': 7.27.1
-      '@babel/parser': 7.28.5
-      '@babel/types': 7.28.5
+      '@babel/code-frame': 7.29.0
+      '@babel/parser': 7.29.0
+      '@babel/types': 7.29.0
 
   '@babel/template@7.28.6':
     dependencies:

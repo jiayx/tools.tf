@@ -2,7 +2,7 @@
 import { jsxRenderer } from 'hono/jsx-renderer'
 import { Link, Script, ViteClient } from 'vite-ssr-components/hono'
 
-export const renderer = jsxRenderer(() => {
+export const renderer = jsxRenderer(({ children }) => {
   return (
     <html lang="zh-CN">
       <head>
@@ -15,7 +15,7 @@ export const renderer = jsxRenderer(() => {
         <Link href="/src/style.css" rel="stylesheet" />
       </head>
       <body>
-        <div id="root"></div>
+        {children}
         <Script type="module" src="/src/main.tsx" />
       </body>
     </html>

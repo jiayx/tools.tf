@@ -4,27 +4,15 @@ import QRCodeStyling, {
   type CornerSquareType,
   type DotType,
   type ErrorCorrectionLevel,
-} from 'qr-code-styling'
+  type GradientType,
+} from 'qr-code-styling-worker'
 import { useEffect, useRef, useState } from 'react'
-
-type GradientType = 'linear' | 'radial'
-
-interface QrConfig {
-  data: string
-  dotType: DotType
-  cornerSquareType: CornerSquareType
-  cornerDotType: CornerDotType
-  fgColor: string
-  useGradient: boolean
-  gradientColor1: string
-  gradientColor2: string
-  gradientType: GradientType
-  bgColor: string
-  transparentBg: boolean
-  errorLevel: ErrorCorrectionLevel
-  logoUrl: string
-  margin: number
-}
+import {
+  DEFAULT_CONFIG,
+  type QrConfig,
+  buildQrImageQuery,
+  buildQrCodeStylingOptions,
+} from './image'
 
 interface Preset {
   label: string
@@ -187,83 +175,6 @@ const DOWNLOAD_SIZES = [
   { label: '2048px', value: 2048 },
 ] as const
 
-const DEFAULT_CONFIG: QrConfig = {
-  data: 'https://tools.tf',
-  dotType: 'rounded',
-  cornerSquareType: 'extra-rounded',
-  cornerDotType: 'dot',
-  fgColor: '#2563eb',
-  useGradient: true,
-  gradientColor1: '#2563eb',
-  gradientColor2: '#06b6d4',
-  gradientType: 'linear',
-  bgColor: '#ffffff',
-  transparentBg: false,
-  errorLevel: 'M',
-  logoUrl: '',
-  margin: 16,
-}
-
-function encodeQrData(data: string) {
-  const source = data || 'https://tools.tf'
-  const bytes = new TextEncoder().encode(source)
-  let encoded = ''
-
-  for (const byte of bytes) {
-    encoded += String.fromCharCode(byte)
-  }
-
-  return encoded
-}
-
-function buildQrOptions(cfg: QrConfig) {
-  const gradient = cfg.useGradient
-    ? {
-        type: cfg.gradientType,
-        rotation: 45,
-        colorStops: [
-          { offset: 0, color: cfg.gradientColor1 },
-          { offset: 1, color: cfg.gradientColor2 },
-        ],
-      }
-    : undefined
-
-  return {
-    type: 'svg',
-    width: 320,
-    height: 320,
-    margin: cfg.margin,
-    data: encodeQrData(cfg.data),
-    image: cfg.logoUrl || undefined,
-    imageOptions: {
-      crossOrigin: 'anonymous',
-      margin: 6,
-      imageSize: 0.3,
-    },
-    qrOptions: {
-      errorCorrectionLevel: cfg.errorLevel,
-    },
-    dotsOptions: {
-      type: cfg.dotType,
-      color: cfg.fgColor,
-      gradient,
-    },
-    cornersSquareOptions: {
-      type: cfg.cornerSquareType,
-      color: cfg.fgColor,
-      gradient,
-    },
-    cornersDotOptions: {
-      type: cfg.cornerDotType,
-      color: cfg.fgColor,
-      gradient,
-    },
-    backgroundOptions: {
-      color: cfg.transparentBg ? 'rgba(0,0,0,0)' : cfg.bgColor,
-    },
-  }
-}
-
 export function QrApp() {
   const [cfg, setCfg] = useState<QrConfig>(DEFAULT_CONFIG)
   const [inputValue, setInputValue] = useState<string>(DEFAULT_CONFIG.data)
@@ -273,10 +184,10 @@ export function QrApp() {
   const qrRef = useRef<QRCodeStyling | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Init QR instance
   useEffect(() => {
-    const qr = new QRCodeStyling(buildQrOptions(cfg))
+    const qr = new QRCodeStyling(buildQrCodeStylingOptions({ ...cfg, size: 320 }))
     qrRef.current = qr
+
     if (containerRef.current) {
       containerRef.current.innerHTML = ''
       qr.append(containerRef.current)
@@ -284,9 +195,8 @@ export function QrApp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Update on config change
   useEffect(() => {
-    qrRef.current?.update(buildQrOptions(cfg))
+    qrRef.current?.update(buildQrCodeStylingOptions({ ...cfg, size: 320 }))
   }, [cfg])
 
   const applyPreset = (idx: number) => {
@@ -315,16 +225,11 @@ export function QrApp() {
   }
 
   const handleDownload = async () => {
-    // Scale margin proportionally to download size
-    const scale = downloadSize / 320
-    const exportQr = new QRCodeStyling({
-      ...buildQrOptions(cfg),
-      width: downloadSize,
-      height: downloadSize,
-      margin: Math.round(cfg.margin * scale),
-    })
+    const exportQr = new QRCodeStyling(buildQrCodeStylingOptions({ ...cfg, size: downloadSize }))
     await exportQr.download({ name: `qrcode-${downloadSize}px`, extension: 'png' })
   }
+
+  const imageUrl = `/image?${buildQrImageQuery({ ...cfg, size: downloadSize })}`
 
   return (
     <div className="page">
@@ -589,6 +494,9 @@ export function QrApp() {
           <button className="download-btn" onClick={handleDownload}>
             下载 PNG
           </button>
+          <a className="preview-link-inline" href={imageUrl} target="_blank" rel="noreferrer">
+            在新页面打开当前二维码
+          </a>
           <p className="scan-hint">请用手机扫码验证内容是否正确后再分享</p>
         </main>
       </div>
