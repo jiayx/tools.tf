@@ -178,6 +178,7 @@ export function buildQrCodeStylingOptions(config: QrImageOptions): Partial<Optio
       type: config.dotType,
       color: config.fgColor,
       gradient,
+      roundSize: false,
     },
     cornersSquareOptions: {
       type: config.cornerSquareType,
