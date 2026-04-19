@@ -11,18 +11,18 @@
   "dependencies": {
     "@codemirror/lang-json": "^6.0.1",
     "@uiw/react-codemirror": "^4.23.10",
-    "hono": "^4.11.1",
+    "hono": "catalog:",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "^1.17.1",
+    "@cloudflare/vite-plugin": "catalog:",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^5.0.3",
-    "typescript": "^5.9.2",
-    "vite": "npm:^7.3.0",
-    "vite-ssr-components": "^0.5.1",
-    "wrangler": "^4.54.0"
+    "@vitejs/plugin-react": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-ssr-components": "catalog:",
+    "wrangler": "catalog:"
   }
 }

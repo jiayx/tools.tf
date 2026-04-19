@@ -13,12 +13,12 @@
     "@codemirror/merge": "^6.11.2",
     "@codemirror/state": "^6.5.3",
     "@codemirror/view": "^6.39.7",
-    "hono": "^4.11.1"
+    "hono": "catalog:"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "^1.2.3",
-    "vite": "^6.3.5",
-    "vite-ssr-components": "^0.5.2",
-    "wrangler": "^4.17.0"
+    "@cloudflare/vite-plugin": "catalog:",
+    "vite": "catalog:",
+    "vite-ssr-components": "catalog:",
+    "wrangler": "catalog:"
   }
 }
