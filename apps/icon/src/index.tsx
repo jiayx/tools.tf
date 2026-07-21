@@ -57,7 +57,7 @@ const parseOptions = (query: Record<string, string>, sizeParam?: string) => {
   const parsed = parseIconQuery(query)
   const type = parsed.type
 
-  const size = clamp(parseNumber(sizeParam || query.size, DEFAULTS.size), 16, 512)
+  const size = clamp(parseNumber(sizeParam || query.size, DEFAULTS.size), 16, 1024)
   const angle = clamp(parseNumber(query.angle, DEFAULTS.angle), 0, 360)
   const radius = clamp(parseNumber(query.radius, DEFAULTS.radius), 0, 50)
 
@@ -305,7 +305,7 @@ const IconPage = () => {
           <div class="control">
             <label htmlFor="sizeRange">Export size</label>
             <div class="range">
-              <input id="sizeRange" type="range" min={16} max={512} step={8} value={DEFAULTS.size} data-field="size" />
+              <input id="sizeRange" type="range" min={16} max={1024} step={8} value={DEFAULTS.size} data-field="size" />
               <span data-field-value="size">{DEFAULTS.size}px</span>
             </div>
           </div>
@@ -348,7 +348,7 @@ const IconPage = () => {
               </div>
             </div>
             <div class="chip-row">
-              {[16, 32, 48, 64, 96, 128, 256].map((size) => (
+              {[16, 32, 48, 64, 96, 128, 256, 512, 1024].map((size) => (
                 <div class="chip-group">
                   <a class="chip" href="#" data-size-link data-size={size}>
                     {size}px
