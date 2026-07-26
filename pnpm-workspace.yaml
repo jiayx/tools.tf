@@ -28,3 +28,4 @@ catalog:
 minimumReleaseAgeExclude:
   - '@cloudflare/workers-types@5.20260726.1'
   - '@emnapi/runtime@1.11.3'
+  - qr-code-styling-worker@0.1.2
