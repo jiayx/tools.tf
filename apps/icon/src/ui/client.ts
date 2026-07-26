@@ -1,3 +1,4 @@
+import { localeFromDocument, pick } from '@tools/i18n'
 import { DEFAULTS, PRESETS } from '../config'
 import { ICON_SET_META, getIconSetData, getIconWrapperAttributes, loadIconSet } from '../registry/icon-registry-client'
 import type { IconSetId } from '../registry/icon-types'
@@ -8,6 +9,29 @@ import { buildIconQuery } from '../shared/query'
 import { buildBackgroundParts, buildIconSvg as buildIconSvgMarkup, buildTextSvg } from '../shared/svg'
 
 document.addEventListener('DOMContentLoaded', () => {
+  const locale = localeFromDocument()
+  const messages = pick(locale, {
+    en: {
+      icon: 'Icon',
+      search: (label: string) => `Search ${label.toLowerCase()} icons`,
+      loading: 'Loading icons...',
+      usage: 'Icon usage',
+      copy: 'Copy',
+      copied: 'Copied',
+      failed: 'Failed',
+      download: (size: number, format: string) => `Download ${size}px ${format}`,
+    },
+    zh: {
+      icon: '图标',
+      search: (label: string) => `搜索 ${label} 图标`,
+      loading: '正在加载图标...',
+      usage: '图标用法',
+      copy: '复制',
+      copied: '已复制',
+      failed: '失败',
+      download: (size: number, format: string) => `下载 ${size}px ${format}`,
+    },
+  })
   const preview = document.querySelector<HTMLElement>('[data-preview]')
   const previewCanvas = document.querySelector<HTMLElement>('[data-preview-canvas]')
   const urlInput = document.querySelector<HTMLInputElement>('[data-url]')
@@ -336,8 +360,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const updateIconSearchPlaceholder = () => {
     if (!iconFilter) return
-    const label = ICON_SET_META[getIconSet(state.type)]?.label || 'Icon'
-    iconFilter.placeholder = `Search ${label.toLowerCase()} icons`
+    const label = ICON_SET_META[getIconSet(state.type)]?.label || messages.icon
+    iconFilter.placeholder = messages.search(label)
   }
 
   const setIconLoading = (isLoading: boolean) => {
@@ -346,7 +370,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (iconFilter) {
       iconFilter.disabled = isLoading
       if (isLoading) {
-        iconFilter.placeholder = 'Loading icons...'
+        iconFilter.placeholder = messages.loading
       } else {
         updateIconSearchPlaceholder()
       }
@@ -546,9 +570,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const query = buildQuery().toString()
     const groups = [
       {
-        title: 'Icon usage',
+        title: messages.usage,
         lines: [
-          `<img src="${iconUrl}" alt="Icon" width="${size}" height="${size}" />`,
+          `<img src="${iconUrl}" alt="${messages.icon}" width="${size}" height="${size}" />`,
           `<div class="brand-icon" style="background-image: url('${iconUrl}'); width: ${size}px; height: ${size}px;"></div>`,
         ],
       },
@@ -579,7 +603,7 @@ document.addEventListener('DOMContentLoaded', () => {
         button.type = 'button'
         button.className = 'snippet-copy'
         button.dataset.snippetCopy = 'true'
-        button.textContent = 'Copy'
+        button.textContent = messages.copy
         row.append(code, button)
         groupWrap.append(row)
       })
@@ -605,8 +629,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const size = Number(link.dataset.size || 0)
       if (!size) return
       link.href = `${absoluteBase}${buildUrl(size)}`
-      link.setAttribute('title', `Download ${size}px ${downloadFormat.toUpperCase()}`)
-      link.setAttribute('aria-label', `Download ${size}px ${downloadFormat.toUpperCase()}`)
+      const downloadLabel = messages.download(size, downloadFormat.toUpperCase())
+      link.setAttribute('title', downloadLabel)
+      link.setAttribute('aria-label', downloadLabel)
       if (downloadFormat === 'svg') {
         link.setAttribute('download', `icon-${size}.svg`)
       } else {
@@ -961,18 +986,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetCopyText = () => {
       if (timer) window.clearTimeout(timer)
       timer = window.setTimeout(() => {
-        copyBtn.textContent = 'Copy'
+        copyBtn.textContent = messages.copy
       }, 1200)
     }
 
     copyBtn.addEventListener('click', async () => {
       try {
         await navigator.clipboard.writeText(urlInput.value)
-        copyBtn.textContent = 'Copied'
+        copyBtn.textContent = messages.copied
         resetCopyText()
       } catch (err) {
         console.error(err)
-        copyBtn.textContent = 'Failed'
+        copyBtn.textContent = messages.failed
         resetCopyText()
       }
     })
@@ -988,15 +1013,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!text) return
     try {
       await navigator.clipboard.writeText(text)
-      target.textContent = 'Copied'
+      target.textContent = messages.copied
       window.setTimeout(() => {
-        if (target) target.textContent = 'Copy'
+        if (target) target.textContent = messages.copy
       }, 1200)
     } catch (err) {
       console.error(err)
-      target.textContent = 'Failed'
+      target.textContent = messages.failed
       window.setTimeout(() => {
-        if (target) target.textContent = 'Copy'
+        if (target) target.textContent = messages.copy
       }, 1200)
     }
   })

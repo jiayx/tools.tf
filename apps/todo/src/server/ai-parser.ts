@@ -55,6 +55,7 @@ export const SYSTEM_PROMPT = [
   '- complexity is integer 1-5.',
   '- estimated_hours is total hours.',
   '- steps must be 3-5 items with executable verbs and estimated_hours.',
+  '- Write task titles, contexts, and step titles in the requested locale.',
   '- flags only from: DATE_AMBIGUOUS, MISSING_TIME_DEFAULTED, FUZZY_TIME_DEFAULTED, MISSING_DUE, LOW_CONFIDENCE.',
   '- Use DATE_AMBIGUOUS only when truly uncertain which calendar date is meant (e.g. "12/3" could be Dec 3 or Mar 12).',
   '- confidence range: 0 to 1.',
@@ -197,12 +198,22 @@ const inferKind = (text: string) => {
   return 'generic';
 };
 
-const buildDefaultSteps = (kind: 'exam' | 'writing' | 'coding' | 'generic', estimatedHours: number): TaskStep[] => {
-  const titles: Record<typeof kind, string[]> = {
-    exam: ['整理考点与范围', '完成重点练习与错题', '查漏补缺并复盘', '考前快速回顾'],
-    writing: ['确认题目与资料清单', '搭建结构并写初稿', '修订论证与表达', '最终排版并提交'],
-    coding: ['读需求并拆分任务', '实现核心功能', '测试与修复问题', '整理文档并提交'],
-    generic: ['明确交付要求', '完成主体内容', '自查与修正', '提交并记录结果'],
+const buildDefaultSteps = (
+  kind: 'exam' | 'writing' | 'coding' | 'generic',
+  estimatedHours: number,
+  locale: string,
+): TaskStep[] => {
+  const isChinese = locale.toLowerCase().startsWith('zh');
+  const titles: Record<typeof kind, string[]> = isChinese ? {
+      exam: ['整理考点与范围', '完成重点练习与错题', '查漏补缺并复盘', '考前快速回顾'],
+      writing: ['确认题目与资料清单', '搭建结构并写初稿', '修订论证与表达', '最终排版并提交'],
+      coding: ['读需求并拆分任务', '实现核心功能', '测试与修复问题', '整理文档并提交'],
+      generic: ['明确交付要求', '完成主体内容', '自查与修正', '提交并记录结果'],
+    } : {
+      exam: ['Review the scope and key topics', 'Complete practice and revisit mistakes', 'Fill knowledge gaps and review', 'Do a final quick review'],
+      writing: ['Confirm the topic and sources', 'Outline and write the first draft', 'Revise the argument and wording', 'Format and submit the final version'],
+      coding: ['Review requirements and split the work', 'Implement the core functionality', 'Test and fix issues', 'Finish documentation and submit'],
+      generic: ['Clarify the deliverables', 'Complete the main work', 'Review and correct the result', 'Submit and record the outcome'],
   };
 
   const weights = [0.15, 0.45, 0.25, 0.15];
@@ -234,14 +245,15 @@ const normalizeEstimatedHours = (value: unknown, complexity: number, stepHoursHi
   return COMPLEXITY_BASE_HOURS[complexity] ?? 4.5;
 };
 
-const normalizeSteps = (value: unknown, estimatedHours: number, taskHint: string): TaskStep[] => {
-  const fallback = buildDefaultSteps(inferKind(taskHint), estimatedHours);
+const normalizeSteps = (value: unknown, estimatedHours: number, taskHint: string, locale: string): TaskStep[] => {
+  const isChinese = locale.toLowerCase().startsWith('zh');
+  const fallback = buildDefaultSteps(inferKind(taskHint), estimatedHours, locale);
   if (!Array.isArray(value)) return fallback;
 
   const cleaned = value
     .filter((item) => isObject(item))
     .map((item, index) => {
-      const title = getString(item.title).trim() || `步骤 ${index + 1}`;
+      const title = getString(item.title).trim() || (isChinese ? `步骤 ${index + 1}` : `Step ${index + 1}`);
       const hours = round1(Math.max(0.3, getNumber(item.estimated_hours, 0.3)));
       return {
         id: getString(item.id).trim() || `step_${index + 1}`,
@@ -344,11 +356,14 @@ export const normalizeSingleTask = (
   raw: unknown,
   sourceText: string,
   baseTimezone: string,
-  index: number
+  index: number,
+  locale = 'en',
 ): ParseCandidateTask | null => {
   if (!isObject(raw)) return null;
 
-  const title = getString(raw.title).trim() || `任务 ${index + 1}`;
+  const title = getString(raw.title).trim() || (
+    locale.toLowerCase().startsWith('zh') ? `任务 ${index + 1}` : `Task ${index + 1}`
+  );
   const context = getString(raw.context).trim();
   let flags = parseFlags(raw.flags);
 
@@ -362,7 +377,7 @@ export const normalizeSingleTask = (
         .reduce((sum, item) => sum + Math.max(0, getNumber(item.estimated_hours, 0)), 0)
     : 0;
   const estimatedHours = normalizeEstimatedHours(raw.estimated_hours, complexity, stepHourHint);
-  const steps = normalizeSteps(raw.steps, estimatedHours, `${title} ${context}`);
+  const steps = normalizeSteps(raw.steps, estimatedHours, `${title} ${context}`, locale);
   const confidence = normalizeConfidence(raw.confidence, Boolean(dueResult.due));
 
   if (confidence < 0.5 && !flags.includes('LOW_CONFIDENCE')) {
@@ -459,7 +474,7 @@ export const parseTextToTasksWithAi = async (input: ParseWithAiInput): Promise<P
       }
 
       const normalized = rawTasks
-        .map((task, index) => normalizeSingleTask(task, input.text, input.baseTimezone, index))
+        .map((task, index) => normalizeSingleTask(task, input.text, input.baseTimezone, index, input.locale))
         .filter((task): task is ParseCandidateTask => Boolean(task));
 
       if (normalized.length === 0) {

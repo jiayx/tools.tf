@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@pierre/diffs": "^1.2.12",
+    "@tools/i18n": "workspace:*",
     "hono": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:"

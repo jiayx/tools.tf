@@ -3,6 +3,7 @@ import { useState } from 'react';
 import type { ClientTask, TaskStatus } from '../types';
 import { STATUS_COLOR, STATUS_LABEL, formatDue, isOverdue, hasWarnFlag, warnFlagTip } from '../utils';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { t } from '../i18n';
 
 const COLUMNS: TaskStatus[] = ['upcoming_start', 'in_progress', 'upcoming_due', 'completed'];
 
@@ -120,12 +121,12 @@ function KanbanColumn({
       >
         {tasks.length === 0 && draggedStatus === null && (
           <div className="flex items-center justify-center h-24 text-xs text-gray-700">
-            暂无任务
+            {t('No tasks', '暂无任务')}
           </div>
         )}
         {isDragOver && !isSameColumn && tasks.length === 0 && (
           <div className="flex items-center justify-center h-24 text-xs text-violet-500/60">
-            松开以移入
+            {t('Drop to move here', '松开以移入')}
           </div>
         )}
         {tasks.map((task) => (
@@ -220,7 +221,7 @@ function KanbanCard({
       {task.start_by && task.status !== 'completed' && (
         <div className="text-xs text-gray-600 mb-2 flex items-center gap-1">
           <span>⏱</span>
-          <span>开始 {formatDue(task.start_by)}</span>
+          <span>{t('Start', '开始')} {formatDue(task.start_by)}</span>
         </div>
       )}
 
@@ -228,7 +229,7 @@ function KanbanCard({
       {stepsTotal > 0 && (
         <div className="mb-2">
           <div className="flex justify-between text-xs text-gray-600 mb-1">
-            <span>{stepsDone}/{stepsTotal} 步骤</span>
+            <span>{stepsDone}/{stepsTotal} {t('steps', '步骤')}</span>
             <span>{Math.round(progress * 100)}%</span>
           </div>
           <div className="h-1 bg-gray-800 rounded-full overflow-hidden">
@@ -253,7 +254,7 @@ function KanbanCard({
               type="button"
               onClick={(e) => { e.stopPropagation(); onComplete(); }}
               className="text-xs text-gray-600 hover:text-emerald-400 transition-colors px-1.5 py-0.5 rounded hover:bg-emerald-400/10 cursor-pointer"
-              aria-label="标记完成"
+              aria-label={t('Mark complete', '标记完成')}
             >
               ✓
             </button>
@@ -265,7 +266,7 @@ function KanbanCard({
               setConfirmOpen(true);
             }}
             className="text-xs text-gray-700 hover:text-red-400 transition-colors px-1.5 py-0.5 rounded hover:bg-red-400/10 cursor-pointer opacity-0 group-hover:opacity-100"
-            aria-label="删除"
+            aria-label={t('Delete', '删除')}
           >
             ✕
           </button>
@@ -274,8 +275,8 @@ function KanbanCard({
 
       {confirmOpen && (
         <ConfirmDialog
-          title={`删除「${task.title}」`}
-          message="此操作不可撤销，任务将被永久删除。"
+          title={t(`Delete “${task.title}”`, `删除「${task.title}」`)}
+          message={t('This action cannot be undone. The task will be permanently deleted.', '此操作不可撤销，任务将被永久删除。')}
           onConfirm={() => { setConfirmOpen(false); onDelete(); }}
           onCancel={() => setConfirmOpen(false)}
         />
@@ -286,7 +287,7 @@ function KanbanCard({
 
 function ComplexityDots({ value }: { value: number }) {
   return (
-    <div className="flex items-center gap-0.5" title={`复杂度 ${value}/5`}>
+    <div className="flex items-center gap-0.5" title={t(`Complexity ${value}/5`, `复杂度 ${value}/5`)}>
       {[1, 2, 3, 4, 5].map((i) => (
         <div
           key={i}

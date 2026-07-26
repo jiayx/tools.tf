@@ -1,3 +1,4 @@
+import { pick, type Locale } from '@tools/i18n'
 import type {
   CornerDotType,
   CornerSquareType,
@@ -129,14 +130,20 @@ function parseGradientType(value: string | null): GradientType {
   return value === 'radial' ? 'radial' : 'linear'
 }
 
-export function parseQrImageOptions(searchParams: URLSearchParams): QrImageOptions {
+export function parseQrImageOptions(searchParams: URLSearchParams, locale: Locale = 'en'): QrImageOptions {
   const data = searchParams.get('data') || DEFAULT_DATA
   if (new TextEncoder().encode(data).byteLength > MAX_QR_DATA_BYTES) {
-    throw new QrInputError(`二维码内容不能超过 ${MAX_QR_DATA_BYTES} 字节`)
+    throw new QrInputError(pick(locale, {
+      en: `QR content cannot exceed ${MAX_QR_DATA_BYTES} bytes`,
+      zh: `二维码内容不能超过 ${MAX_QR_DATA_BYTES} 字节`,
+    }))
   }
 
   if (searchParams.has('logo') || searchParams.has('logoUrl')) {
-    throw new QrInputError('公共图片接口不支持远程 Logo，请在页面中本地生成')
+    throw new QrInputError(pick(locale, {
+      en: 'The public image endpoint does not support remote logos. Generate it locally on the page.',
+      zh: '公共图片接口不支持远程 Logo，请在页面中本地生成',
+    }))
   }
 
   return {

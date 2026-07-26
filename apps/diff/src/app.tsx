@@ -1,6 +1,7 @@
 /** @jsxImportSource react */
 import { parseDiffFromFile, type FileDiffOptions, type SupportedLanguages } from '@pierre/diffs'
 import { FileDiff } from '@pierre/diffs/react'
+import { browserLocale, pick } from '@tools/i18n'
 import { useDeferredValue, useMemo, useState } from 'react'
 import { detectLanguage } from './detectLanguage'
 
@@ -27,7 +28,7 @@ export function signOff() {
 `
 
 const LANGUAGES: { label: string; value: SupportedLanguages | 'auto' }[] = [
-  { label: '自动检测', value: 'auto' },
+  { label: 'Auto', value: 'auto' },
   { label: 'TypeScript', value: 'typescript' },
   { label: 'JavaScript', value: 'javascript' },
   { label: 'TSX', value: 'tsx' },
@@ -62,6 +63,51 @@ const diffOptions: FileDiffOptions<undefined> = {
 const countLines = (value: string) => value === '' ? 0 : value.split('\n').length
 
 export function DiffApp() {
+  const locale = browserLocale()
+  const copy = pick(locale, {
+    en: {
+      description: 'Drop in two text blocks and see every change instantly.',
+      auto: 'Auto',
+      language: 'Syntax highlighting language',
+      swap: 'Swap sides',
+      sample: 'Sample text',
+      clear: 'Clear',
+      original: 'Original text',
+      updated: 'Updated text',
+      lines: (count: number) => `${count} lines`,
+      oldPlaceholder: 'Paste the old text here',
+      newPlaceholder: 'Paste the new text here',
+      result: 'Diff result',
+      resultHelp: 'Split view with inline highlighting and automatic folding of unchanged regions.',
+      summary: 'Diff summary',
+      changed: 'Changed',
+      unchanged: 'No differences',
+      tooLarge: 'Each side must contain no more than 500,000 characters',
+      empty: 'Enter text to see the differences',
+      identical: 'The two text blocks are identical',
+    },
+    zh: {
+      description: '把两段文本放进来，立刻看清每一处变化。',
+      auto: '自动检测',
+      language: '语法高亮语言',
+      swap: '交换左右',
+      sample: '示例文本',
+      clear: '清空',
+      original: '原始文本',
+      updated: '更新后文本',
+      lines: (count: number) => `${count} 行`,
+      oldPlaceholder: '在这里粘贴旧版本文本',
+      newPlaceholder: '在这里粘贴新版本文本',
+      result: 'Diff 结果',
+      resultHelp: '分栏展示，支持行内高亮与自动折叠未改动区域。',
+      summary: '差异摘要',
+      changed: '有变化',
+      unchanged: '没有差异',
+      tooLarge: '单侧文本不能超过 500,000 个字符',
+      empty: '输入文本后这里会显示差异',
+      identical: '两段文本完全相同，没有差异',
+    },
+  })
   const [leftText, setLeftText] = useState(SAMPLE_LEFT)
   const [rightText, setRightText] = useState(SAMPLE_RIGHT)
   // 'auto' = follow detection; anything else = user override
@@ -129,27 +175,27 @@ export function DiffApp() {
       <header className="page-header">
         <div className="page-header__title">
           <span className="eyebrow">Diff</span>
-          <span className="page-header__desc">把两段文本丢进来，立刻看清每一处变化。</span>
+          <span className="page-header__desc">{copy.description}</span>
         </div>
         <div className="toolbar">
           <select
             className="lang-select"
-            aria-label="语法高亮语言"
+            aria-label={copy.language}
             value={langPref}
             onChange={(e) => handleLangChange(e.target.value)}
           >
             {LANGUAGES.map((l) => (
-              <option key={l.value} value={l.value}>{l.label}{l.value === 'auto' && langPref === 'auto' ? ` (${detectedLang})` : ''}</option>
+              <option key={l.value} value={l.value}>{l.value === 'auto' ? copy.auto : l.label}{l.value === 'auto' && langPref === 'auto' ? ` (${detectedLang})` : ''}</option>
             ))}
           </select>
           <button type="button" className="ghost-button" onClick={handleSwap}>
-            交换左右
+            {copy.swap}
           </button>
           <button type="button" className="ghost-button" onClick={handleReset}>
-            示例文本
+            {copy.sample}
           </button>
           <button type="button" className="ghost-button" onClick={handleClear}>
-            清空
+            {copy.clear}
           </button>
         </div>
       </header>
@@ -159,27 +205,27 @@ export function DiffApp() {
           <div className="editor-grid">
             <label className="editor-card">
               <div className="editor-card__header">
-                <span className="editor-card__label">原始文本</span>
-                <span className="editor-card__meta">{countLines(leftText)} 行</span>
+                <span className="editor-card__label">{copy.original}</span>
+                <span className="editor-card__meta">{copy.lines(countLines(leftText))}</span>
               </div>
               <textarea
                 value={leftText}
                 onChange={(event) => setLeftText(event.target.value)}
                 spellCheck={false}
-                placeholder="在这里粘贴旧版本文本"
+                placeholder={copy.oldPlaceholder}
               />
             </label>
 
             <label className="editor-card">
               <div className="editor-card__header">
-                <span className="editor-card__label">更新后文本</span>
-                <span className="editor-card__meta">{countLines(rightText)} 行</span>
+                <span className="editor-card__label">{copy.updated}</span>
+                <span className="editor-card__meta">{copy.lines(countLines(rightText))}</span>
               </div>
               <textarea
                 value={rightText}
                 onChange={(event) => setRightText(event.target.value)}
                 spellCheck={false}
-                placeholder="在这里粘贴新版本文本"
+                placeholder={copy.newPlaceholder}
               />
             </label>
           </div>
@@ -188,12 +234,12 @@ export function DiffApp() {
         <div className="panel diff-panel">
           <div className="panel__header panel__header--stacked">
             <div>
-              <h2>Diff 结果</h2>
-              <p>分栏展示，支持行内高亮与自动折叠未改动区域。</p>
+              <h2>{copy.result}</h2>
+              <p>{copy.resultHelp}</p>
             </div>
-            <div className="summary-pills" aria-label="diff summary">
+            <div className="summary-pills" aria-label={copy.summary}>
               <span className={`summary-pill ${summary.changed ? 'summary-pill--active' : ''}`}>
-                {summary.changed ? '有变化' : '没有差异'}
+                {summary.changed ? copy.changed : copy.unchanged}
               </span>
               <span className="summary-pill summary-pill--add">+{summary.additions}</span>
               <span className="summary-pill summary-pill--delete">-{summary.deletions}</span>
@@ -202,11 +248,11 @@ export function DiffApp() {
 
           <div className="diff-shell">
             {tooLarge ? (
-              <div className="diff-empty">单侧文本不能超过 500,000 个字符</div>
+              <div className="diff-empty">{copy.tooLarge}</div>
             ) : isEmpty ? (
-              <div className="diff-empty">输入文本后这里会显示差异</div>
+              <div className="diff-empty">{copy.empty}</div>
             ) : !summary.changed ? (
-              <div className="diff-empty">两段文本完全相同，没有差异</div>
+              <div className="diff-empty">{copy.identical}</div>
             ) : (
               <FileDiff className="diff-view" fileDiff={fileDiff} options={diffOptions} />
             )}

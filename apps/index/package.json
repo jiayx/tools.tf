@@ -8,6 +8,7 @@
     "deploy": "$npm_execpath run build && wrangler deploy"
   },
   "dependencies": {
+    "@tools/i18n": "workspace:*",
     "hono": "catalog:"
   },
   "devDependencies": {

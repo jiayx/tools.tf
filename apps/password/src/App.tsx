@@ -1,5 +1,6 @@
 /** @jsxImportSource react */
-import { useCallback, useEffect, useState } from 'react'
+import { browserLocale, pick, type Locale } from '@tools/i18n'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 const CHAR_SETS = {
   upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
@@ -39,7 +40,7 @@ export const DEFAULT_CONFIG: Config = {
   count: 1,
 }
 
-export function getStrength(password: string): { level: number; label: string; color: string } {
+export function getStrength(password: string, locale: Locale = 'zh'): { level: number; label: string; color: string } {
   let score = 0
   if (password.length >= 8) score++
   if (password.length >= 12) score++
@@ -49,10 +50,10 @@ export function getStrength(password: string): { level: number; label: string; c
   if (/[0-9]/.test(password)) score++
   if (/[^A-Za-z0-9]/.test(password)) score++
 
-  if (score <= 2) return { level: 1, label: '弱', color: '#ef4444' }
-  if (score <= 4) return { level: 2, label: '中', color: '#f59e0b' }
-  if (score <= 5) return { level: 3, label: '强', color: '#10b981' }
-  return { level: 4, label: '极强', color: '#059669' }
+  if (score <= 2) return { level: 1, label: pick(locale, { en: 'Weak', zh: '弱' }), color: '#ef4444' }
+  if (score <= 4) return { level: 2, label: pick(locale, { en: 'Medium', zh: '中' }), color: '#f59e0b' }
+  if (score <= 5) return { level: 3, label: pick(locale, { en: 'Strong', zh: '强' }), color: '#10b981' }
+  return { level: 4, label: pick(locale, { en: 'Very strong', zh: '极强' }), color: '#059669' }
 }
 
 const filterPool = (value: string, excludeAmbiguous: boolean) =>
@@ -102,6 +103,51 @@ function generatePasswords(cfg: Config): string[] {
 }
 
 export function PasswordApp() {
+  const locale = useMemo(() => browserLocale(), [])
+  const copy = useMemo(() => pick(locale, {
+    en: {
+      title: 'Password Generator',
+      description: 'Generate secure random passwords locally in your browser. Nothing is sent to a server.',
+      length: 'Password length',
+      characters: (count: number) => `${count} characters`,
+      characterTypes: 'Character types',
+      upper: 'Uppercase letters',
+      lower: 'Lowercase letters',
+      digits: 'Numbers',
+      symbols: 'Symbols',
+      exclude: 'Exclude ambiguous characters',
+      count: 'Number to generate',
+      items: (count: number) => `${count}`,
+      regenerate: 'Regenerate',
+      copy: 'Copy',
+      copied: 'Copied',
+      copyAll: 'Copy all',
+      copiedAll: 'Copied all',
+      copyError: 'Copy failed. Select the password manually.',
+      privacy: 'Passwords are generated in your browser and never uploaded.',
+    },
+    zh: {
+      title: '密码生成器',
+      description: '在浏览器本地生成安全随机密码，不经过任何服务器',
+      length: '密码长度',
+      characters: (count: number) => `${count} 位`,
+      characterTypes: '字符类型',
+      upper: '大写字母',
+      lower: '小写字母',
+      digits: '数字',
+      symbols: '特殊符号',
+      exclude: '排除易混淆字符',
+      count: '生成数量',
+      items: (count: number) => `${count} 个`,
+      regenerate: '重新生成',
+      copy: '复制',
+      copied: '已复制',
+      copyAll: '复制全部',
+      copiedAll: '已全部复制',
+      copyError: '复制失败，请手动选择密码',
+      privacy: '密码在您的浏览器中生成，不会上传至任何服务器',
+    },
+  }), [locale])
   const [cfg, setCfg] = useState<Config>(DEFAULT_CONFIG)
   const [passwords, setPasswords] = useState<string[]>([])
   const [copied, setCopied] = useState<number | null>(null)
@@ -150,7 +196,7 @@ export function PasswordApp() {
     })
   }
 
-  const strength = passwords[0] ? getStrength(passwords[0]) : null
+  const strength = passwords[0] ? getStrength(passwords[0], locale) : null
   const entropy = estimateEntropy(cfg)
 
   return (
@@ -158,9 +204,9 @@ export function PasswordApp() {
       <header className="page-header">
         <div className="page-header__title">
           <span className="eyebrow">tools.tf</span>
-          <h1 className="page-header__name">密码生成器</h1>
+          <h1 className="page-header__name">{copy.title}</h1>
         </div>
-        <p className="page-header__desc">在浏览器本地生成安全随机密码，不经过任何服务器</p>
+        <p className="page-header__desc">{copy.description}</p>
       </header>
 
       <div className="layout">
@@ -169,7 +215,7 @@ export function PasswordApp() {
           {/* Length */}
           <section className="section">
             <label className="field-label">
-              密码长度 <span className="field-label-value">{cfg.length} 位</span>
+              {copy.length} <span className="field-label-value">{copy.characters(cfg.length)}</span>
             </label>
             <input
               type="range"
@@ -188,7 +234,7 @@ export function PasswordApp() {
 
           {/* Charset */}
           <section className="section">
-            <label className="field-label">字符类型</label>
+            <label className="field-label">{copy.characterTypes}</label>
             <div className="toggle-group">
               <label className="toggle-item">
                 <input
@@ -196,7 +242,7 @@ export function PasswordApp() {
                   checked={cfg.upper}
                   onChange={(e) => update({ upper: e.target.checked })}
                 />
-                <span className="toggle-label">大写字母</span>
+                <span className="toggle-label">{copy.upper}</span>
                 <span className="toggle-example">A–Z</span>
               </label>
               <label className="toggle-item">
@@ -205,7 +251,7 @@ export function PasswordApp() {
                   checked={cfg.lower}
                   onChange={(e) => update({ lower: e.target.checked })}
                 />
-                <span className="toggle-label">小写字母</span>
+                <span className="toggle-label">{copy.lower}</span>
                 <span className="toggle-example">a–z</span>
               </label>
               <label className="toggle-item">
@@ -214,7 +260,7 @@ export function PasswordApp() {
                   checked={cfg.digits}
                   onChange={(e) => update({ digits: e.target.checked })}
                 />
-                <span className="toggle-label">数字</span>
+                <span className="toggle-label">{copy.digits}</span>
                 <span className="toggle-example">0–9</span>
               </label>
               <label className="toggle-item">
@@ -223,7 +269,7 @@ export function PasswordApp() {
                   checked={cfg.symbols}
                   onChange={(e) => update({ symbols: e.target.checked })}
                 />
-                <span className="toggle-label">特殊符号</span>
+                <span className="toggle-label">{copy.symbols}</span>
                 <span className="toggle-example">!@#…</span>
               </label>
               <label className="toggle-item toggle-item--divider">
@@ -232,7 +278,7 @@ export function PasswordApp() {
                   checked={cfg.excludeAmbiguous}
                   onChange={(e) => update({ excludeAmbiguous: e.target.checked })}
                 />
-                <span className="toggle-label">排除易混淆字符</span>
+                <span className="toggle-label">{copy.exclude}</span>
                 <span className="toggle-example">0Ol1I…</span>
               </label>
             </div>
@@ -241,7 +287,7 @@ export function PasswordApp() {
           {/* Count */}
           <section className="section">
             <label className="field-label">
-              生成数量 <span className="field-label-value">{cfg.count} 个</span>
+              {copy.count} <span className="field-label-value">{copy.items(cfg.count)}</span>
             </label>
             <input
               type="range"
@@ -261,7 +307,7 @@ export function PasswordApp() {
           {/* Regenerate */}
           <section className="section section--action">
             <button className="regenerate-btn" onClick={generate}>
-              重新生成
+              {copy.regenerate}
             </button>
           </section>
         </aside>
@@ -295,7 +341,7 @@ export function PasswordApp() {
                   className={`copy-btn${copied === i ? ' copied' : ''}`}
                   onClick={() => copyPassword(pw, i)}
                 >
-                  {copied === i ? '已复制' : '复制'}
+                  {copied === i ? copy.copied : copy.copy}
                 </button>
               </li>
             ))}
@@ -306,12 +352,12 @@ export function PasswordApp() {
               className={`copy-all-btn${copied === -1 ? ' copied' : ''}`}
               onClick={copyAll}
             >
-              {copied === -1 ? '已全部复制' : '复制全部'}
+              {copied === -1 ? copy.copiedAll : copy.copyAll}
             </button>
           )}
 
           <p className={copyError ? 'hint-text hint-text--error' : 'hint-text'} aria-live="polite">
-            {copyError ? '复制失败，请手动选择密码' : '密码在您的浏览器中生成，不会上传至任何服务器'}
+            {copyError ? copy.copyError : copy.privacy}
           </p>
         </main>
       </div>

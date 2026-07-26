@@ -1,4 +1,5 @@
-import { Hono } from 'hono';
+import { pick, resolveLocale } from '@tools/i18n';
+import { Hono, type Context } from 'hono';
 import { renderer } from './renderer';
 import { parseTextToTasksWithAi, type WorkersAiBinding } from './server/ai-parser';
 import { parseTextToTasksWithDeepSeek } from './server/deepseek-parser';
@@ -27,6 +28,9 @@ const app = new Hono<{ Bindings: CloudflareBindings }>();
 
 app.use(renderer);
 
+const requestMessage = (c: Context, en: string, zh: string) =>
+  pick(resolveLocale(c.req.header('Accept-Language')), { en, zh });
+
 const isTaskStatus = (value: unknown): value is TaskStatus => {
   return value === 'upcoming_start' || value === 'upcoming_due' || value === 'in_progress' || value === 'completed';
 };
@@ -52,7 +56,7 @@ app.post('/api/parse', async (c) => {
   const body = (await c.req.json()) as ParseInput;
 
   if (!body.text || !body.text.trim()) {
-    return c.json({ error: 'text 不能为空' }, 400);
+    return c.json({ error: requestMessage(c, 'Text is required', 'text 不能为空') }, 400);
   }
 
   const baseTimezone =
@@ -129,7 +133,7 @@ app.post('/api/tasks/batch', async (c) => {
   const body = (await c.req.json()) as BatchCreateInput;
 
   if (!body.parse_id || !Array.isArray(body.tasks_confirmed)) {
-    return c.json({ error: 'parse_id 与 tasks_confirmed 必填' }, 400);
+    return c.json({ error: requestMessage(c, 'parse_id and tasks_confirmed are required', 'parse_id 与 tasks_confirmed 必填') }, 400);
   }
 
   const existingTasks = await dbGetAllTasks(c.env.DB);
@@ -145,14 +149,18 @@ app.post('/api/tasks/batch', async (c) => {
 
   for (const candidate of body.tasks_confirmed) {
     try {
-      const normalized = normalizeCandidateForCreate(candidate, activeTasks);
+      const normalized = normalizeCandidateForCreate(
+        candidate,
+        activeTasks,
+        resolveLocale(c.req.header('Accept-Language')),
+      );
       const id = makeId('task');
       const nowIso = new Date().toISOString();
 
       const record: TaskRecord = {
         id,
         parse_id: body.parse_id,
-        title: candidate.title.trim() || '未命名任务',
+        title: candidate.title.trim() || requestMessage(c, 'Untitled task', '未命名任务'),
         context: candidate.context || '',
         due_at_utc: normalized.dueUtc,
         due_tz: normalized.due ? normalized.due.timezone : null,
@@ -179,7 +187,9 @@ app.post('/api/tasks/batch', async (c) => {
         estimated_hours: record.estimated_hours,
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : '任务创建失败';
+      const message = error instanceof Error
+        ? error.message
+        : requestMessage(c, 'Failed to create task', '任务创建失败');
       return c.json({ error: message }, 400);
     }
   }
@@ -202,7 +212,7 @@ app.get('/api/tasks/:id', async (c) => {
   const id = c.req.param('id');
   const task = await dbGetTask(c.env.DB, id);
   if (!task) {
-    return c.json({ error: '任务不存在' }, 404);
+    return c.json({ error: requestMessage(c, 'Task not found', '任务不存在') }, 404);
   }
   return c.json({ task: toClientTask(task) });
 });
@@ -211,7 +221,7 @@ app.patch('/api/tasks/:id', async (c) => {
   const id = c.req.param('id');
   const task = await dbGetTask(c.env.DB, id);
   if (!task) {
-    return c.json({ error: '任务不存在' }, 404);
+    return c.json({ error: requestMessage(c, 'Task not found', '任务不存在') }, 404);
   }
 
   const body = (await c.req.json()) as Partial<{
@@ -228,7 +238,7 @@ app.patch('/api/tasks/:id', async (c) => {
   }>;
 
   if (body.status !== undefined && !isTaskStatus(body.status)) {
-    return c.json({ error: 'status 无效' }, 400);
+    return c.json({ error: requestMessage(c, 'Invalid status', 'status 无效') }, 400);
   }
 
   const next: TaskRecord = {
@@ -264,11 +274,11 @@ app.patch('/api/tasks/:id', async (c) => {
 
   if (body.steps) {
     if (body.steps.length < 3 || body.steps.length > 5) {
-      return c.json({ error: 'steps 必须 3-5 条' }, 400);
+      return c.json({ error: requestMessage(c, 'There must be 3 to 5 steps', 'steps 必须 3-5 条') }, 400);
     }
     next.steps = body.steps.map((step, index) => ({
       id: step.id || `step_${index + 1}`,
-      title: step.title.trim() || `步骤 ${index + 1}`,
+      title: step.title.trim() || requestMessage(c, `Step ${index + 1}`, `步骤 ${index + 1}`),
       estimated_hours: Math.max(0.3, Number(step.estimated_hours || 0.3)),
       done: Boolean(step.done),
     }));
@@ -332,7 +342,7 @@ app.delete('/api/tasks/:id', async (c) => {
   const id = c.req.param('id');
   const deleted = await dbDeleteTask(c.env.DB, id);
   if (!deleted) {
-    return c.json({ error: '任务不存在' }, 404);
+    return c.json({ error: requestMessage(c, 'Task not found', '任务不存在') }, 404);
   }
   return c.json({ ok: true });
 });
@@ -341,7 +351,7 @@ app.post('/api/tasks/:id/complete', async (c) => {
   const id = c.req.param('id');
   const task = await dbGetTask(c.env.DB, id);
   if (!task) {
-    return c.json({ error: '任务不存在' }, 404);
+    return c.json({ error: requestMessage(c, 'Task not found', '任务不存在') }, 404);
   }
 
   const next: TaskRecord = {

@@ -1,6 +1,7 @@
 /** @jsxImportSource react */
 import { json } from '@codemirror/lang-json'
 import CodeMirror, { EditorView } from '@uiw/react-codemirror'
+import { browserLocale, pick } from '@tools/i18n'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { minifyJson, type IndentValue, type JsonResult } from './json-format'
 
@@ -11,12 +12,6 @@ const MAX_JSON_LENGTH = 2_000_000
 
 type CopyState = 'idle' | 'success' | 'error'
 
-const INDENT_OPTIONS: Array<{ label: string; value: IndentValue }> = [
-  { label: '2 空格', value: 2 },
-  { label: '4 空格', value: 4 },
-  { label: 'Tab', value: '\t' },
-]
-
 const baseTheme = EditorView.theme({
   '&': { fontSize: '13px', height: '100%' },
   '.cm-scroller': { fontFamily: "'Fira Code', 'Cascadia Code', Consolas, monospace", overflow: 'auto' },
@@ -25,6 +20,47 @@ const baseTheme = EditorView.theme({
 })
 
 export function JsonApp() {
+  const copy = useMemo(() => pick(browserLocale(), {
+    en: {
+      title: 'JSON Formatter',
+      indent: 'Indent',
+      spaces: (count: number) => `${count} spaces`,
+      tab: 'Tab',
+      format: 'Format',
+      minify: 'Minify',
+      copy: 'Copy',
+      copied: 'Copied',
+      copyFailed: 'Copy failed',
+      clear: 'Clear',
+      input: 'Input',
+      output: 'Output',
+      valid: 'Valid',
+      workerFailed: 'The formatting worker failed',
+      tooLarge: 'JSON cannot exceed 2,000,000 characters',
+    },
+    zh: {
+      title: 'JSON 格式化',
+      indent: '缩进',
+      spaces: (count: number) => `${count} 空格`,
+      tab: '制表符',
+      format: '格式化',
+      minify: '压缩',
+      copy: '复制',
+      copied: '已复制',
+      copyFailed: '复制失败',
+      clear: '清空',
+      input: '输入',
+      output: '输出',
+      valid: '有效',
+      workerFailed: '格式化 Worker 运行失败',
+      tooLarge: 'JSON 不能超过 2,000,000 个字符',
+    },
+  }), [])
+  const indentOptions = useMemo<Array<{ label: string; value: IndentValue }>>(() => [
+    { label: copy.spaces(2), value: 2 },
+    { label: copy.spaces(4), value: 4 },
+    { label: copy.tab, value: '\t' },
+  ], [copy])
   const [input, setInput] = useState('')
   const [indent, setIndent] = useState<IndentValue>(2)
   const [result, setResult] = useState<JsonResult | null>(null)
@@ -52,7 +88,7 @@ export function JsonApp() {
       }
     }
     worker.onerror = () => {
-      setResult({ ok: false, error: '格式化 Worker 运行失败' })
+      setResult({ ok: false, error: copy.workerFailed })
     }
 
     return () => {
@@ -62,7 +98,7 @@ export function JsonApp() {
         window.clearTimeout(copyTimeoutRef.current)
       }
     }
-  }, [])
+  }, [copy.workerFailed])
 
   useEffect(() => {
     const requestId = ++requestIdRef.current
@@ -71,7 +107,7 @@ export function JsonApp() {
       return
     }
     if (input.length > MAX_JSON_LENGTH) {
-      setResult({ ok: false, error: 'JSON 不能超过 2,000,000 个字符' })
+      setResult({ ok: false, error: copy.tooLarge })
       return
     }
 
@@ -80,7 +116,7 @@ export function JsonApp() {
     }, FORMAT_DEBOUNCE_MS)
 
     return () => window.clearTimeout(timer)
-  }, [input, indent])
+  }, [copy.tooLarge, input, indent])
 
   const outputValue = result?.ok ? result.value : ''
 
@@ -117,20 +153,20 @@ export function JsonApp() {
       <div className="topbar">
         <div className="topbar__title">
           <span className="eyebrow">tools.tf</span>
-          <h1 className="page-header__name">JSON 格式化</h1>
+          <h1 className="page-header__name">{copy.title}</h1>
         </div>
         <div className="topbar__actions">
           <label className="indent-label">
-            缩进
+            {copy.indent}
             <select
               className="indent-select"
               value={String(indent)}
               onChange={(e) => {
-                const next = INDENT_OPTIONS.find((option) => String(option.value) === e.target.value)
+                const next = indentOptions.find((option) => String(option.value) === e.target.value)
                 setIndent(next?.value ?? 2)
               }}
             >
-              {INDENT_OPTIONS.map((option) => (
+              {indentOptions.map((option) => (
                 <option key={String(option.value)} value={String(option.value)}>
                   {option.label}
                 </option>
@@ -138,20 +174,20 @@ export function JsonApp() {
             </select>
           </label>
           <button className="btn" onClick={handleFormat} disabled={!result?.ok}>
-            格式化
+            {copy.format}
           </button>
           <button className="btn" onClick={handleMinify} disabled={!result?.ok}>
-            压缩
+            {copy.minify}
           </button>
           <button
             className={`btn btn--primary${copyState === 'success' ? ' btn--copied' : ''}${copyState === 'error' ? ' btn--error' : ''}`}
             onClick={handleCopy}
             disabled={!outputValue}
           >
-            {copyState === 'success' ? '已复制' : copyState === 'error' ? '复制失败' : '复制'}
+            {copyState === 'success' ? copy.copied : copyState === 'error' ? copy.copyFailed : copy.copy}
           </button>
           <button className="btn btn--ghost" onClick={handleClear} disabled={!input}>
-            清空
+            {copy.clear}
           </button>
         </div>
       </div>
@@ -166,7 +202,7 @@ export function JsonApp() {
       <div className="editors">
         {/* Input */}
         <div className="editor-wrap">
-          <div className="editor-label">输入</div>
+          <div className="editor-label">{copy.input}</div>
           <div className="editor-box">
             <CodeMirror
               value={input}
@@ -187,9 +223,9 @@ export function JsonApp() {
         {/* Output */}
         <div className="editor-wrap">
           <div className="editor-label">
-            输出
+            {copy.output}
             {result?.ok && (
-              <span className="editor-label__badge editor-label__badge--ok">✓ 有效</span>
+              <span className="editor-label__badge editor-label__badge--ok">✓ {copy.valid}</span>
             )}
           </div>
           <div className={`editor-box${result && !result.ok ? ' editor-box--error' : ''}`}>

@@ -6,7 +6,8 @@ import QRCodeStyling, {
   type ErrorCorrectionLevel,
   type GradientType,
 } from 'qr-code-styling-worker'
-import { useEffect, useRef, useState } from 'react'
+import { browserLocale, pick } from '@tools/i18n'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   DEFAULT_CONFIG,
   type QrConfig,
@@ -141,24 +142,26 @@ const PRESETS: Preset[] = [
   },
 ]
 
-const DOT_TYPES: { label: string; value: DotType }[] = [
-  { label: '方形', value: 'square' },
-  { label: '圆形', value: 'dots' },
-  { label: '圆角', value: 'rounded' },
-  { label: '优雅', value: 'classy' },
-  { label: '优雅圆角', value: 'classy-rounded' },
-  { label: '菱形', value: 'extra-rounded' },
+type LocalizedLabel = { en: string; zh: string }
+
+const DOT_TYPES: { label: LocalizedLabel; value: DotType }[] = [
+  { label: { en: 'Square', zh: '方形' }, value: 'square' },
+  { label: { en: 'Dots', zh: '圆形' }, value: 'dots' },
+  { label: { en: 'Rounded', zh: '圆角' }, value: 'rounded' },
+  { label: { en: 'Classy', zh: '优雅' }, value: 'classy' },
+  { label: { en: 'Classy rounded', zh: '优雅圆角' }, value: 'classy-rounded' },
+  { label: { en: 'Extra rounded', zh: '菱形' }, value: 'extra-rounded' },
 ]
 
-const CORNER_SQUARE_TYPES: { label: string; value: CornerSquareType }[] = [
-  { label: '方形', value: 'square' },
-  { label: '点形', value: 'dot' },
-  { label: '大圆角', value: 'extra-rounded' },
+const CORNER_SQUARE_TYPES: { label: LocalizedLabel; value: CornerSquareType }[] = [
+  { label: { en: 'Square', zh: '方形' }, value: 'square' },
+  { label: { en: 'Dot', zh: '点形' }, value: 'dot' },
+  { label: { en: 'Rounded', zh: '大圆角' }, value: 'extra-rounded' },
 ]
 
-const CORNER_DOT_TYPES: { label: string; value: CornerDotType }[] = [
-  { label: '方形', value: 'square' },
-  { label: '圆形', value: 'dot' },
+const CORNER_DOT_TYPES: { label: LocalizedLabel; value: CornerDotType }[] = [
+  { label: { en: 'Square', zh: '方形' }, value: 'square' },
+  { label: { en: 'Round', zh: '圆形' }, value: 'dot' },
 ]
 
 const ERROR_LEVELS: { label: string; value: ErrorCorrectionLevel }[] = [
@@ -178,6 +181,75 @@ const MAX_LOGO_BYTES = 512 * 1024
 const ALLOWED_LOGO_TYPES = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp'])
 
 export function QrApp() {
+  const locale = useMemo(() => browserLocale(), [])
+  const copy = useMemo(() => pick(locale, {
+    en: {
+      title: 'QR Code Generator',
+      description: 'Enter content, customize the style, and create a polished QR code.',
+      content: 'Content',
+      placeholder: 'Enter text or a link...',
+      presets: 'Theme presets',
+      foreground: 'Foreground',
+      solid: 'Solid',
+      gradient: 'Gradient',
+      linear: 'Linear',
+      radial: 'Radial',
+      background: 'Background',
+      transparent: 'Transparent',
+      margin: 'Margin',
+      none: 'None',
+      large: 'Large',
+      dots: 'Dot style',
+      cornerSquare: 'Finder frame style',
+      cornerDot: 'Finder dot style',
+      correction: 'Error correction',
+      logo: 'Embed a logo (optional)',
+      replace: 'Replace image',
+      upload: 'Upload image',
+      remove: 'Remove',
+      logoHint: 'Error correction is set to H to keep the code scannable.',
+      download: 'Download PNG',
+      localLogo: 'QR codes with logos are generated only in your browser. Use the download button to save.',
+      open: 'Open the current QR code in a new page',
+      scan: 'Scan the code with your phone to verify it before sharing.',
+      invalidLogo: 'Logo must be PNG, JPEG, GIF, or WebP',
+      logoTooLarge: 'Logo cannot exceed 512KB',
+      generateFailed: 'QR generation failed. Shorten the content or remove the logo and try again.',
+    },
+    zh: {
+      title: 'QR Code 生成器',
+      description: '输入内容，定制样式，生成美观的二维码',
+      content: '内容',
+      placeholder: '输入文字或链接...',
+      presets: '预设主题',
+      foreground: '前景色',
+      solid: '纯色',
+      gradient: '渐变',
+      linear: '线性',
+      radial: '径向',
+      background: '背景色',
+      transparent: '透明',
+      margin: '边距',
+      none: '无',
+      large: '大',
+      dots: '点阵形状',
+      cornerSquare: '定位框样式',
+      cornerDot: '定位点样式',
+      correction: '容错等级',
+      logo: '嵌入 Logo（可选）',
+      replace: '更换图片',
+      upload: '上传图片',
+      remove: '移除',
+      logoHint: '已启用 H 级容错以确保可扫性',
+      download: '下载 PNG',
+      localLogo: '带 Logo 的二维码仅在浏览器本地生成，请使用下载按钮保存',
+      open: '在新页面打开当前二维码',
+      scan: '请用手机扫码验证内容是否正确后再分享',
+      invalidLogo: 'Logo 仅支持 PNG、JPEG、GIF 或 WebP',
+      logoTooLarge: 'Logo 不能超过 512KB',
+      generateFailed: '二维码生成失败，请缩短内容或移除 Logo 后重试',
+    },
+  }), [locale])
   const [cfg, setCfg] = useState<QrConfig>(DEFAULT_CONFIG)
   const [inputValue, setInputValue] = useState<string>(DEFAULT_CONFIG.data)
   const [activePreset, setActivePreset] = useState<number>(1) // Ocean
@@ -221,12 +293,12 @@ export function QrApp() {
     const file = e.target.files?.[0]
     if (!file) return
     if (!ALLOWED_LOGO_TYPES.has(file.type)) {
-      setError('Logo 仅支持 PNG、JPEG、GIF 或 WebP')
+      setError(copy.invalidLogo)
       e.target.value = ''
       return
     }
     if (file.size > MAX_LOGO_BYTES) {
-      setError('Logo 不能超过 512KB')
+      setError(copy.logoTooLarge)
       e.target.value = ''
       return
     }
@@ -245,7 +317,7 @@ export function QrApp() {
       const exportQr = new QRCodeStyling(buildQrCodeStylingOptions({ ...cfg, size: downloadSize }))
       await exportQr.download({ name: `qrcode-${downloadSize}px`, extension: 'png' })
     } catch {
-      setError('二维码生成失败，请缩短内容或移除 Logo 后重试')
+      setError(copy.generateFailed)
     }
   }
 
@@ -256,9 +328,9 @@ export function QrApp() {
       <header className="page-header">
         <div className="page-header__title">
           <span className="eyebrow">tools.tf</span>
-          <h1 className="page-header__name">QR Code 生成器</h1>
+          <h1 className="page-header__name">{copy.title}</h1>
         </div>
-        <p className="page-header__desc">输入内容，定制样式，生成美观的二维码</p>
+        <p className="page-header__desc">{copy.description}</p>
       </header>
 
       <div className="layout">
@@ -266,11 +338,11 @@ export function QrApp() {
         <aside className="panel">
           {/* Input */}
           <section className="section">
-            <label className="field-label">内容</label>
+            <label className="field-label">{copy.content}</label>
             <textarea
               className="input"
               rows={3}
-              placeholder="输入文字或链接..."
+              placeholder={copy.placeholder}
               value={inputValue}
               onChange={(e) => {
                 const nextValue = e.target.value
@@ -291,7 +363,7 @@ export function QrApp() {
 
           {/* Presets */}
           <section className="section">
-            <label className="field-label">预设主题</label>
+            <label className="field-label">{copy.presets}</label>
             <div className="presets">
               {PRESETS.map((p, i) => (
                 <button
@@ -309,20 +381,20 @@ export function QrApp() {
 
           {/* Foreground Color */}
           <section className="section">
-            <label className="field-label">前景色</label>
+            <label className="field-label">{copy.foreground}</label>
             <div className="seg-row">
               <div className="seg">
                 <button
                   className={`seg-btn${!cfg.useGradient ? ' active' : ''}`}
                   onClick={() => update({ useGradient: false, fgColor: cfg.gradientColor1 })}
                 >
-                  纯色
+                  {copy.solid}
                 </button>
                 <button
                   className={`seg-btn${cfg.useGradient ? ' active' : ''}`}
                   onClick={() => update({ useGradient: true })}
                 >
-                  渐变
+                  {copy.gradient}
                 </button>
               </div>
               <input
@@ -348,28 +420,28 @@ export function QrApp() {
                 disabled={!cfg.useGradient}
                 onChange={(e) => update({ gradientType: e.target.value as GradientType })}
               >
-                <option value="linear">线性</option>
-                <option value="radial">径向</option>
+                <option value="linear">{copy.linear}</option>
+                <option value="radial">{copy.radial}</option>
               </select>
             </div>
           </section>
 
           {/* Background */}
           <section className="section">
-            <label className="field-label">背景色</label>
+            <label className="field-label">{copy.background}</label>
             <div className="seg-row">
               <div className="seg">
                 <button
                   className={`seg-btn${!cfg.transparentBg ? ' active' : ''}`}
                   onClick={() => update({ transparentBg: false })}
                 >
-                  纯色
+                  {copy.solid}
                 </button>
                 <button
                   className={`seg-btn${cfg.transparentBg ? ' active' : ''}`}
                   onClick={() => update({ transparentBg: true })}
                 >
-                  透明
+                  {copy.transparent}
                 </button>
               </div>
               <div className={`color-preview${cfg.transparentBg ? ' color-preview--transparent' : ''}`}>
@@ -388,7 +460,7 @@ export function QrApp() {
           {/* Margin */}
           <section className="section">
             <label className="field-label">
-              边距 <span className="field-label-value">{cfg.margin}px</span>
+              {copy.margin} <span className="field-label-value">{cfg.margin}px</span>
             </label>
             <input
               type="range"
@@ -400,14 +472,14 @@ export function QrApp() {
               onChange={(e) => update({ margin: Number(e.target.value) })}
             />
             <div className="slider-hints">
-              <span>无</span>
-              <span>大</span>
+              <span>{copy.none}</span>
+              <span>{copy.large}</span>
             </div>
           </section>
 
           {/* Dot Style */}
           <section className="section">
-            <label className="field-label">点阵形状</label>
+            <label className="field-label">{copy.dots}</label>
             <div className="chip-group">
               {DOT_TYPES.map((d) => (
                 <button
@@ -415,7 +487,7 @@ export function QrApp() {
                   className={`chip${cfg.dotType === d.value ? ' active' : ''}`}
                   onClick={() => update({ dotType: d.value })}
                 >
-                  {d.label}
+                  {pick(locale, d.label)}
                 </button>
               ))}
             </div>
@@ -424,7 +496,7 @@ export function QrApp() {
           {/* Corner Styles */}
           <section className="section two-col">
             <div>
-              <label className="field-label">定位框样式</label>
+              <label className="field-label">{copy.cornerSquare}</label>
               <div className="chip-group">
                 {CORNER_SQUARE_TYPES.map((d) => (
                   <button
@@ -432,13 +504,13 @@ export function QrApp() {
                     className={`chip${cfg.cornerSquareType === d.value ? ' active' : ''}`}
                     onClick={() => update({ cornerSquareType: d.value })}
                   >
-                    {d.label}
+                    {pick(locale, d.label)}
                   </button>
                 ))}
               </div>
             </div>
             <div>
-              <label className="field-label">定位点样式</label>
+              <label className="field-label">{copy.cornerDot}</label>
               <div className="chip-group">
                 {CORNER_DOT_TYPES.map((d) => (
                   <button
@@ -446,7 +518,7 @@ export function QrApp() {
                     className={`chip${cfg.cornerDotType === d.value ? ' active' : ''}`}
                     onClick={() => update({ cornerDotType: d.value })}
                   >
-                    {d.label}
+                    {pick(locale, d.label)}
                   </button>
                 ))}
               </div>
@@ -455,7 +527,7 @@ export function QrApp() {
 
           {/* Error Correction */}
           <section className="section">
-            <label className="field-label">容错等级</label>
+            <label className="field-label">{copy.correction}</label>
             <div className="chip-group">
               {ERROR_LEVELS.map((e) => (
                 <button
@@ -471,22 +543,22 @@ export function QrApp() {
 
           {/* Logo */}
           <section className="section">
-            <label className="field-label">嵌入 Logo（可选）</label>
+            <label className="field-label">{copy.logo}</label>
             <div className="logo-upload">
               <label className="upload-btn">
                 <input type="file" accept="image/*" onChange={handleLogoUpload} />
-                {cfg.logoUrl ? '更换图片' : '上传图片'}
+                {cfg.logoUrl ? copy.replace : copy.upload}
               </label>
               {cfg.logoUrl && (
                 <button
                   className="remove-btn"
                   onClick={() => update({ logoUrl: '', errorLevel: 'M' })}
                 >
-                  移除
+                  {copy.remove}
                 </button>
               )}
               {cfg.logoUrl && (
-                <span className="hint">已启用 H 级容错以确保可扫性</span>
+                <span className="hint">{copy.logoHint}</span>
               )}
             </div>
           </section>
@@ -512,17 +584,17 @@ export function QrApp() {
             </div>
           </div>
           <button className="download-btn" onClick={handleDownload}>
-            下载 PNG
+            {copy.download}
           </button>
           {cfg.logoUrl ? (
-            <p className="scan-hint">带 Logo 的二维码仅在浏览器本地生成，请使用下载按钮保存</p>
+            <p className="scan-hint">{copy.localLogo}</p>
           ) : (
             <a className="preview-link-inline" href={imageUrl} target="_blank" rel="noreferrer">
-              在新页面打开当前二维码
+              {copy.open}
             </a>
           )}
           {error && <p className="error-message" role="alert">{error}</p>}
-          <p className="scan-hint">请用手机扫码验证内容是否正确后再分享</p>
+          <p className="scan-hint">{copy.scan}</p>
         </main>
       </div>
     </div>

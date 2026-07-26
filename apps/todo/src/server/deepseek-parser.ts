@@ -88,7 +88,7 @@ export async function parseTextToTasksWithDeepSeek(
   }
 
   const normalized = rawTasks
-    .map((task, index) => normalizeSingleTask(task, input.text, input.baseTimezone, index))
+    .map((task, index) => normalizeSingleTask(task, input.text, input.baseTimezone, index, input.locale))
     .filter((task): task is ParseCandidateTask => Boolean(task));
 
   for (const t of normalized) {

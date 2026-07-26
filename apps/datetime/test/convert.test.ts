@@ -81,7 +81,7 @@ describe('parseTime — error cases', () => {
 
   test('invalid timezone returns error', () => {
     const r = parseTime('tomorrow 9am', 'Mars/Base', 'en', NOW)
-    expect(r).toEqual({ error: '原始时区无效' })
+    expect(r).toEqual({ error: 'The source timezone is invalid' })
   })
 })
 

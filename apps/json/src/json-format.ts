@@ -9,7 +9,7 @@ export function formatJson(raw: string, indent: IndentValue): JsonResult {
     const parsed = JSON.parse(raw)
     return { ok: true, value: JSON.stringify(parsed, null, indent) }
   } catch (error) {
-    return { ok: false, error: error instanceof Error ? error.message : 'JSON 无效' }
+    return { ok: false, error: error instanceof Error ? error.message : 'Invalid JSON' }
   }
 }
 
@@ -17,6 +17,6 @@ export function minifyJson(raw: string): JsonResult {
   try {
     return { ok: true, value: JSON.stringify(JSON.parse(raw)) }
   } catch (error) {
-    return { ok: false, error: error instanceof Error ? error.message : 'JSON 无效' }
+    return { ok: false, error: error instanceof Error ? error.message : 'Invalid JSON' }
   }
 }

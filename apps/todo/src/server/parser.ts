@@ -327,15 +327,27 @@ const parseDate = (
   return { date: null, flags: ['MISSING_DUE'] };
 };
 
-const buildSteps = (kind: 'exam' | 'writing' | 'coding' | 'generic', estimatedHours: number): TaskStep[] => {
-  const templates: Record<typeof kind, string[]> = {
-    exam: ['整理考点与范围', '完成重点练习与错题', '查漏补缺并复盘', '考前快速回顾'],
-    writing: ['确认题目与资料清单', '搭建结构并写初稿', '修订论证与表达', '最终排版并提交'],
-    coding: ['读需求并拆分任务', '实现核心功能', '测试与修复问题', '整理文档并提交'],
-    generic: ['明确交付要求', '完成主体内容', '自查与修正', '提交并记录结果'],
+const buildSteps = (
+  kind: 'exam' | 'writing' | 'coding' | 'generic',
+  estimatedHours: number,
+  locale: Locale,
+): TaskStep[] => {
+  const templates: Record<Locale, Record<typeof kind, string[]>> = {
+    en: {
+      exam: ['Review the scope and key topics', 'Complete practice and revisit mistakes', 'Fill knowledge gaps and review', 'Do a final quick review'],
+      writing: ['Confirm the topic and sources', 'Outline and write the first draft', 'Revise the argument and wording', 'Format and submit the final version'],
+      coding: ['Review requirements and split the work', 'Implement the core functionality', 'Test and fix issues', 'Finish documentation and submit'],
+      generic: ['Clarify the deliverables', 'Complete the main work', 'Review and correct the result', 'Submit and record the outcome'],
+    },
+    zh: {
+      exam: ['整理考点与范围', '完成重点练习与错题', '查漏补缺并复盘', '考前快速回顾'],
+      writing: ['确认题目与资料清单', '搭建结构并写初稿', '修订论证与表达', '最终排版并提交'],
+      coding: ['读需求并拆分任务', '实现核心功能', '测试与修复问题', '整理文档并提交'],
+      generic: ['明确交付要求', '完成主体内容', '自查与修正', '提交并记录结果'],
+    },
   };
 
-  const titles = templates[kind];
+  const titles = templates[locale][kind];
   const weights = [0.15, 0.45, 0.25, 0.15];
   const steps = titles.map((title, index) => ({
     id: `step_${index + 1}`,
@@ -368,6 +380,7 @@ const splitCandidates = (text: string) => {
 };
 
 export const parseTextToTasks = (text: string, options: ParseOptions): ParseCandidateTask[] => {
+  const locale: Locale = options.locale.toLowerCase().startsWith('zh') ? 'zh' : 'en';
   const baseTimezone = isValidTimeZone(options.baseTimezone)
     ? options.baseTimezone
     : Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -398,7 +411,7 @@ export const parseTextToTasks = (text: string, options: ParseOptions): ParseCand
     const complexity = estimateComplexity(line);
     const estimatedHours = estimateHoursByComplexity(complexity, line);
     const kind = inferTaskKind(line);
-    const steps = buildSteps(kind, estimatedHours);
+    const steps = buildSteps(kind, estimatedHours, locale);
     const confidence = buildConfidence(line, hasDate);
 
     if (confidence < 0.5 && !flags.includes('LOW_CONFIDENCE')) {
@@ -436,10 +449,10 @@ export const parseTextToTasks = (text: string, options: ParseOptions): ParseCand
   }
 
   if (tasks.length === 0) {
-    const fallbackTitle = text.trim().slice(0, 60) || '未命名任务';
+    const fallbackTitle = text.trim().slice(0, 60) || (locale === 'zh' ? '未命名任务' : 'Untitled task');
     const complexity = 3;
     const estimatedHours = 4;
-    const steps = buildSteps('generic', estimatedHours);
+    const steps = buildSteps('generic', estimatedHours, locale);
     tasks.push({
       id: makeId('candidate'),
       title: normalizeTitle(fallbackTitle),
@@ -458,14 +471,14 @@ export const parseTextToTasks = (text: string, options: ParseOptions): ParseCand
   return tasks;
 };
 
-const normalizeSteps = (steps: TaskStep[], estimatedHours: number) => {
+const normalizeSteps = (steps: TaskStep[], estimatedHours: number, locale: Locale) => {
   if (steps.length < 3 || steps.length > 5) {
-    throw new Error('steps 必须在 3 到 5 条之间');
+    throw new Error(locale === 'zh' ? 'steps 必须在 3 到 5 条之间' : 'There must be 3 to 5 steps');
   }
 
   const cleaned = steps.map((step, index) => ({
     id: step.id || `step_${index + 1}`,
-    title: step.title.trim() || `步骤 ${index + 1}`,
+    title: step.title.trim() || (locale === 'zh' ? `步骤 ${index + 1}` : `Step ${index + 1}`),
     estimated_hours: round1(Math.max(0.3, Number(step.estimated_hours || 0.3))),
     done: Boolean(step.done),
   }));
@@ -481,11 +494,12 @@ const normalizeSteps = (steps: TaskStep[], estimatedHours: number) => {
 
 export const normalizeCandidateForCreate = (
   candidate: ParseCandidateTask,
-  existingTasks: { start_by_utc: string | null; start_by_tz: string | null; estimated_hours: number }[] = []
+  existingTasks: { start_by_utc: string | null; start_by_tz: string | null; estimated_hours: number }[] = [],
+  locale: Locale = 'en',
 ) => {
   const complexity = clamp(Math.round(candidate.complexity), 1, 5);
   const estimatedHours = round1(Math.max(0.5, Number(candidate.estimated_hours || 0.5)));
-  const steps = normalizeSteps(candidate.steps, estimatedHours);
+  const steps = normalizeSteps(candidate.steps, estimatedHours, locale);
 
   const due = candidate.due;
   const dueUtc = due ? zonedDateTimeToUtc(due.date, due.time, due.timezone).toISOString() : null;
@@ -516,3 +530,4 @@ export const deriveDueFromUtc = (due_at_utc: string | null, due_tz: string | nul
   if (!due_at_utc || !due_tz) return null;
   return formatUtcToZoned(due_at_utc, due_tz);
 };
+import type { Locale } from '@tools/i18n';

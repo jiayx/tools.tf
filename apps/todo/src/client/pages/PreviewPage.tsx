@@ -3,6 +3,7 @@ import { useState } from 'react';
 import type { ParseCandidateTask, ParseResponse, TaskFlag } from '../types';
 import { batchCreateTasks } from '../api';
 import { FLAG_COLOR, FLAG_LABEL, complexityLabel, formatDue } from '../utils';
+import { t } from '../i18n';
 
 type Props = {
   result: ParseResponse;
@@ -48,7 +49,7 @@ export function PreviewPage({ result, onConfirmed, onBack }: Props) {
   async function handleConfirm() {
     const confirmed = tasks.filter((t) => selected.has(t.id));
     if (confirmed.length === 0) {
-      setError('请至少选择一个任务');
+      setError(t('Select at least one task', '请至少选择一个任务'));
       return;
     }
     setError(null);
@@ -57,7 +58,7 @@ export function PreviewPage({ result, onConfirmed, onBack }: Props) {
       await batchCreateTasks(result.parse_id, confirmed);
       onConfirmed();
     } catch (e) {
-      setError(e instanceof Error ? e.message : '创建失败，请重试');
+      setError(e instanceof Error ? e.message : t('Creation failed. Try again.', '创建失败，请重试'));
     } finally {
       setLoading(false);
     }
@@ -71,23 +72,25 @@ export function PreviewPage({ result, onConfirmed, onBack }: Props) {
         {/* Top bar */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl font-semibold">解析预览</h2>
+            <h2 className="text-xl font-semibold">{t('Parse preview', '解析预览')}</h2>
             <p className="text-sm text-gray-400 mt-0.5">
-              共识别到 <span className="text-violet-400 font-medium">{tasks.length}</span> 个候选任务，
-              已选 <span className="text-violet-400 font-medium">{selected.size}</span> 个
+              {t('Found ', '共识别到 ')}<span className="text-violet-400 font-medium">{tasks.length}</span>
+              {t(' candidate tasks; ', ' 个候选任务，')}
+              {t('selected ', '已选 ')}<span className="text-violet-400 font-medium">{selected.size}</span>
+              {t('.', ' 个')}
               {result.parse_engine === 'workers_ai' && (
                 <span className="ml-2 px-2 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-400 text-xs">
-                  AI 引擎
+                  {t('AI engine', 'AI 引擎')}
                 </span>
               )}
             </p>
           </div>
           <div className="flex items-center gap-2">
             <button type="button" onClick={selectAll} className="text-xs text-gray-400 hover:text-gray-200 px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
-              全选
+              {t('Select all', '全选')}
             </button>
             <button type="button" onClick={selectNone} className="text-xs text-gray-400 hover:text-gray-200 px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
-              全不选
+              {t('Select none', '全不选')}
             </button>
           </div>
         </div>
@@ -117,7 +120,7 @@ export function PreviewPage({ result, onConfirmed, onBack }: Props) {
               onClick={onBack}
               className="px-4 py-2 rounded-xl text-sm text-gray-400 hover:text-gray-200 hover:bg-white/5 transition-colors cursor-pointer"
             >
-              返回重新输入
+              {t('Back to input', '返回重新输入')}
             </button>
             <button
               type="button"
@@ -125,7 +128,9 @@ export function PreviewPage({ result, onConfirmed, onBack }: Props) {
               disabled={loading || selected.size === 0}
               className="px-6 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold transition-all shadow-lg shadow-violet-500/20 flex items-center gap-2 cursor-pointer"
             >
-              {loading ? '创建中…' : `确认创建 ${selected.size} 个任务 →`}
+              {loading
+                ? t('Creating…', '创建中…')
+                : t(`Create ${selected.size} tasks →`, `确认创建 ${selected.size} 个任务 →`)}
             </button>
           </div>
         </div>
@@ -190,7 +195,7 @@ function TaskCard({
                   onClick={onEdit}
                   className="text-xs text-gray-500 hover:text-violet-400 px-2 py-1 rounded-lg hover:bg-white/5 transition-colors flex-shrink-0 cursor-pointer"
                 >
-                  编辑
+                  {t('Edit', '编辑')}
                 </button>
               </div>
 
@@ -200,19 +205,19 @@ function TaskCard({
 
               <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-400">
                 <span>
-                  截止：<span className="text-gray-300">{task.due ? formatDue(task.due) : '未设置'}</span>
+                  {t('Due: ', '截止：')}<span className="text-gray-300">{task.due ? formatDue(task.due) : t('Not set', '未设置')}</span>
                 </span>
                 <span>
-                  开始：<span className="text-gray-300">{task.start_by ? formatDue(task.start_by) : '—'}</span>
+                  {t('Start: ', '开始：')}<span className="text-gray-300">{task.start_by ? formatDue(task.start_by) : '—'}</span>
                 </span>
                 <span>
-                  复杂度：<span className="text-gray-300">{complexityLabel(task.complexity)}</span>
+                  {t('Complexity: ', '复杂度：')}<span className="text-gray-300">{complexityLabel(task.complexity)}</span>
                 </span>
                 <span>
-                  耗时：<span className="text-gray-300">{task.estimated_hours}h</span>
+                  {t('Duration: ', '耗时：')}<span className="text-gray-300">{task.estimated_hours}h</span>
                 </span>
                 <span>
-                  置信度：<span className={task.confidence >= 0.7 ? 'text-emerald-400' : 'text-orange-400'}>
+                  {t('Confidence: ', '置信度：')}<span className={task.confidence >= 0.7 ? 'text-emerald-400' : 'text-orange-400'}>
                     {Math.round(task.confidence * 100)}%
                   </span>
                 </span>
@@ -288,7 +293,7 @@ function EditForm({
   return (
     <div className="space-y-3">
       <div>
-        <label className="text-xs text-gray-500 mb-1 block">标题</label>
+        <label className="text-xs text-gray-500 mb-1 block">{t('Title', '标题')}</label>
         <input
           type="text"
           value={title}
@@ -298,7 +303,7 @@ function EditForm({
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-xs text-gray-500 mb-1 block">截止日期</label>
+          <label className="text-xs text-gray-500 mb-1 block">{t('Due date', '截止日期')}</label>
           <input
             type="date"
             value={dueDate}
@@ -307,7 +312,7 @@ function EditForm({
           />
         </div>
         <div>
-          <label className="text-xs text-gray-500 mb-1 block">截止时间</label>
+          <label className="text-xs text-gray-500 mb-1 block">{t('Due time', '截止时间')}</label>
           <input
             type="time"
             value={dueTime}
@@ -318,7 +323,7 @@ function EditForm({
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-xs text-gray-500 mb-1 block">复杂度 (1-5)</label>
+          <label className="text-xs text-gray-500 mb-1 block">{t('Complexity (1-5)', '复杂度 (1-5)')}</label>
           <input
             type="number"
             min={1}
@@ -329,7 +334,7 @@ function EditForm({
           />
         </div>
         <div>
-          <label className="text-xs text-gray-500 mb-1 block">预估时长 (h)</label>
+          <label className="text-xs text-gray-500 mb-1 block">{t('Estimated hours', '预估时长 (h)')}</label>
           <input
             type="number"
             min={0.5}
@@ -346,14 +351,14 @@ function EditForm({
           onClick={save}
           className="px-4 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-xs font-medium transition-colors cursor-pointer"
         >
-          保存
+          {t('Save', '保存')}
         </button>
         <button
           type="button"
           onClick={onClose}
           className="px-4 py-1.5 rounded-lg text-gray-400 hover:text-gray-200 text-xs hover:bg-white/5 transition-colors cursor-pointer"
         >
-          取消
+          {t('Cancel', '取消')}
         </button>
       </div>
     </div>
@@ -369,10 +374,10 @@ function Header({ onBack }: { onBack: () => void }) {
       <span className="font-semibold text-lg tracking-tight">TaskFlow AI</span>
       <nav className="ml-6 flex items-center gap-1 text-sm">
         <button type="button" onClick={onBack} className="text-gray-500 hover:text-gray-300 px-2 py-1 rounded transition-colors cursor-pointer">
-          导入
+          {t('Import', '导入')}
         </button>
         <span className="text-gray-700">/</span>
-        <span className="text-gray-200 px-2 py-1">解析预览</span>
+        <span className="text-gray-200 px-2 py-1">{t('Parse preview', '解析预览')}</span>
       </nav>
     </header>
   );

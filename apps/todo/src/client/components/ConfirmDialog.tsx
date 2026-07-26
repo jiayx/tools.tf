@@ -1,5 +1,6 @@
 /** @jsxImportSource react */
 import { useEffect } from 'react';
+import { t } from '../i18n';
 
 type Props = {
   title: string;
@@ -16,7 +17,7 @@ type Props = {
 export function ConfirmDialog({
   title,
   message,
-  confirmLabel = '确认删除',
+  confirmLabel = t('Delete', '确认删除'),
   onConfirm,
   onCancel,
 }: Props) {
@@ -64,7 +65,7 @@ export function ConfirmDialog({
             onClick={onCancel}
             className="px-4 py-2 text-sm rounded-lg bg-white/5 text-gray-300 hover:bg-white/10 transition-colors cursor-pointer"
           >
-            取消
+            {t('Cancel', '取消')}
           </button>
           <button
             type="button"

@@ -4,6 +4,7 @@ import { buildIcsUrl, deleteTask, fetchTask, updateTask } from '../api';
 import type { ClientTask, TaskDue, TaskStep } from '../types';
 import { FLAG_COLOR, FLAG_LABEL, STATUS_COLOR, STATUS_LABEL, complexityLabel, formatDue, isOverdue } from '../utils';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { t } from '../i18n';
 
 type Props = {
   taskId: string;
@@ -26,7 +27,7 @@ export function TaskDetailPage({ taskId, onBack, onNewImport }: Props) {
       const t = await fetchTask(taskId);
       setTask(t);
     } catch (e) {
-      setError(e instanceof Error ? e.message : '加载失败');
+      setError(e instanceof Error ? e.message : t('Failed to load task', '加载失败'));
     } finally {
       setLoading(false);
     }
@@ -77,7 +78,7 @@ export function TaskDetailPage({ taskId, onBack, onNewImport }: Props) {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center text-gray-500">
-        加载中…
+        {t('Loading…', '加载中…')}
       </div>
     );
   }
@@ -85,9 +86,9 @@ export function TaskDetailPage({ taskId, onBack, onNewImport }: Props) {
   if (error || !task) {
     return (
       <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center gap-4">
-        <div className="text-red-400">{error || '任务不存在'}</div>
+        <div className="text-red-400">{error || t('Task not found', '任务不存在')}</div>
         <button type="button" onClick={onBack} className="text-violet-400 hover:underline cursor-pointer">
-          返回任务库
+          {t('Back to task library', '返回任务库')}
         </button>
       </div>
     );
@@ -102,11 +103,11 @@ export function TaskDetailPage({ taskId, onBack, onNewImport }: Props) {
         <span className="font-semibold text-lg tracking-tight">TaskFlow AI</span>
         <nav className="ml-6 flex items-center gap-1 text-sm">
           <button type="button" onClick={onNewImport} className="text-gray-500 hover:text-gray-300 px-2 py-1 rounded transition-colors cursor-pointer">
-            导入
+            {t('Import', '导入')}
           </button>
           <span className="text-gray-700">/</span>
           <button type="button" onClick={onBack} className="text-gray-500 hover:text-gray-300 px-2 py-1 rounded transition-colors cursor-pointer">
-            任务库
+            {t('Task library', '任务库')}
           </button>
           <span className="text-gray-700">/</span>
           <span className="text-gray-200 px-2 py-1 max-w-[200px] truncate">{task.title}</span>
@@ -115,16 +116,16 @@ export function TaskDetailPage({ taskId, onBack, onNewImport }: Props) {
           type="button"
           onClick={() => setShowDeleteConfirm(true)}
           className="ml-auto text-xs text-red-500 hover:text-red-400 hover:bg-red-500/10 px-3 py-1.5 rounded-lg transition-colors cursor-pointer border border-red-500/20 hover:border-red-500/40"
-          title="删除任务"
+          title={t('Delete task', '删除任务')}
         >
-          删除任务
+          {t('Delete task', '删除任务')}
         </button>
       </header>
 
       {showDeleteConfirm && task && (
         <ConfirmDialog
-          title={`删除「${task.title}」`}
-          message="此操作不可撤销，任务将被永久删除。"
+          title={t(`Delete “${task.title}”`, `删除「${task.title}」`)}
+          message={t('This action cannot be undone. The task will be permanently deleted.', '此操作不可撤销，任务将被永久删除。')}
           onConfirm={handleDelete}
           onCancel={() => setShowDeleteConfirm(false)}
         />
@@ -138,7 +139,7 @@ export function TaskDetailPage({ taskId, onBack, onNewImport }: Props) {
               value={task.title}
               onSave={(title) => patch({ title })}
             />
-            {saving && <span className="text-xs text-gray-500 mt-2">保存中…</span>}
+            {saving && <span className="text-xs text-gray-500 mt-2">{t('Saving…', '保存中…')}</span>}
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -147,7 +148,7 @@ export function TaskDetailPage({ taskId, onBack, onNewImport }: Props) {
             </span>
             {overdue && (
               <span className="text-xs font-medium px-2.5 py-1 rounded-full text-red-400 bg-red-400/10">
-                已逾期
+                {t('Overdue', '已逾期')}
               </span>
             )}
             {task.flags.map((flag) => (
@@ -160,10 +161,10 @@ export function TaskDetailPage({ taskId, onBack, onNewImport }: Props) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {/* Time info */}
-          <InfoCard title="时间信息">
+          <InfoCard title={t('Time', '时间信息')}>
             <InfoRow
-              label="截止时间"
-              value={task.due ? formatDue(task.due) : '未设置'}
+              label={t('Due date', '截止时间')}
+              value={task.due ? formatDue(task.due) : t('Not set', '未设置')}
               highlight={overdue}
               editing={editingField === 'due'}
               onEdit={() => setEditingField('due')}
@@ -177,7 +178,7 @@ export function TaskDetailPage({ taskId, onBack, onNewImport }: Props) {
               )}
             </InfoRow>
             <InfoRow
-              label="最晚开始"
+              label={t('Latest start', '最晚开始')}
               value={task.start_by ? formatDue(task.start_by) : '—'}
               editing={editingField === 'start_by'}
               onEdit={() => setEditingField('start_by')}
@@ -191,22 +192,22 @@ export function TaskDetailPage({ taskId, onBack, onNewImport }: Props) {
               )}
             </InfoRow>
             <InfoRow
-              label="时间锁定"
-              value={task.start_by_locked ? '已锁定（手动）' : '自动计算'}
+              label={t('Start time mode', '时间锁定')}
+              value={task.start_by_locked ? t('Locked manually', '已锁定（手动）') : t('Calculated automatically', '自动计算')}
             />
           </InfoCard>
 
           {/* Task meta */}
-          <InfoCard title="任务信息">
+          <InfoCard title={t('Task details', '任务信息')}>
             <InfoRow
-              label="复杂度"
+              label={t('Complexity', '复杂度')}
               value={`${complexityLabel(task.complexity)}（${task.complexity}/5）`}
               editing={editingField === 'complexity'}
               onEdit={() => setEditingField('complexity')}
             >
               {editingField === 'complexity' && (
                 <NumberEditor
-                  label="复杂度 (1-5)"
+                  label={t('Complexity (1-5)', '复杂度 (1-5)')}
                   value={task.complexity}
                   min={1} max={5}
                   onSave={(v) => patch({ complexity: v })}
@@ -215,14 +216,14 @@ export function TaskDetailPage({ taskId, onBack, onNewImport }: Props) {
               )}
             </InfoRow>
             <InfoRow
-              label="预估耗时"
+              label={t('Estimated time', '预估耗时')}
               value={`${task.estimated_hours}h`}
               editing={editingField === 'hours'}
               onEdit={() => setEditingField('hours')}
             >
               {editingField === 'hours' && (
                 <NumberEditor
-                  label="预估耗时 (h)"
+                  label={t('Estimated time (h)', '预估耗时 (h)')}
                   value={task.estimated_hours}
                   min={0.5} step={0.5}
                   onSave={(v) => patch({ estimated_hours: v })}
@@ -231,7 +232,7 @@ export function TaskDetailPage({ taskId, onBack, onNewImport }: Props) {
               )}
             </InfoRow>
             <InfoRow
-              label="置信度"
+              label={t('Confidence', '置信度')}
               value={`${Math.round(task.confidence * 100)}%`}
             />
           </InfoCard>
@@ -241,8 +242,8 @@ export function TaskDetailPage({ taskId, onBack, onNewImport }: Props) {
         <div className="bg-gray-900 border border-white/8 rounded-xl overflow-hidden mb-6">
           <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
             <div className="flex items-center gap-3">
-              <h3 className="font-semibold text-sm">执行步骤</h3>
-              <span className="text-xs text-gray-500">{stepsDone}/{stepsTotal} 完成</span>
+              <h3 className="font-semibold text-sm">{t('Steps', '执行步骤')}</h3>
+              <span className="text-xs text-gray-500">{stepsDone}/{stepsTotal} {t('complete', '完成')}</span>
             </div>
             {stepsTotal > 0 && (
               <div className="flex items-center gap-2">
@@ -267,7 +268,7 @@ export function TaskDetailPage({ taskId, onBack, onNewImport }: Props) {
               />
             ))}
             {task.steps.length === 0 && (
-              <div className="px-5 py-6 text-sm text-gray-600 text-center">暂无步骤</div>
+              <div className="px-5 py-6 text-sm text-gray-600 text-center">{t('No steps', '暂无步骤')}</div>
             )}
           </div>
         </div>
@@ -275,7 +276,7 @@ export function TaskDetailPage({ taskId, onBack, onNewImport }: Props) {
         {/* Context */}
         {task.context && (
           <div className="bg-gray-900 border border-white/8 rounded-xl px-5 py-4 mb-6">
-            <h3 className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">原始上下文</h3>
+            <h3 className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">{t('Original context', '原始上下文')}</h3>
             <p className="text-sm text-gray-400 leading-relaxed">{task.context}</p>
           </div>
         )}
@@ -292,7 +293,7 @@ export function TaskDetailPage({ taskId, onBack, onNewImport }: Props) {
                 : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
             }`}
           >
-            {task.status === 'completed' ? '↩ 取消完成' : '✓ 标记完成'}
+            {task.status === 'completed' ? t('↩ Mark incomplete', '↩ 取消完成') : t('✓ Mark complete', '✓ 标记完成')}
           </button>
 
           <button
@@ -301,7 +302,7 @@ export function TaskDetailPage({ taskId, onBack, onNewImport }: Props) {
             className="px-5 py-2.5 rounded-xl bg-gray-800 hover:bg-gray-700 border border-white/8 text-sm text-gray-300 hover:text-white transition-all flex items-center gap-2 cursor-pointer"
           >
             <span>📆</span>
-            下载 .ics
+            {t('Download .ics', '下载 .ics')}
           </button>
 
           <button
@@ -309,7 +310,7 @@ export function TaskDetailPage({ taskId, onBack, onNewImport }: Props) {
             onClick={onBack}
             className="px-4 py-2.5 rounded-xl text-sm text-gray-500 hover:text-gray-300 hover:bg-white/5 transition-colors cursor-pointer ml-auto"
           >
-            ← 返回
+            {t('← Back', '← 返回')}
           </button>
         </div>
       </div>
@@ -328,7 +329,7 @@ function StepRow({ step, index, onToggle }: { step: TaskStep; index: number; onT
             ? 'bg-emerald-500/20 border-emerald-500/60'
             : 'border-gray-600 hover:border-emerald-400/60'
         }`}
-        aria-label={step.done ? '取消完成' : '标记完成'}
+        aria-label={step.done ? t('Mark incomplete', '取消完成') : t('Mark complete', '标记完成')}
       >
         {step.done && (
           <svg className="w-2.5 h-2.5 text-emerald-400" viewBox="0 0 10 10" fill="none" aria-hidden="true">
@@ -383,7 +384,7 @@ function InfoRow({
               onClick={onEdit}
               className="text-xs text-gray-600 hover:text-violet-400 transition-colors cursor-pointer"
             >
-              编辑
+              {t('Edit', '编辑')}
             </button>
           )}
         </div>
@@ -408,10 +409,10 @@ function EditableTitle({ value, onSave }: { value: string; onSave: (v: string) =
           className="flex-1 text-2xl font-bold bg-gray-900 border border-violet-500/50 rounded-lg px-3 py-1 text-gray-100 outline-none"
         />
         <button type="button" onClick={() => { onSave(draft); setEditing(false); }} className="mt-2 text-xs text-violet-400 hover:underline cursor-pointer">
-          保存
+          {t('Save', '保存')}
         </button>
         <button type="button" onClick={() => setEditing(false)} className="mt-2 text-xs text-gray-500 hover:underline cursor-pointer">
-          取消
+          {t('Cancel', '取消')}
         </button>
       </div>
     );
@@ -425,7 +426,7 @@ function EditableTitle({ value, onSave }: { value: string; onSave: (v: string) =
         onClick={() => { setDraft(value); setEditing(true); }}
         className="mt-1 text-xs text-gray-600 hover:text-violet-400 transition-colors cursor-pointer"
       >
-        编辑
+        {t('Edit', '编辑')}
       </button>
     </div>
   );
@@ -470,10 +471,10 @@ function DueEditor({
         }}
         className="text-xs px-3 py-1.5 bg-violet-600 hover:bg-violet-500 text-white rounded-lg transition-colors cursor-pointer"
       >
-        保存
+        {t('Save', '保存')}
       </button>
       <button type="button" onClick={onCancel} className="text-xs text-gray-500 hover:text-gray-300 cursor-pointer">
-        取消
+        {t('Cancel', '取消')}
       </button>
     </div>
   );
@@ -514,10 +515,10 @@ function NumberEditor({
         onClick={() => onSave(v)}
         className="text-xs px-3 py-1.5 bg-violet-600 hover:bg-violet-500 text-white rounded-lg transition-colors cursor-pointer"
       >
-        保存
+        {t('Save', '保存')}
       </button>
       <button type="button" onClick={onCancel} className="text-xs text-gray-500 hover:text-gray-300 cursor-pointer">
-        取消
+        {t('Cancel', '取消')}
       </button>
     </div>
   );

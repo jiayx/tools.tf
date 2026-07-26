@@ -1,4 +1,5 @@
 /** @jsxImportSource hono/jsx */
+import { pick, resolveLocale } from '@tools/i18n'
 import { Hono } from 'hono'
 import QRCodeStyling from 'qr-code-styling-worker'
 import { QrInputError, buildQrCodeStylingOptions, parseQrImageOptions } from './image'
@@ -9,8 +10,9 @@ const app = new Hono()
 app.use(renderer)
 
 app.get('/image', async (c) => {
+  const locale = resolveLocale(c.req.header('Accept-Language'))
   try {
-    const options = parseQrImageOptions(new URL(c.req.url).searchParams)
+    const options = parseQrImageOptions(new URL(c.req.url).searchParams, locale)
     const qr = new QRCodeStyling(buildQrCodeStylingOptions(options))
     const svg = await qr.getSvgString()
 
@@ -22,7 +24,10 @@ app.get('/image', async (c) => {
 
     return c.body(svg)
   } catch (error) {
-    const message = error instanceof QrInputError ? error.message : '无法生成二维码，请缩短内容或调整参数'
+    const message = error instanceof QrInputError ? error.message : pick(locale, {
+      en: 'Unable to generate the QR code. Shorten the content or adjust the options.',
+      zh: '无法生成二维码，请缩短内容或调整参数',
+    })
     return c.json({ error: message }, 400)
   }
 })

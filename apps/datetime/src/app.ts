@@ -1,3 +1,4 @@
+import { localeFromDocument, pick } from '@tools/i18n'
 import { getOffsetMinutes, formatOffset, parseTime } from './convert'
 
 type ZoneOption = {
@@ -32,6 +33,21 @@ const resultArea = document.querySelector<HTMLDivElement>('#result-area')
 const errorMsg = document.querySelector<HTMLParagraphElement>('#error-msg')
 const convertBtn = document.querySelector<HTMLButtonElement>('#convert-btn')
 const chips = Array.from(document.querySelectorAll<HTMLButtonElement>('.chip'))
+const locale = localeFromDocument()
+const messages = pick(locale, {
+  en: {
+    waiting: 'Waiting for input…',
+    source: 'Source',
+    parsed: (text: string) => `Parsed fragment: “${text}”`,
+    yourTimezone: 'Your timezone',
+  },
+  zh: {
+    waiting: '等待输入…',
+    source: '原始',
+    parsed: (text: string) => `解析片段：「${text}」`,
+    yourTimezone: '你的时区',
+  },
+})
 
 function buildLabel(value: string, date = new Date()) {
   try {
@@ -58,8 +74,7 @@ function getUserTimeZone() {
 }
 
 function getLang() {
-  const saved = localStorage.getItem('lang')
-  return saved || navigator.languages?.[0] || navigator.language || 'en'
+  return navigator.languages?.[0] || navigator.language || 'en'
 }
 
 function showError(msg: string) {
@@ -75,7 +90,7 @@ function resetResult() {
   if (!resultArea) return
   const placeholder = document.createElement('div')
   placeholder.className = 'result-placeholder'
-  placeholder.textContent = '等待输入…'
+  placeholder.textContent = messages.waiting
   resultArea.replaceChildren(placeholder)
   resultArea.classList.remove('has-result')
 }
@@ -114,14 +129,14 @@ function showResult({
   source.className = 'result-source'
   const sourceLabel = document.createElement('span')
   sourceLabel.className = 'result-source-label'
-  sourceLabel.textContent = '原始'
+  sourceLabel.textContent = messages.source
   const sourceValue = document.createElement('span')
   sourceValue.textContent = `${sourceTime} · ${sourceZone} · ${sourceOffset}`
   source.append(sourceLabel, sourceValue)
 
   const parsed = document.createElement('div')
   parsed.className = 'result-parsed'
-  parsed.textContent = `解析片段：「${parsedText}」`
+  parsed.textContent = messages.parsed(parsedText)
 
   resultArea.replaceChildren(main, source, parsed)
   resultArea.classList.add('has-result')
@@ -177,7 +192,7 @@ function scheduleConvert() {
 
 function setup() {
   const userZone = getUserTimeZone()
-  const userLabel = `${buildLabel(userZone)} · 你的时区`
+  const userLabel = `${buildLabel(userZone)} · ${messages.yourTimezone}`
   const uniqueZones = [
     { value: userZone, label: userLabel },
     ...zonePresets.filter((z) => z.value !== userZone),

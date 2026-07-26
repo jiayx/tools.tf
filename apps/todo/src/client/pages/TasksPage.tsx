@@ -4,6 +4,7 @@ import { deleteTask, fetchTasks, updateTask, buildIcsUrl } from '../api';
 import type { ClientTask, TaskStatus } from '../types';
 import { STATUS_COLOR, STATUS_LABEL, complexityLabel, formatDue, isOverdue, hasWarnFlag, warnFlagTip } from '../utils';
 import { KanbanView } from './KanbanView';
+import { t } from '../i18n';
 
 type Props = {
   onTaskClick: (id: string) => void;
@@ -28,7 +29,7 @@ export function TasksPage({ onTaskClick, onNewImport }: Props) {
       const data = await fetchTasks({ sort: sortBy });
       setTasks(data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : '加载失败');
+      setError(e instanceof Error ? e.message : t('Failed to load tasks', '加载失败'));
     } finally {
       setLoading(false);
     }
@@ -112,22 +113,22 @@ export function TasksPage({ onTaskClick, onNewImport }: Props) {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="搜索任务…"
+              placeholder={t('Search tasks…', '搜索任务…')}
               className="w-full bg-gray-900 border border-white/8 rounded-xl pl-9 pr-4 py-2.5 text-sm text-gray-100 placeholder-gray-600 outline-none focus:border-violet-500/40 transition-colors"
             />
           </div>
 
           {viewMode === 'list' && (
             <div className="flex items-center gap-2">
-              <label className="text-xs text-gray-500">排序</label>
+              <label className="text-xs text-gray-500">{t('Sort', '排序')}</label>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
                 className="text-xs bg-gray-900 border border-white/8 rounded-lg px-2 py-2 text-gray-300 outline-none focus:border-violet-500/40 transition-colors cursor-pointer"
               >
-                <option value="due">截止时间</option>
-                <option value="start_by">开始时间</option>
-                <option value="created">创建时间</option>
+                <option value="due">{t('Due date', '截止时间')}</option>
+                <option value="start_by">{t('Start date', '开始时间')}</option>
+                <option value="created">{t('Created date', '创建时间')}</option>
               </select>
             </div>
           )}
@@ -137,7 +138,7 @@ export function TasksPage({ onTaskClick, onNewImport }: Props) {
             <button
               type="button"
               onClick={() => setViewMode('list')}
-              title="列表视图"
+              title={t('List view', '列表视图')}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
                 viewMode === 'list'
                   ? 'bg-violet-600 text-white'
@@ -145,12 +146,12 @@ export function TasksPage({ onTaskClick, onNewImport }: Props) {
               }`}
             >
               <ListIcon />
-              列表
+              {t('List', '列表')}
             </button>
             <button
               type="button"
               onClick={() => setViewMode('kanban')}
-              title="泳道视图"
+              title={t('Board view', '泳道视图')}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
                 viewMode === 'kanban'
                   ? 'bg-violet-600 text-white'
@@ -158,7 +159,7 @@ export function TasksPage({ onTaskClick, onNewImport }: Props) {
               }`}
             >
               <KanbanIcon />
-              泳道
+              {t('Board', '泳道')}
             </button>
           </div>
 
@@ -168,12 +169,12 @@ export function TasksPage({ onTaskClick, onNewImport }: Props) {
             className="px-4 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 border border-white/8 text-sm text-gray-300 hover:text-white transition-all flex items-center gap-2 cursor-pointer"
           >
             <span>📆</span>
-            导出全部 ICS
+            {t('Export all as ICS', '导出全部 ICS')}
           </button>
         </div>
 
         {loading && (
-          <div className="text-center py-20 text-gray-500">加载中…</div>
+          <div className="text-center py-20 text-gray-500">{t('Loading…', '加载中…')}</div>
         )}
         {error && (
           <div className="text-center py-20 text-red-400">{error}</div>
@@ -204,7 +205,7 @@ export function TasksPage({ onTaskClick, onNewImport }: Props) {
                     <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${STATUS_COLOR[s]}`}>
                       {STATUS_LABEL[s]}
                     </span>
-                    <span className="text-xs text-gray-600">{group.length} 个</span>
+                    <span className="text-xs text-gray-600">{t(`${group.length} tasks`, `${group.length} 个`)}</span>
                   </div>
                   <div className="space-y-2">
                     {group.map((task) => (
@@ -257,7 +258,7 @@ function TaskRow({
             ? 'bg-emerald-500/20 border-emerald-500/60'
             : 'border-gray-600 hover:border-emerald-500/60'
         }`}
-        aria-label="完成任务"
+        aria-label={t('Complete task', '完成任务')}
       >
         {task.status === 'completed' && (
           <svg className="w-2.5 h-2.5 text-emerald-400" viewBox="0 0 10 10" fill="none" aria-hidden="true">
@@ -283,14 +284,14 @@ function TaskRow({
         <div className="flex items-center gap-3 mt-0.5 text-xs text-gray-500 flex-wrap">
           {task.due && (
             <span className={overdue ? 'text-red-400' : ''}>
-              截止 {formatDue(task.due)}
+              {t('Due', '截止')} {formatDue(task.due)}
             </span>
           )}
           {task.start_by && (
-            <span>开始 {formatDue(task.start_by)}</span>
+            <span>{t('Start', '开始')} {formatDue(task.start_by)}</span>
           )}
           {stepsTotal > 0 && (
-            <span>{stepsDone}/{stepsTotal} 步骤</span>
+            <span>{stepsDone}/{stepsTotal} {t('steps', '步骤')}</span>
           )}
           <span>{complexityLabel(task.complexity)} · {task.estimated_hours}h</span>
         </div>
@@ -321,10 +322,10 @@ function EmptyState({ hasFilters, onNewImport }: { hasFilters: boolean; onNewImp
     <div className="text-center py-20">
       <div className="text-5xl mb-4">{hasFilters ? '🔍' : '📭'}</div>
       <h3 className="text-lg font-medium text-gray-300 mb-2">
-        {hasFilters ? '没有匹配的任务' : '任务库为空'}
+        {hasFilters ? t('No matching tasks', '没有匹配的任务') : t('The task library is empty', '任务库为空')}
       </h3>
       <p className="text-sm text-gray-500 mb-6">
-        {hasFilters ? '尝试调整搜索条件' : '先导入一些任务吧'}
+        {hasFilters ? t('Try adjusting your search', '尝试调整搜索条件') : t('Import some tasks to get started', '先导入一些任务吧')}
       </p>
       {!hasFilters && (
         <button
@@ -332,7 +333,7 @@ function EmptyState({ hasFilters, onNewImport }: { hasFilters: boolean; onNewImp
           onClick={onNewImport}
           className="px-5 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold transition-all cursor-pointer"
         >
-          开始导入 →
+          {t('Start importing →', '开始导入 →')}
         </button>
       )}
     </div>
@@ -352,17 +353,17 @@ function Header({ onNewImport }: { onNewImport: () => void }) {
           onClick={onNewImport}
           className="text-gray-500 hover:text-gray-300 px-2 py-1 rounded transition-colors cursor-pointer"
         >
-          导入
+          {t('Import', '导入')}
         </button>
         <span className="text-gray-700">/</span>
-        <span className="text-gray-200 px-2 py-1">任务库</span>
+        <span className="text-gray-200 px-2 py-1">{t('Task library', '任务库')}</span>
       </nav>
       <button
         type="button"
         onClick={onNewImport}
         className="ml-auto px-4 py-1.5 rounded-xl bg-violet-600/20 hover:bg-violet-600/30 border border-violet-500/30 text-violet-400 text-sm font-medium transition-all cursor-pointer"
       >
-        + 新建导入
+        {t('+ New import', '+ 新建导入')}
       </button>
     </header>
   );

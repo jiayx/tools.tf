@@ -4,6 +4,11 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import ssrPlugin from 'vite-ssr-components/plugin';
 
-export default defineConfig({
-  plugins: [cloudflare(), react(), tailwindcss(), ssrPlugin()],
-});
+export default defineConfig(({ mode }) => ({
+  plugins: mode === 'test'
+    ? [react()]
+    : [cloudflare(), react(), tailwindcss(), ssrPlugin()],
+  test: {
+    environment: 'node',
+  },
+}));

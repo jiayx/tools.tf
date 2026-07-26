@@ -128,7 +128,7 @@ function buildDateInTimeZone(components: ParsedComponents, timeZone: string): Da
   const millisecond = components.get('millisecond') ?? 0
 
   if (year === null || month === null || day === null) {
-    throw new Error('解析结果缺少日期组件')
+    throw new Error('Parsed result is missing date components')
   }
 
   const utcGuess = Date.UTC(year, month - 1, day, hour, minute, second, millisecond)
@@ -161,14 +161,26 @@ export function parseTime(
   lang = 'zh',
   now = new Date(),
 ): ConvertResult | ConvertError {
+  const isChinese = lang.toLowerCase().startsWith('zh')
+  const errors = isChinese
+    ? {
+        empty: '请输入时间描述',
+        timezone: '原始时区无效',
+        parse: '没有解析出时间，试试补充日期或时间段',
+      }
+    : {
+        empty: 'Enter a time description',
+        timezone: 'The source timezone is invalid',
+        parse: 'No time found. Try adding a date or time of day',
+      }
   const trimmed = text.trim()
-  if (!trimmed) return { error: '请输入时间描述' }
+  if (!trimmed) return { error: errors.empty }
 
   let sourceOffsetMin: number
   try {
     sourceOffsetMin = getOffsetMinutes(sourceZone, now)
   } catch {
-    return { error: '原始时区无效' }
+    return { error: errors.timezone }
   }
 
   let parsed: ReturnType<typeof chrono.parse>[number] | undefined
@@ -183,7 +195,7 @@ export function parseTime(
     }
   }
 
-  if (!parsed) return { error: '没有解析出时间，试试补充日期或时间段' }
+  if (!parsed) return { error: errors.parse }
 
   return {
     eventDate: buildDateInTimeZone(parsed.start, sourceZone),

@@ -1,5 +1,6 @@
 /** @jsxImportSource react */
 import type { TaskDue, TaskFlag, TaskStatus } from './types';
+import { t } from './i18n';
 
 /** 格式化 TaskDue 为可读字符串 */
 export function formatDue(due: TaskDue | null | undefined): string {
@@ -9,10 +10,10 @@ export function formatDue(due: TaskDue | null | undefined): string {
 
 /** 状态标签 */
 export const STATUS_LABEL: Record<TaskStatus, string> = {
-  upcoming_start: '未开始',
-  upcoming_due: '即将截止',
-  in_progress: '进行中',
-  completed: '已完成',
+  upcoming_start: t('Not started', '未开始'),
+  upcoming_due: t('Due soon', '即将截止'),
+  in_progress: t('In progress', '进行中'),
+  completed: t('Completed', '已完成'),
 };
 
 /** 状态颜色 class (tailwind) */
@@ -25,11 +26,11 @@ export const STATUS_COLOR: Record<TaskStatus, string> = {
 
 /** Flag 对应的人类可读描述 */
 export const FLAG_LABEL: Record<TaskFlag, string> = {
-  DATE_AMBIGUOUS: '日期歧义',
-  MISSING_TIME_DEFAULTED: '时间已补全',
-  FUZZY_TIME_DEFAULTED: '模糊时间已补全',
-  MISSING_DUE: '缺少截止时间',
-  LOW_CONFIDENCE: '低置信度',
+  DATE_AMBIGUOUS: t('Ambiguous date', '日期歧义'),
+  MISSING_TIME_DEFAULTED: t('Time filled in', '时间已补全'),
+  FUZZY_TIME_DEFAULTED: t('Approximate time filled in', '模糊时间已补全'),
+  MISSING_DUE: t('Missing due date', '缺少截止时间'),
+  LOW_CONFIDENCE: t('Low confidence', '低置信度'),
 };
 
 /** Flag 颜色 */
@@ -55,16 +56,16 @@ export function warnFlagTip(flags: TaskFlag[]): string {
   return flags
     .filter((f) => WARN_FLAGS.has(f))
     .map((f) => FLAG_LABEL[f])
-    .join('、');
+    .join(t(', ', '、'));
 }
 
 /** 复杂度文字 */
 export function complexityLabel(v: number): string {
-  if (v <= 1) return '极低';
-  if (v <= 2) return '低';
-  if (v <= 3) return '中';
-  if (v <= 4) return '高';
-  return '极高';
+  if (v <= 1) return t('Very low', '极低');
+  if (v <= 2) return t('Low', '低');
+  if (v <= 3) return t('Medium', '中');
+  if (v <= 4) return t('High', '高');
+  return t('Very high', '极高');
 }
 
 /** 检测是否已过期 */

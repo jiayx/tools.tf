@@ -32,4 +32,28 @@ describe('IP responses', () => {
       isCurl: false,
     })
   })
+
+  it('renders Chinese only for Chinese browser languages and otherwise falls back to English', async () => {
+    const chineseResponse = await app.request('https://ip.tools.tf/', {
+      headers: {
+        'Accept-Language': 'zh-CN,zh;q=0.9',
+        'CF-Connecting-IP': '203.0.113.10',
+        'User-Agent': 'test',
+      },
+    })
+    const chineseHtml = await chineseResponse.text()
+    expect(chineseHtml).toContain('<html lang="zh-CN">')
+    expect(chineseHtml).toContain('公网 IP 地址')
+
+    const fallbackResponse = await app.request('https://ip.tools.tf/', {
+      headers: {
+        'Accept-Language': 'fr-FR,de;q=0.8',
+        'CF-Connecting-IP': '203.0.113.10',
+        'User-Agent': 'test',
+      },
+    })
+    const fallbackHtml = await fallbackResponse.text()
+    expect(fallbackHtml).toContain('<html lang="en">')
+    expect(fallbackHtml).toContain('Public IP address')
+  })
 })

@@ -1,3 +1,4 @@
+import { pick, resolveLocale, type Locale } from '@tools/i18n'
 import { Hono } from 'hono'
 import { renderer } from './renderer'
 import {
@@ -105,7 +106,79 @@ const buildSvg = async (
   return buildIconSvg({ size, glyph: iconGlyph, iconMarkup, wrapper: iconWrapper, defs, backgroundMarkup, clipPath })
 }
 
-const IconPage = () => {
+const IconPage = ({ locale }: { locale: Locale }) => {
+  const copy = pick(locale, {
+    en: {
+      title: 'Craft an icon that feels like your brand.',
+      build: 'Build your mark',
+      reset: 'Reset',
+      intro: 'Pick a style, then refine colors and scale.',
+      mode: 'Icon mode',
+      text: 'Text',
+      lucide: 'Lucide icon',
+      tabler: 'Tabler icon',
+      logos: 'Logos',
+      textHelp: 'Keep it short: up to 6 characters.',
+      textSize: 'Text size',
+      radius: 'Corner radius',
+      icon: 'Icon',
+      search: 'Search lucide icons',
+      iconSize: 'Icon size',
+      presets: 'Theme presets',
+      random: 'Random',
+      backgroundStyle: 'Background style',
+      transparent: 'Transparent',
+      solid: 'Solid',
+      gradient: 'Gradient',
+      foreground: 'Foreground',
+      background1: 'Background 1',
+      background2: 'Background 2',
+      angle: 'Gradient angle',
+      exportSize: 'Export size',
+      preview: 'Live preview',
+      previewHelp: 'Use the URL below for direct icon usage.',
+      previewAria: 'Icon preview',
+      copy: 'Copy',
+      commonSizes: 'Common icon sizes',
+      download: (size: number) => `Download ${size}px SVG`,
+      snippets: 'HTML snippets',
+    },
+    zh: {
+      title: '制作一个契合你品牌气质的图标。',
+      build: '创建图标',
+      reset: '重置',
+      intro: '选择样式，再调整颜色与尺寸。',
+      mode: '图标模式',
+      text: '文字',
+      lucide: 'Lucide 图标',
+      tabler: 'Tabler 图标',
+      logos: '品牌图标',
+      textHelp: '保持简短，最多 6 个字符。',
+      textSize: '文字大小',
+      radius: '圆角',
+      icon: '图标',
+      search: '搜索 Lucide 图标',
+      iconSize: '图标大小',
+      presets: '主题预设',
+      random: '随机',
+      backgroundStyle: '背景样式',
+      transparent: '透明',
+      solid: '纯色',
+      gradient: '渐变',
+      foreground: '前景色',
+      background1: '背景色 1',
+      background2: '背景色 2',
+      angle: '渐变角度',
+      exportSize: '导出尺寸',
+      preview: '实时预览',
+      previewHelp: '可直接使用下方 URL 引用图标。',
+      previewAria: '图标预览',
+      copy: '复制',
+      commonSizes: '常用图标尺寸',
+      download: (size: number) => `下载 ${size}px SVG`,
+      snippets: 'HTML 代码片段',
+    },
+  })
   const getPresetBackground = (bgMode: string, bg1: string, bg2: string, angle: number) => {
     if (bgMode === 'solid') return bg1
     if (bgMode === 'transparent') return 'transparent'
@@ -119,7 +192,7 @@ const IconPage = () => {
           <p class="eyebrow">
             <a href="/" class="eyebrow__link">Icon Atelier</a>
           </p>
-          <h1>Craft an icon that feels like your brand.</h1>
+          <h1>{copy.title}</h1>
         </div>
       </header>
 
@@ -127,41 +200,41 @@ const IconPage = () => {
         <form class="panel controls" data-form>
           <div class="panel__header">
             <div class="panel__header-main">
-              <h3>Build your mark</h3>
+              <h3>{copy.build}</h3>
               <button type="button" class="panel__reset" data-reset>
-                Reset
+                {copy.reset}
               </button>
             </div>
-            <p>Pick a style, then refine colors and scale.</p>
+            <p>{copy.intro}</p>
           </div>
 
           <div class="control">
-            <label>Icon mode</label>
+            <label>{copy.mode}</label>
             <div class="segmented" data-mode>
               <button type="button" class="segmented__btn is-active" data-mode-btn data-mode-value="text">
-                Text
+                {copy.text}
               </button>
               <button type="button" class="segmented__btn" data-mode-btn data-mode-value="lucide">
-                Lucide icon
+                {copy.lucide}
               </button>
               <button type="button" class="segmented__btn" data-mode-btn data-mode-value="tabler">
-                Tabler icon
+                {copy.tabler}
               </button>
               <button type="button" class="segmented__btn" data-mode-btn data-mode-value="logos">
-                Logos
+                {copy.logos}
               </button>
             </div>
           </div>
 
           <div class="control-group control-group--paired" data-text-controls>
             <div class="control control--full">
-              <label htmlFor="textInput">Text</label>
+              <label htmlFor="textInput">{copy.text}</label>
               <input id="textInput" type="text" maxlength={6} value={DEFAULTS.text} data-field="text" />
-              <span class="helper">Keep it short: up to 6 characters.</span>
+              <span class="helper">{copy.textHelp}</span>
             </div>
             <div class="control">
               <div class="control__head">
-                <label htmlFor="glyphSizeText">Text size</label>
+                <label htmlFor="glyphSizeText">{copy.textSize}</label>
                 <span class="control__value" data-field-value="textGlyph">{DEFAULTS.textGlyph}%</span>
               </div>
               <div class="range">
@@ -173,7 +246,7 @@ const IconPage = () => {
 
           <div class="control" data-radius-control>
             <div class="control__head">
-              <label htmlFor="radiusRange">Corner radius</label>
+              <label htmlFor="radiusRange">{copy.radius}</label>
               <span class="control__value" data-field-value="radius">{DEFAULTS.radius}%</span>
             </div>
             <div class="range">
@@ -183,7 +256,7 @@ const IconPage = () => {
 
           <div class="control-group control-group--paired is-hidden" data-icon-controls>
             <div class="control control--full">
-              <label htmlFor="iconSearch">Icon</label>
+              <label htmlFor="iconSearch">{copy.icon}</label>
               <div class="icon-dropdown" data-icon-dropdown>
                 <button type="button" class="icon-trigger" data-icon-trigger>
                   <span class="icon-trigger__preview" aria-hidden="true">
@@ -200,7 +273,7 @@ const IconPage = () => {
                   <input
                     id="iconSearch"
                     type="text"
-                    placeholder={`Search ${ICON_SET_META.lucide.label.toLowerCase()} icons`}
+                    placeholder={copy.search}
                     data-icon-filter
                   />
                   <div class="icon-options" data-icon-options>
@@ -211,7 +284,7 @@ const IconPage = () => {
             </div>
             <div class="control">
               <div class="control__head">
-                <label htmlFor="glyphSizeIcon">Icon size</label>
+                <label htmlFor="glyphSizeIcon">{copy.iconSize}</label>
                 <span class="control__value" data-field-value="iconGlyph">{DEFAULTS.iconGlyph}%</span>
               </div>
               <div class="range">
@@ -223,7 +296,7 @@ const IconPage = () => {
 
           <div class="control-group">
             <div class="control">
-              <label>Theme presets</label>
+              <label>{copy.presets}</label>
               <div class="preset-row">
                 {PRESETS.map((preset, index) => {
                   const background = getPresetBackground(preset.bgMode, preset.bg1, preset.bg2, preset.angle)
@@ -241,18 +314,18 @@ const IconPage = () => {
                 })}
                 <button type="button" class="preset-chip preset-chip--random" data-random>
                   <span class="preset-swatch preset-swatch--rainbow"></span>
-                  Random
+                  {copy.random}
                 </button>
               </div>
             </div>
             <div class="control">
-              <label>Background style</label>
+              <label>{copy.backgroundStyle}</label>
               <div class="segmented" data-bg-mode>
                 <button type="button" class="segmented__btn" data-bg-mode-btn data-bg-mode-value="transparent">
-                  Transparent
+                  {copy.transparent}
                 </button>
                 <button type="button" class="segmented__btn" data-bg-mode-btn data-bg-mode-value="solid">
-                  Solid
+                  {copy.solid}
                 </button>
                 <button
                   type="button"
@@ -260,26 +333,26 @@ const IconPage = () => {
                   data-bg-mode-btn
                   data-bg-mode-value="gradient"
                 >
-                  Gradient
+                  {copy.gradient}
                 </button>
               </div>
             </div>
             <div class="control" data-fg-control>
-              <label>Foreground</label>
+              <label>{copy.foreground}</label>
               <div class="color">
                 <input type="color" value={DEFAULTS.fg} data-field="fg" />
                 <input type="text" value={DEFAULTS.fg} data-field="fgText" />
               </div>
             </div>
             <div class="control" data-bg1-control>
-              <label>Background 1</label>
+              <label>{copy.background1}</label>
               <div class="color">
                 <input type="color" value={DEFAULTS.bg1} data-field="bg1" />
                 <input type="text" value={DEFAULTS.bg1} data-field="bg1Text" />
               </div>
             </div>
             <div class="control" data-bg2-control>
-              <label>Background 2</label>
+              <label>{copy.background2}</label>
               <div class="color">
                 <input type="color" value={DEFAULTS.bg2} data-field="bg2" />
                 <input type="text" value={DEFAULTS.bg2} data-field="bg2Text" />
@@ -288,7 +361,7 @@ const IconPage = () => {
           </div>
 
           <div class="control" data-angle-control>
-            <label htmlFor="angleRange">Gradient angle</label>
+            <label htmlFor="angleRange">{copy.angle}</label>
             <div class="range">
               <input id="angleRange" type="range" min={0} max={360} value={DEFAULTS.angle} data-field="angle" />
               <span data-field-value="angle">{DEFAULTS.angle}°</span>
@@ -296,7 +369,7 @@ const IconPage = () => {
           </div>
 
           <div class="control">
-            <label htmlFor="sizeRange">Export size</label>
+            <label htmlFor="sizeRange">{copy.exportSize}</label>
             <div class="range">
               <input id="sizeRange" type="range" min={16} max={1024} step={8} value={DEFAULTS.size} data-field="size" />
               <span data-field-value="size">{DEFAULTS.size}px</span>
@@ -307,24 +380,24 @@ const IconPage = () => {
 
         <aside class="panel preview">
           <div class="panel__header">
-            <h3>Live preview</h3>
-            <p>Use the URL below for direct icon usage.</p>
+            <h3>{copy.preview}</h3>
+            <p>{copy.previewHelp}</p>
           </div>
 
           <div class="preview__canvas is-loading" data-preview-canvas>
-            <div class="preview__image" data-preview aria-label="Icon preview"></div>
+            <div class="preview__image" data-preview aria-label={copy.previewAria}></div>
           </div>
 
           <div class="preview__url">
             <input type="text" readOnly data-url />
             <button type="button" data-copy>
-              Copy
+              {copy.copy}
             </button>
           </div>
 
           <div class="preview__sizes">
             <div class="preview__sizes-header">
-              <p>Common icon sizes</p>
+              <p>{copy.commonSizes}</p>
               <div class="segmented segmented--compact" data-download-format>
                 <button type="button" class="segmented__btn is-active" data-format-btn data-format="svg">
                   SVG
@@ -351,7 +424,7 @@ const IconPage = () => {
                     href="#"
                     data-size-download
                     data-size={size}
-                    aria-label={`Download ${size}px SVG`}
+                    aria-label={copy.download(size)}
                   >
                     <span class="chip__icon" aria-hidden="true">↓</span>
                   </a>
@@ -361,7 +434,7 @@ const IconPage = () => {
           </div>
 
           <div class="preview__snippet">
-            <p>HTML snippets</p>
+            <p>{copy.snippets}</p>
             <div class="snippet-list" data-snippet-list></div>
           </div>
         </aside>
@@ -376,7 +449,8 @@ const IconPage = () => {
 }
 
 app.get('/', (c) => {
-  return c.render(<IconPage />)
+  const locale = resolveLocale(c.req.header('Accept-Language'))
+  return c.render(<IconPage locale={locale} />)
 })
 
 app.get('/icon/:size?', async (c) => {
