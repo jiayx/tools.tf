@@ -114,6 +114,52 @@ body {
   letter-spacing: 0.03em;
 }
 
+.address-grid {
+  margin-top: 28px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.address-card {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid rgba(124, 231, 255, 0.18);
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgba(124, 231, 255, 0.08), rgba(24, 34, 55, 0.88));
+}
+
+.address-card__label,
+.address-card__status {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.address-card__label {
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.address-card__value {
+  margin: 8px 0 6px;
+  overflow-wrap: anywhere;
+  font-size: clamp(16px, 2.3vw, 21px);
+  font-weight: 600;
+}
+
+.copy-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+  transform: none;
+  box-shadow: none;
+}
+
 .grid {
   margin-top: 28px;
   display: grid;
@@ -194,5 +240,9 @@ body {
 
   .badge {
     align-self: flex-start;
+  }
+
+  .address-grid {
+    grid-template-columns: 1fr;
   }
 }

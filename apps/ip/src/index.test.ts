@@ -55,5 +55,7 @@ describe('IP responses', () => {
     const fallbackHtml = await fallbackResponse.text()
     expect(fallbackHtml).toContain('<html lang="en">')
     expect(fallbackHtml).toContain('Public IP address')
+    expect(fallbackHtml).toContain('data-ip-family="ipv4"')
+    expect(fallbackHtml).toContain('data-ip-family="ipv6"')
   })
 })

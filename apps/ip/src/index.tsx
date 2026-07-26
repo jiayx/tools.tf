@@ -64,6 +64,7 @@ export const collectIpDetails = (c: Context): IpDetails => {
 
 const IpPage = ({ details, locale }: { details: IpDetails; locale: Locale }) => {
   const unavailable = pick(locale, { en: 'Unavailable', zh: '暂无数据' })
+  const checking = pick(locale, { en: 'Checking…', zh: '检测中…' })
   const locationLine = [details.city, details.region].filter(Boolean).join(', ') || unavailable
   const coordinates =
     details.latitude && details.longitude ? `${details.latitude}, ${details.longitude}` : unavailable
@@ -92,6 +93,43 @@ const IpPage = ({ details, locale }: { details: IpDetails; locale: Locale }) => 
           </div>
           <div class="badge">{details.country}</div>
         </header>
+
+        <section class="address-grid" aria-label={pick(locale, {
+          en: 'IPv4 and IPv6 connectivity',
+          zh: 'IPv4 与 IPv6 连接状态',
+        })}>
+          <article class="address-card">
+            <div>
+              <p class="address-card__label">IPv4</p>
+              <p class="address-card__value" data-ip-family="ipv4">{checking}</p>
+              <p class="address-card__status" data-ip-status="ipv4">{checking}</p>
+            </div>
+            <button
+              class="copy-btn"
+              type="button"
+              data-copy-family="ipv4"
+              disabled
+            >
+              {pick(locale, { en: 'Copy', zh: '复制' })}
+            </button>
+          </article>
+
+          <article class="address-card">
+            <div>
+              <p class="address-card__label">IPv6</p>
+              <p class="address-card__value" data-ip-family="ipv6">{checking}</p>
+              <p class="address-card__status" data-ip-status="ipv6">{checking}</p>
+            </div>
+            <button
+              class="copy-btn"
+              type="button"
+              data-copy-family="ipv6"
+              disabled
+            >
+              {pick(locale, { en: 'Copy', zh: '复制' })}
+            </button>
+          </article>
+        </section>
 
         <section class="grid">
           <article class="tile">
