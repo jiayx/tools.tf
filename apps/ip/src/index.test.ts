@@ -43,7 +43,8 @@ describe('IP responses', () => {
     })
     const chineseHtml = await chineseResponse.text()
     expect(chineseHtml).toContain('<html lang="zh-CN">')
-    expect(chineseHtml).toContain('公网 IP 地址')
+    expect(chineseHtml).toContain('当前出口 IP')
+    expect(chineseHtml).toContain('本次访问所使用的公网地址')
 
     const fallbackResponse = await app.request('https://ip.tools.tf/', {
       headers: {
@@ -54,7 +55,8 @@ describe('IP responses', () => {
     })
     const fallbackHtml = await fallbackResponse.text()
     expect(fallbackHtml).toContain('<html lang="en">')
-    expect(fallbackHtml).toContain('Public IP address')
+    expect(fallbackHtml).toContain('Current outbound IP')
+    expect(fallbackHtml).toContain('Public address used for this page request')
     expect(fallbackHtml).toContain('data-ip-family="ipv4"')
     expect(fallbackHtml).toContain('data-ip-family="ipv6"')
   })

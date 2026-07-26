@@ -51,6 +51,11 @@ body {
   flex-wrap: wrap;
 }
 
+.card__header-main {
+  min-width: 0;
+  flex: 1;
+}
+
 .eyebrow {
   font-size: 12px;
   letter-spacing: 0.14em;
@@ -78,6 +83,7 @@ body {
 }
 
 .copy-btn {
+  flex: 0 0 auto;
   border: 1px solid var(--border);
   background: var(--panel-strong);
   color: var(--text);
@@ -85,6 +91,7 @@ body {
   border-radius: 8px;
   font-weight: 600;
   font-size: 12px;
+  white-space: nowrap;
   cursor: pointer;
   transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
 }
@@ -131,6 +138,10 @@ body {
   border: 1px solid rgba(124, 231, 255, 0.18);
   border-radius: 14px;
   background: linear-gradient(145deg, rgba(124, 231, 255, 0.08), rgba(24, 34, 55, 0.88));
+}
+
+.address-card > div {
+  min-width: 0;
 }
 
 .address-card__label,
