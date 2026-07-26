@@ -4,7 +4,7 @@ import { renderer } from './renderer'
 
 type CfFields = Partial<IncomingRequestCfProperties>
 
-type IpDetails = {
+export type IpDetails = {
   ip: string
   country: string
   city?: string
@@ -22,8 +22,13 @@ type IpDetails = {
 const app = new Hono()
 
 app.use(renderer)
+app.use('*', async (c, next) => {
+  await next()
+  c.header('Cache-Control', 'no-store')
+  c.header('X-Content-Type-Options', 'nosniff')
+})
 
-const collectIpDetails = (c: Context): IpDetails => {
+export const collectIpDetails = (c: Context): IpDetails => {
   const ip = c.req.header('CF-Connecting-IP') ?? 'Unknown'
   const country = c.req.header('CF-IPCountry') ?? 'Unknown'
   const userAgent = c.req.header('User-Agent') ?? undefined
@@ -122,8 +127,13 @@ const IpPage = ({ details }: { details: IpDetails }) => {
 
 app.get('/', (c) => {
   const details = collectIpDetails(c)
+  const format = c.req.query('format')
 
-  if (details.isCurl) {
+  if (format === 'json' || c.req.header('Accept')?.includes('application/json')) {
+    return c.json(details)
+  }
+
+  if (details.isCurl || format === 'text') {
     return c.text(`${details.ip}\n`)
   }
 

@@ -1,21 +1,10 @@
-```txt
-pnpm install
-pnpm run dev
-```
+# Datetime
 
-```txt
-pnpm run deploy
-```
+使用自然语言描述时间，并在 IANA 时区之间进行换算。解析和换算均在浏览器中完成。
 
-[For generating/synchronizing types based on your Worker configuration run](https://developers.cloudflare.com/workers/wrangler/commands/#types):
-
-```txt
-pnpm run cf-typegen
-```
-
-Pass the `CloudflareBindings` as generics when instantiation `Hono`:
-
-```ts
-// src/index.ts
-const app = new Hono<{ Bindings: CloudflareBindings }>();
+```bash
+pnpm --filter datetime dev
+pnpm --filter datetime test
+pnpm --filter datetime build
+pnpm --filter datetime deploy
 ```

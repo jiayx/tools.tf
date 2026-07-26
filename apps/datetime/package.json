@@ -3,6 +3,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "build": "vite build",
     "preview": "$npm_execpath run build && vite preview",
     "deploy": "$npm_execpath run build && wrangler deploy",
@@ -16,6 +18,7 @@
     "@cloudflare/vite-plugin": "catalog:",
     "vite": "catalog:",
     "vite-ssr-components": "catalog:",
+    "vitest": "catalog:",
     "wrangler": "catalog:"
   }
 }

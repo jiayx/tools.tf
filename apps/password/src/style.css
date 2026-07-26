@@ -361,3 +361,7 @@ button, textarea, input, select {
   color: var(--muted);
   margin: 0;
 }
+
+.hint-text--error {
+  color: #dc2626;
+}

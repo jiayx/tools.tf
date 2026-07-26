@@ -19,7 +19,7 @@ function randomIndex(max: number): number {
   return buf[0] % max
 }
 
-interface Config {
+export interface Config {
   length: number
   upper: boolean
   lower: boolean
@@ -29,7 +29,7 @@ interface Config {
   count: number
 }
 
-const DEFAULT_CONFIG: Config = {
+export const DEFAULT_CONFIG: Config = {
   length: 16,
   upper: true,
   lower: true,
@@ -39,7 +39,7 @@ const DEFAULT_CONFIG: Config = {
   count: 1,
 }
 
-function getStrength(password: string): { level: number; label: string; color: string } {
+export function getStrength(password: string): { level: number; label: string; color: string } {
   let score = 0
   if (password.length >= 8) score++
   if (password.length >= 12) score++
@@ -55,9 +55,20 @@ function getStrength(password: string): { level: number; label: string; color: s
   return { level: 4, label: '极强', color: '#059669' }
 }
 
-function generatePassword(cfg: Config): string {
+const filterPool = (value: string, excludeAmbiguous: boolean) =>
+  excludeAmbiguous ? value.split('').filter((char) => !AMBIGUOUS.has(char)).join('') : value
+
+export function estimateEntropy(cfg: Config): number {
+  const poolSize = Object.entries(CHAR_SETS)
+    .filter(([key]) => cfg[key as keyof typeof CHAR_SETS])
+    .reduce((total, [, chars]) => total + filterPool(chars, cfg.excludeAmbiguous).length, 0)
+
+  return poolSize > 0 ? cfg.length * Math.log2(poolSize) : 0
+}
+
+export function generatePassword(cfg: Config): string {
   const filter = (s: string) =>
-    cfg.excludeAmbiguous ? s.split('').filter((c) => !AMBIGUOUS.has(c)).join('') : s
+    filterPool(s, cfg.excludeAmbiguous)
 
   const pools: string[] = []
   if (cfg.upper) pools.push(filter(CHAR_SETS.upper))
@@ -94,6 +105,7 @@ export function PasswordApp() {
   const [cfg, setCfg] = useState<Config>(DEFAULT_CONFIG)
   const [passwords, setPasswords] = useState<string[]>([])
   const [copied, setCopied] = useState<number | null>(null)
+  const [copyError, setCopyError] = useState(false)
 
   const generate = useCallback(() => {
     setPasswords(generatePasswords(cfg))
@@ -105,15 +117,27 @@ export function PasswordApp() {
   }, [cfg])
 
   const copyPassword = async (pw: string, idx: number) => {
-    await navigator.clipboard.writeText(pw)
-    setCopied(idx)
-    setTimeout(() => setCopied(null), 2000)
+    try {
+      await navigator.clipboard.writeText(pw)
+      setCopied(idx)
+      setCopyError(false)
+      setTimeout(() => setCopied(null), 2000)
+    } catch {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 2000)
+    }
   }
 
   const copyAll = async () => {
-    await navigator.clipboard.writeText(passwords.join('\n'))
-    setCopied(-1)
-    setTimeout(() => setCopied(null), 2000)
+    try {
+      await navigator.clipboard.writeText(passwords.join('\n'))
+      setCopied(-1)
+      setCopyError(false)
+      setTimeout(() => setCopied(null), 2000)
+    } catch {
+      setCopyError(true)
+      setTimeout(() => setCopyError(false), 2000)
+    }
   }
 
   const update = (patch: Partial<Config>) => {
@@ -127,6 +151,7 @@ export function PasswordApp() {
   }
 
   const strength = passwords[0] ? getStrength(passwords[0]) : null
+  const entropy = estimateEntropy(cfg)
 
   return (
     <div className="page">
@@ -256,7 +281,7 @@ export function PasswordApp() {
                 />
               </div>
               <span className="strength-label" style={{ color: strength.color }}>
-                {strength.label}
+                {strength.label} · {Math.floor(entropy)} bits
               </span>
             </div>
           )}
@@ -285,7 +310,9 @@ export function PasswordApp() {
             </button>
           )}
 
-          <p className="hint-text">密码在您的浏览器中生成，不会上传至任何服务器</p>
+          <p className={copyError ? 'hint-text hint-text--error' : 'hint-text'} aria-live="polite">
+            {copyError ? '复制失败，请手动选择密码' : '密码在您的浏览器中生成，不会上传至任何服务器'}
+          </p>
         </main>
       </div>
     </div>

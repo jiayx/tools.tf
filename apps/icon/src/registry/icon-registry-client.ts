@@ -1,6 +1,7 @@
 import type { IconRenderMode, IconSetId, IconSetData } from './icon-types'
 import { ICON_SET_META } from './icon-types'
 import { buildIndexFromJson, fetchIconifyJson } from './iconify-utils'
+import { ICONIFY_PACKAGES } from './iconify-utils'
 
 const CDN_ONLY = import.meta.env.VITE_ICONIFY_CDN_ONLY === 'true'
 
@@ -11,7 +12,7 @@ const loaders: Record<IconSetId, () => Promise<IconSetData>> = {
   },
   tabler: async () => {
     try {
-      const json = await fetchIconifyJson('@iconify-json/tabler')
+      const json = await fetchIconifyJson(ICONIFY_PACKAGES.tabler)
       const [names, getMarkup] = buildIndexFromJson(json, false)
       return { names, getMarkup }
     } catch (error) {
@@ -25,7 +26,7 @@ const loaders: Record<IconSetId, () => Promise<IconSetData>> = {
   },
   logos: async () => {
     try {
-      const json = await fetchIconifyJson('@iconify-json/logos')
+      const json = await fetchIconifyJson(ICONIFY_PACKAGES.logos)
       const [names, getMarkup] = buildIndexFromJson(json, true)
       return { names, getMarkup }
     } catch (error) {

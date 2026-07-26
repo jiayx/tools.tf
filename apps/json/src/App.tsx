@@ -2,11 +2,13 @@
 import { json } from '@codemirror/lang-json'
 import CodeMirror, { EditorView } from '@uiw/react-codemirror'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { minifyJson, type IndentValue, type JsonResult } from './json-format'
 
 const PLACEHOLDER = `{\n  "paste": "your JSON here"\n}`
 const COPY_FEEDBACK_MS = 2000
+const FORMAT_DEBOUNCE_MS = 150
+const MAX_JSON_LENGTH = 2_000_000
 
-type IndentValue = number | string
 type CopyState = 'idle' | 'success' | 'error'
 
 const INDENT_OPTIONS: Array<{ label: string; value: IndentValue }> = [
@@ -14,23 +16,6 @@ const INDENT_OPTIONS: Array<{ label: string; value: IndentValue }> = [
   { label: '4 空格', value: 4 },
   { label: 'Tab', value: '\t' },
 ]
-
-function tryFormat(raw: string, indent: IndentValue): { ok: true; value: string } | { ok: false; error: string } {
-  try {
-    const parsed = JSON.parse(raw)
-    return { ok: true, value: JSON.stringify(parsed, null, indent) }
-  } catch (e) {
-    return { ok: false, error: (e as Error).message }
-  }
-}
-
-function tryMinify(raw: string): { ok: true; value: string } | { ok: false; error: string } {
-  try {
-    return { ok: true, value: JSON.stringify(JSON.parse(raw)) }
-  } catch (e) {
-    return { ok: false, error: (e as Error).message }
-  }
-}
 
 const baseTheme = EditorView.theme({
   '&': { fontSize: '13px', height: '100%' },
@@ -42,8 +27,11 @@ const baseTheme = EditorView.theme({
 export function JsonApp() {
   const [input, setInput] = useState('')
   const [indent, setIndent] = useState<IndentValue>(2)
+  const [result, setResult] = useState<JsonResult | null>(null)
   const [copyState, setCopyState] = useState<CopyState>('idle')
   const copyTimeoutRef = useRef<number | null>(null)
+  const workerRef = useRef<Worker | null>(null)
+  const requestIdRef = useRef(0)
 
   const resetCopyState = useCallback(() => {
     if (copyTimeoutRef.current !== null) {
@@ -56,16 +44,42 @@ export function JsonApp() {
   }, [])
 
   useEffect(() => {
+    const worker = new Worker(new URL('./json.worker.ts', import.meta.url), { type: 'module' })
+    workerRef.current = worker
+    worker.onmessage = (event: MessageEvent<{ id: number; result: JsonResult }>) => {
+      if (event.data.id === requestIdRef.current) {
+        setResult(event.data.result)
+      }
+    }
+    worker.onerror = () => {
+      setResult({ ok: false, error: '格式化 Worker 运行失败' })
+    }
+
     return () => {
+      worker.terminate()
+      workerRef.current = null
       if (copyTimeoutRef.current !== null) {
         window.clearTimeout(copyTimeoutRef.current)
       }
     }
   }, [])
 
-  const result = useMemo(() => {
-    if (!input.trim()) return null
-    return tryFormat(input, indent)
+  useEffect(() => {
+    const requestId = ++requestIdRef.current
+    if (!input.trim()) {
+      setResult(null)
+      return
+    }
+    if (input.length > MAX_JSON_LENGTH) {
+      setResult({ ok: false, error: 'JSON 不能超过 2,000,000 个字符' })
+      return
+    }
+
+    const timer = window.setTimeout(() => {
+      workerRef.current?.postMessage({ id: requestId, raw: input, indent })
+    }, FORMAT_DEBOUNCE_MS)
+
+    return () => window.clearTimeout(timer)
   }, [input, indent])
 
   const outputValue = result?.ok ? result.value : ''
@@ -77,7 +91,7 @@ export function JsonApp() {
   }, [result])
 
   const handleMinify = useCallback(() => {
-    const r = tryMinify(input)
+    const r = minifyJson(input)
     if (r.ok) setInput(r.value)
   }, [input])
 

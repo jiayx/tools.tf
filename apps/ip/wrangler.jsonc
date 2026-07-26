@@ -1,14 +1,12 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "ip",
-  "compatibility_date": "2025-08-03",
+  "compatibility_date": "2026-07-26",
   "main": "./src/index.tsx",
   "observability": {
     "logs": {
       "enabled": false,
-      "head_sampling_rate": 1,
-      "invocation_logs": true,
-      "persist": true
+      "head_sampling_rate": 0
     }
   }
 }

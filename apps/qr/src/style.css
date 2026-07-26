@@ -514,3 +514,10 @@ button, textarea, input, select {
   text-align: center;
   margin: 0;
 }
+
+.error-message {
+  margin: 8px 0 0;
+  color: #dc2626;
+  font-size: 13px;
+  text-align: center;
+}

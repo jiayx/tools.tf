@@ -1,7 +1,7 @@
 /** @jsxImportSource react */
 import { parseDiffFromFile, type FileDiffOptions, type SupportedLanguages } from '@pierre/diffs'
 import { FileDiff } from '@pierre/diffs/react'
-import { useMemo, useState } from 'react'
+import { useDeferredValue, useMemo, useState } from 'react'
 import { detectLanguage } from './detectLanguage'
 
 const SAMPLE_LEFT = `export function greet(name: string) {
@@ -30,12 +30,14 @@ const LANGUAGES: { label: string; value: SupportedLanguages | 'auto' }[] = [
   { label: '自动检测', value: 'auto' },
   { label: 'TypeScript', value: 'typescript' },
   { label: 'JavaScript', value: 'javascript' },
-  { label: 'TSX / JSX', value: 'tsx' },
+  { label: 'TSX', value: 'tsx' },
+  { label: 'JSX', value: 'jsx' },
   { label: 'Python', value: 'python' },
   { label: 'Go', value: 'go' },
   { label: 'Rust', value: 'rust' },
   { label: 'Java', value: 'java' },
-  { label: 'C / C++', value: 'c' },
+  { label: 'C', value: 'c' },
+  { label: 'C++', value: 'cpp' },
   { label: 'CSS', value: 'css' },
   { label: 'HTML', value: 'html' },
   { label: 'JSON', value: 'json' },
@@ -44,6 +46,8 @@ const LANGUAGES: { label: string; value: SupportedLanguages | 'auto' }[] = [
   { label: 'Shell', value: 'shellscript' },
   { label: 'SQL', value: 'sql' },
 ]
+
+const MAX_TEXT_LENGTH = 500_000
 
 const diffOptions: FileDiffOptions<undefined> = {
   diffStyle: 'split',
@@ -62,10 +66,18 @@ export function DiffApp() {
   const [rightText, setRightText] = useState(SAMPLE_RIGHT)
   // 'auto' = follow detection; anything else = user override
   const [langPref, setLangPref] = useState<SupportedLanguages | 'auto'>('auto')
+  const deferredLeftText = useDeferredValue(leftText)
+  const deferredRightText = useDeferredValue(rightText)
+  const tooLarge =
+    leftText.length > MAX_TEXT_LENGTH ||
+    rightText.length > MAX_TEXT_LENGTH ||
+    deferredLeftText.length > MAX_TEXT_LENGTH ||
+    deferredRightText.length > MAX_TEXT_LENGTH
 
   const detectedLang = useMemo(() => {
-    return detectLanguage(leftText || rightText) ?? 'text'
-  }, [leftText, rightText])
+    const sample = `${deferredLeftText}\n${deferredRightText}`.slice(0, 100_000)
+    return detectLanguage(sample) ?? 'text'
+  }, [deferredLeftText, deferredRightText])
 
   const lang: SupportedLanguages = langPref === 'auto' ? detectedLang : langPref
 
@@ -75,10 +87,10 @@ export function DiffApp() {
 
   const fileDiff = useMemo(() => {
     return parseDiffFromFile(
-      { name: 'before', contents: leftText, lang },
-      { name: 'after', contents: rightText, lang },
+      { name: 'before', contents: tooLarge ? '' : deferredLeftText, lang },
+      { name: 'after', contents: tooLarge ? '' : deferredRightText, lang },
     )
-  }, [leftText, rightText, lang])
+  }, [deferredLeftText, deferredRightText, lang, tooLarge])
 
   const summary = useMemo(() => {
     let additions = 0
@@ -122,6 +134,7 @@ export function DiffApp() {
         <div className="toolbar">
           <select
             className="lang-select"
+            aria-label="语法高亮语言"
             value={langPref}
             onChange={(e) => handleLangChange(e.target.value)}
           >
@@ -188,7 +201,9 @@ export function DiffApp() {
           </div>
 
           <div className="diff-shell">
-            {isEmpty ? (
+            {tooLarge ? (
+              <div className="diff-empty">单侧文本不能超过 500,000 个字符</div>
+            ) : isEmpty ? (
               <div className="diff-empty">输入文本后这里会显示差异</div>
             ) : !summary.changed ? (
               <div className="diff-empty">两段文本完全相同，没有差异</div>

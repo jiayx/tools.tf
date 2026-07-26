@@ -174,6 +174,8 @@ const DOWNLOAD_SIZES = [
   { label: '1024px', value: 1024 },
   { label: '2048px', value: 2048 },
 ] as const
+const MAX_LOGO_BYTES = 512 * 1024
+const ALLOWED_LOGO_TYPES = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp'])
 
 export function QrApp() {
   const [cfg, setCfg] = useState<QrConfig>(DEFAULT_CONFIG)
@@ -181,6 +183,7 @@ export function QrApp() {
   const [activePreset, setActivePreset] = useState<number>(1) // Ocean
   const [downloadSize, setDownloadSize] = useState<number>(320)
   const [isComposing, setIsComposing] = useState(false)
+  const [error, setError] = useState('')
   const qrRef = useRef<QRCodeStyling | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -217,6 +220,18 @@ export function QrApp() {
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    if (!ALLOWED_LOGO_TYPES.has(file.type)) {
+      setError('Logo 仅支持 PNG、JPEG、GIF 或 WebP')
+      e.target.value = ''
+      return
+    }
+    if (file.size > MAX_LOGO_BYTES) {
+      setError('Logo 不能超过 512KB')
+      e.target.value = ''
+      return
+    }
+
+    setError('')
     const reader = new FileReader()
     reader.onload = (ev) => {
       update({ logoUrl: ev.target?.result as string, errorLevel: 'H' })
@@ -225,8 +240,13 @@ export function QrApp() {
   }
 
   const handleDownload = async () => {
-    const exportQr = new QRCodeStyling(buildQrCodeStylingOptions({ ...cfg, size: downloadSize }))
-    await exportQr.download({ name: `qrcode-${downloadSize}px`, extension: 'png' })
+    try {
+      setError('')
+      const exportQr = new QRCodeStyling(buildQrCodeStylingOptions({ ...cfg, size: downloadSize }))
+      await exportQr.download({ name: `qrcode-${downloadSize}px`, extension: 'png' })
+    } catch {
+      setError('二维码生成失败，请缩短内容或移除 Logo 后重试')
+    }
   }
 
   const imageUrl = `/image?${buildQrImageQuery({ ...cfg, size: downloadSize })}`
@@ -494,9 +514,14 @@ export function QrApp() {
           <button className="download-btn" onClick={handleDownload}>
             下载 PNG
           </button>
-          <a className="preview-link-inline" href={imageUrl} target="_blank" rel="noreferrer">
-            在新页面打开当前二维码
-          </a>
+          {cfg.logoUrl ? (
+            <p className="scan-hint">带 Logo 的二维码仅在浏览器本地生成，请使用下载按钮保存</p>
+          ) : (
+            <a className="preview-link-inline" href={imageUrl} target="_blank" rel="noreferrer">
+              在新页面打开当前二维码
+            </a>
+          )}
+          {error && <p className="error-message" role="alert">{error}</p>}
           <p className="scan-hint">请用手机扫码验证内容是否正确后再分享</p>
         </main>
       </div>

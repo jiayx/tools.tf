@@ -5,12 +5,14 @@
   "description": "",
   "scripts": {
     "build": "pnpm --recursive --if-present build",
-    "lint": "oxlint . --deny-warnings",
+    "lint": "oxlint . --deny-warnings --deny typescript/no-floating-promises",
     "lint:fix": "oxlint . --fix",
-    "test": "pnpm --recursive --if-present test"
+    "test": "pnpm --recursive --if-present test",
+    "typecheck": "for config in apps/*/tsconfig.json packages/*/tsconfig.json; do tsc --noEmit -p \"$config\"; done"
   },
   "devDependencies": {
-    "oxlint": "catalog:"
+    "oxlint": "catalog:",
+    "typescript": "catalog:"
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"

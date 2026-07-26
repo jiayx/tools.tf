@@ -3,18 +3,22 @@ import { Link, ViteClient, Script } from 'vite-ssr-components/hono'
 
 export const renderer = jsxRenderer(({ children }) => {
   return (
-    <html>
+    <html lang="zh-CN">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>跨时区时间助手 · chrono</title>
+        <title>Timezone · datetime.tools.tf</title>
+        <meta
+          name="description"
+          content="Convert natural-language time descriptions across timezones instantly."
+        />
         <ViteClient />
         <Link href="/src/style.css" rel="stylesheet" />
         <link rel="icon" sizes="64x64" type="image/svg+xml" href="https://icon.tools.tf/icon/64?type=tabler&fg=%231946ae&bg=transparent&glyph=100&icon=timezone" />
       </head>
       <body>
         {children}
-        <Script src="/src/app.ts" type="module" />
+        <Script type="module" src="/src/app.ts" />
       </body>
     </html>
   )

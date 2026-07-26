@@ -98,7 +98,7 @@ const ToolCard = ({ tool }: { tool: Tool }) => (
     style={`--accent: ${tool.accent}`}
   >
     <div class="tool-card__icon">
-      <img src={tool.icon} alt="" width="48" height="48" />
+      <img src={tool.icon} alt="" width="48" height="48" decoding="async" />
     </div>
     <div class="tool-card__body">
       <p class="tool-card__tagline">{tool.tagline}</p>
@@ -119,7 +119,7 @@ app.get('/', (c) => {
 
       <main class="tools">
         {tools.map((tool) => (
-          <ToolCard tool={tool} />
+          <ToolCard key={tool.url} tool={tool} />
         ))}
       </main>
 

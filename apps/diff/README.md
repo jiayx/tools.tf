@@ -1,21 +1,10 @@
-```txt
-pnpm install
-pnpm run dev
-```
+# Diff
 
-```txt
-pnpm run deploy
-```
+浏览器端文本差异工具，支持分栏展示、行内高亮、语言自动识别和变化统计。
 
-[For generating/synchronizing types based on your Worker configuration run](https://developers.cloudflare.com/workers/wrangler/commands/#types):
-
-```txt
-pnpm run cf-typegen
-```
-
-Pass the `CloudflareBindings` as generics when instantiation `Hono`:
-
-```ts
-// src/index.ts
-const app = new Hono<{ Bindings: CloudflareBindings }>();
+```bash
+pnpm --filter diff dev
+pnpm --filter diff test
+pnpm --filter diff build
+pnpm --filter diff deploy
 ```

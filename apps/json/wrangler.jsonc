@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "json",
-  "compatibility_date": "2026-02-16",
+  "compatibility_date": "2026-07-26",
   "main": "./src/index.tsx",
   "observability": {
     "logs": {

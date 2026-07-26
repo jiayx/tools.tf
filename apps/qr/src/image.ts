@@ -13,6 +13,9 @@ const DEFAULT_MARGIN = 16
 const DEFAULT_FG = '#2563eb'
 const DEFAULT_BG = '#ffffff'
 const DEFAULT_ERROR_LEVEL = 'M'
+const MAX_QR_DATA_BYTES = 2_953
+
+export class QrInputError extends Error {}
 
 export interface QrConfig {
   data: string
@@ -127,8 +130,17 @@ function parseGradientType(value: string | null): GradientType {
 }
 
 export function parseQrImageOptions(searchParams: URLSearchParams): QrImageOptions {
+  const data = searchParams.get('data') || DEFAULT_DATA
+  if (new TextEncoder().encode(data).byteLength > MAX_QR_DATA_BYTES) {
+    throw new QrInputError(`二维码内容不能超过 ${MAX_QR_DATA_BYTES} 字节`)
+  }
+
+  if (searchParams.has('logo') || searchParams.has('logoUrl')) {
+    throw new QrInputError('公共图片接口不支持远程 Logo，请在页面中本地生成')
+  }
+
   return {
-    data: searchParams.get('data') || DEFAULT_DATA,
+    data,
     size: clampNumber(searchParams.get('size'), DEFAULT_SIZE, 128, 2048),
     margin: clampNumber(searchParams.get('margin'), DEFAULT_MARGIN, 0, 128),
     dotType: parseDotType(searchParams.get('dotType') || searchParams.get('dot')),
@@ -142,7 +154,7 @@ export function parseQrImageOptions(searchParams: URLSearchParams): QrImageOptio
     bgColor: parseColor(searchParams.get('bg'), DEFAULT_BG),
     transparentBg: parseBoolean(searchParams.get('transparent')),
     errorLevel: parseErrorLevel(searchParams.get('ecl') || searchParams.get('errorLevel')),
-    logoUrl: searchParams.get('logo') || searchParams.get('logoUrl') || '',
+    logoUrl: '',
   }
 }
 
@@ -222,10 +234,6 @@ export function buildQrImageQuery(config: QrImageOptions): string {
 
   if (config.transparentBg) {
     searchParams.set('transparent', '1')
-  }
-
-  if (config.logoUrl) {
-    searchParams.set('logo', config.logoUrl)
   }
 
   return searchParams.toString()

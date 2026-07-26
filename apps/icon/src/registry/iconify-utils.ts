@@ -3,6 +3,10 @@ import { createIconIndex } from '../icons/icon-index'
 
 export const BASE_SIZE = 24
 export const CDN_BASE = 'https://cdn.jsdelivr.net/npm'
+export const ICONIFY_PACKAGES = {
+  tabler: '@iconify-json/tabler@1.2.37',
+  logos: '@iconify-json/logos@1.2.11',
+} as const
 
 export const fetchIconifyJson = async (pkg: string): Promise<IconifyJSON> => {
   const response = await fetch(`${CDN_BASE}/${pkg}/icons.json`)

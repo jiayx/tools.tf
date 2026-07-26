@@ -1,21 +1,26 @@
 import { lucideIconNames, getLucideIconMarkup } from '../icons/lucide'
 import type { IconifyJSON } from '@iconify/types'
 import { ICON_SET_META, type IconSetId, type IconSetData } from './icon-types'
-import { buildIndexFromJson, fetchIconifyJson } from './iconify-utils'
+import { buildIndexFromJson, fetchIconifyJson, ICONIFY_PACKAGES } from './iconify-utils'
 export type { IconSetId } from './icon-types'
-import { KVNamespace } from '@cloudflare/workers-types'
+import type { KVNamespace } from '@cloudflare/workers-types'
 
 export const FALLBACK_ICON_MARKUP = '<circle cx="12" cy="12" r="9" />'
 
 const KV_PREFIX = 'iconify:'
 const KV_TTL_SECONDS = 60 * 60 * 24 * 7
+type Defer = (promise: Promise<unknown>) => void
 
-export const loadIconSetData = async (iconSet: IconSetId, kv?: KVNamespace): Promise<IconSetData> => {
+export const loadIconSetData = async (
+  iconSet: IconSetId,
+  kv?: KVNamespace,
+  defer?: Defer,
+): Promise<IconSetData> => {
   if (iconSet === 'lucide') {
     return { names: lucideIconNames, getMarkup: getLucideIconMarkup }
   }
 
-  const pkg = iconSet === 'tabler' ? '@iconify-json/tabler' : '@iconify-json/logos'
+  const pkg = ICONIFY_PACKAGES[iconSet]
   let json: IconifyJSON | null = null
 
   if (kv) {
@@ -30,12 +35,16 @@ export const loadIconSetData = async (iconSet: IconSetId, kv?: KVNamespace): Pro
     if (!json) {
       json = await fetchIconifyJson(pkg)
       if (kv) {
-        try {
-          await kv.put(`${KV_PREFIX}${iconSet}`, JSON.stringify(json), {
-            expirationTtl: KV_TTL_SECONDS,
-          })
-        } catch (error) {
+        const write = kv.put(`${KV_PREFIX}${iconSet}`, JSON.stringify(json), {
+          expirationTtl: KV_TTL_SECONDS,
+        }).catch((error) => {
           console.warn(error)
+        })
+
+        if (defer) {
+          defer(write)
+        } else {
+          await write
         }
       }
     }

@@ -1,4 +1,4 @@
-import * as chrono from 'chrono-node'
+import { getOffsetMinutes, formatOffset, parseTime } from './convert'
 
 type ZoneOption = {
   value: string
@@ -22,57 +22,20 @@ const zonePresets: ZoneOption[] = [
   { value: 'America/Vancouver' },
   { value: 'Australia/Sydney' },
   { value: 'Pacific/Auckland' },
-  { value: 'UTC' }
+  { value: 'UTC' },
 ]
 
-const input = document.querySelector<HTMLTextAreaElement>('#input-text')
-const form = document.querySelector<HTMLFormElement>('#converter-form')
+const inputEl = document.querySelector<HTMLTextAreaElement>('#input-text')
 const sourceSelect = document.querySelector<HTMLSelectElement>('#source-tz')
 const targetSelect = document.querySelector<HTMLSelectElement>('#target-tz')
-const resultBox = document.querySelector<HTMLDivElement>('#result')
-const detailsBox = document.querySelector<HTMLDivElement>('#details')
+const resultArea = document.querySelector<HTMLDivElement>('#result-area')
+const errorMsg = document.querySelector<HTMLParagraphElement>('#error-msg')
+const convertBtn = document.querySelector<HTMLButtonElement>('#convert-btn')
 const chips = Array.from(document.querySelectorAll<HTMLButtonElement>('.chip'))
-
-function getOffsetMinutes(timeZone: string, date = new Date()) {
-  const dtf = new Intl.DateTimeFormat('en-US', {
-    timeZone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  })
-  const parts = dtf.formatToParts(date)
-  const filled: Record<string, number> = {}
-  for (const part of parts) {
-    if (part.type !== 'literal') {
-      filled[part.type] = Number(part.value)
-    }
-  }
-  const asUTC = Date.UTC(
-    filled.year,
-    filled.month - 1,
-    filled.day,
-    filled.hour,
-    filled.minute,
-    filled.second
-  )
-  return Math.round((asUTC - date.getTime()) / 60000)
-}
-
-function formatOffset(offsetMinutes: number) {
-  const sign = offsetMinutes >= 0 ? '+' : '-'
-  const abs = Math.abs(offsetMinutes)
-  const hours = String(Math.floor(abs / 60)).padStart(2, '0')
-  const minutes = String(abs % 60).padStart(2, '0')
-  return `UTC${sign}${hours}:${minutes}`
-}
 
 function buildLabel(value: string, date = new Date()) {
   try {
-    return `${value.replace(/_/g, ' ')}（${formatOffset(getOffsetMinutes(value, date))}）`
+    return `${value.replace(/_/g, ' ')} (${formatOffset(getOffsetMinutes(value, date))})`
   } catch {
     return value
   }
@@ -83,67 +46,133 @@ function populateSelect(select: HTMLSelectElement | null, zones: ZoneOption[]) {
   const now = new Date()
   select.innerHTML = ''
   zones.forEach((zone) => {
-    const option = document.createElement('option')
-    option.value = zone.value
-    option.textContent = zone.label ?? buildLabel(zone.value, now)
-    select.appendChild(option)
+    const opt = document.createElement('option')
+    opt.value = zone.value
+    opt.textContent = zone.label ?? buildLabel(zone.value, now)
+    select.appendChild(opt)
   })
-}
-
-function setResult({
-  localTime,
-  targetZoneLabel,
-  sourceZoneLabel,
-  sourceTime,
-  parsedText
-}: {
-  localTime: string
-  targetZoneLabel: string
-  sourceZoneLabel: string
-  sourceTime: string
-  parsedText: string
-}) {
-  if (!resultBox || !detailsBox) return
-  resultBox.innerHTML = ''
-  detailsBox.innerHTML = ''
-
-  const primary = document.createElement('div')
-  primary.className = 'time-big'
-  primary.textContent = localTime
-
-  const targetLine = document.createElement('p')
-  targetLine.className = 'muted'
-  targetLine.textContent = `你的时区 · ${targetZoneLabel}`
-
-  const compare = document.createElement('div')
-  compare.className = 'compare'
-  const compareTitle = document.createElement('p')
-  compareTitle.textContent = '原始时间'
-  compareTitle.className = 'label'
-  const compareTime = document.createElement('p')
-  compareTime.className = 'small'
-  compareTime.textContent = `${sourceTime} · ${sourceZoneLabel}`
-  compare.appendChild(compareTitle)
-  compare.appendChild(compareTime)
-
-  resultBox.appendChild(primary)
-  resultBox.appendChild(targetLine)
-  resultBox.appendChild(compare)
-
-  const ref = document.createElement('p')
-  ref.className = 'muted'
-  ref.textContent = `解析片段：“${parsedText}”`
-  detailsBox.appendChild(ref)
-}
-
-function setError(message: string) {
-  if (!resultBox || !detailsBox) return
-  resultBox.innerHTML = `<p class="muted">${message}</p>`
-  detailsBox.innerHTML = ''
 }
 
 function getUserTimeZone() {
   return Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'UTC'
+}
+
+function getLang() {
+  const saved = localStorage.getItem('lang')
+  return saved || navigator.languages?.[0] || navigator.language || 'en'
+}
+
+function showError(msg: string) {
+  if (errorMsg) errorMsg.textContent = msg
+  resetResult()
+}
+
+function clearError() {
+  if (errorMsg) errorMsg.textContent = ''
+}
+
+function resetResult() {
+  if (!resultArea) return
+  const placeholder = document.createElement('div')
+  placeholder.className = 'result-placeholder'
+  placeholder.textContent = '等待输入…'
+  resultArea.replaceChildren(placeholder)
+  resultArea.classList.remove('has-result')
+}
+
+function showResult({
+  localTime,
+  targetZone,
+  targetOffset,
+  sourceTime,
+  sourceZone,
+  sourceOffset,
+  parsedText,
+}: {
+  localTime: string
+  targetZone: string
+  targetOffset: string
+  sourceTime: string
+  sourceZone: string
+  sourceOffset: string
+  parsedText: string
+}) {
+  if (!resultArea) return
+  clearError()
+
+  const main = document.createElement('div')
+  main.className = 'result-main'
+  const time = document.createElement('div')
+  time.className = 'result-time'
+  time.textContent = localTime
+  const zone = document.createElement('div')
+  zone.className = 'result-zone'
+  zone.textContent = `${targetZone} · ${targetOffset}`
+  main.append(time, zone)
+
+  const source = document.createElement('div')
+  source.className = 'result-source'
+  const sourceLabel = document.createElement('span')
+  sourceLabel.className = 'result-source-label'
+  sourceLabel.textContent = '原始'
+  const sourceValue = document.createElement('span')
+  sourceValue.textContent = `${sourceTime} · ${sourceZone} · ${sourceOffset}`
+  source.append(sourceLabel, sourceValue)
+
+  const parsed = document.createElement('div')
+  parsed.className = 'result-parsed'
+  parsed.textContent = `解析片段：「${parsedText}」`
+
+  resultArea.replaceChildren(main, source, parsed)
+  resultArea.classList.add('has-result')
+}
+
+function convert() {
+  if (!inputEl || !sourceSelect || !targetSelect) return
+  const text = inputEl.value.trim()
+  if (!text) {
+    showError('')
+    return
+  }
+
+  const sourceZone = sourceSelect.value
+  const targetZone = targetSelect.value
+  const result = parseTime(text, sourceZone, getLang())
+
+  if ('error' in result) {
+    showError(result.error)
+    return
+  }
+
+  const { eventDate, parsedText } = result
+
+  const targetFormatter = new Intl.DateTimeFormat('zh-CN', {
+    dateStyle: 'full',
+    timeStyle: 'short',
+    timeZone: targetZone,
+  })
+  const sourceFormatter = new Intl.DateTimeFormat('zh-CN', {
+    dateStyle: 'full',
+    timeStyle: 'short',
+    timeZone: sourceZone,
+  })
+
+  showResult({
+    localTime: targetFormatter.format(eventDate),
+    targetZone,
+    targetOffset: formatOffset(getOffsetMinutes(targetZone, eventDate)),
+    sourceTime: sourceFormatter.format(eventDate),
+    sourceZone,
+    sourceOffset: formatOffset(getOffsetMinutes(sourceZone, eventDate)),
+    parsedText,
+  })
+}
+
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+
+function scheduleConvert() {
+  if (debounceTimer !== null) clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(convert, 400)
 }
 
 function setup() {
@@ -151,100 +180,30 @@ function setup() {
   const userLabel = `${buildLabel(userZone)} · 你的时区`
   const uniqueZones = [
     { value: userZone, label: userLabel },
-    ...zonePresets.filter((z) => z.value !== userZone)
+    ...zonePresets.filter((z) => z.value !== userZone),
   ]
 
   populateSelect(sourceSelect, uniqueZones)
   populateSelect(targetSelect, uniqueZones)
 
-  if (sourceSelect) {
-    sourceSelect.value = 'Asia/Shanghai'
-  }
-  if (targetSelect) {
-    targetSelect.value = userZone
-  }
+  if (sourceSelect) sourceSelect.value = 'Asia/Shanghai'
+  if (targetSelect) targetSelect.value = userZone
+
+  inputEl?.addEventListener('input', scheduleConvert)
+  sourceSelect?.addEventListener('change', convert)
+  targetSelect?.addEventListener('change', convert)
+  convertBtn?.addEventListener('click', convert)
 
   chips.forEach((chip) =>
     chip.addEventListener('click', () => {
       const text = chip.dataset.fill
-      if (text && input) {
-        input.value = text
-        input.focus()
+      if (text && inputEl) {
+        inputEl.value = text
+        inputEl.focus()
+        convert()
       }
     })
   )
-
-  form?.addEventListener('submit', (event) => {
-    event.preventDefault()
-    convert()
-  })
-}
-
-function getChrono() {
-  const saved = localStorage.getItem('lang') // 'zh' | 'en' | etc.
-  const lang = saved || (navigator.languages?.[0] || navigator.language || 'en')
-  if (lang.toLowerCase().startsWith('zh')) return chrono.zh
-  if (lang.toLowerCase().startsWith('ja')) return chrono.ja
-  // 可继续扩展
-  return chrono
-}
-
-function makeSemanticNow(offsetMinutes: number) {
-  const now = new Date();
-  return new Date(now.getTime() + offsetMinutes * 60 * 1000);
-}
-
-function convert() {
-  if (!input || !sourceSelect || !targetSelect) return
-  const text = input.value.trim()
-  if (!text) {
-    setError('请输入要换算的时间描述')
-    return
-  }
-
-  const sourceZone = sourceSelect.value
-  const targetZone = targetSelect.value
-
-  let sourceOffset = 0
-  try {
-    sourceOffset = getOffsetMinutes(sourceZone)
-  } catch {
-    setError('原始时区无效，请重新选择')
-    return
-  }
-
-  const chronoInstance = getChrono()
-
-  const results = chronoInstance.parse(text, { instant: makeSemanticNow(sourceOffset), timezone: sourceOffset })
-  const parsed = results[0]
-  if (!parsed) {
-    setError('没有解析出时间，试试补充日期或时间段')
-    return
-  }
-
-  const eventDate = parsed.date()
-
-  const targetFormatter = new Intl.DateTimeFormat('zh-CN', {
-    dateStyle: 'full',
-    timeStyle: 'short',
-    timeZone: targetZone
-  })
-  const sourceFormatter = new Intl.DateTimeFormat('zh-CN', {
-    dateStyle: 'full',
-    timeStyle: 'short',
-    timeZone: sourceZone
-  })
-
-  const targetOffset = formatOffset(getOffsetMinutes(targetZone, eventDate))
-  const sourceOffsetLabel = formatOffset(getOffsetMinutes(sourceZone, eventDate))
-
-  setResult({
-    localTime: targetFormatter.format(eventDate),
-    targetZoneLabel: `${targetZone} · ${targetOffset}`,
-    sourceZoneLabel: `${sourceZone} · ${sourceOffsetLabel}`,
-    sourceTime: sourceFormatter.format(eventDate),
-    parsedText: parsed.text
-  })
 }
 
 setup()

@@ -86,7 +86,11 @@ const parseOptions = (query: Record<string, string>, sizeParam?: string) => {
   } satisfies IconOptions
 }
 
-const buildSvg = async (options: IconOptions, kv?: KVNamespace) => {
+const buildSvg = async (
+  options: IconOptions,
+  kv?: KVNamespace,
+  defer?: (promise: Promise<unknown>) => void,
+) => {
   const { size, fg, bgMode, bg1, bg2, angle, type, text, icon, textGlyph, iconGlyph, radius } = options
   const { defs, backgroundMarkup, clipPath } = buildBackgroundParts({ size, bgMode, bg1, bg2, angle, radius })
 
@@ -95,7 +99,7 @@ const buildSvg = async (options: IconOptions, kv?: KVNamespace) => {
   }
 
   const iconSet = resolveIconSet(type)
-  const data = await loadIconSetData(iconSet, kv)
+  const data = await loadIconSetData(iconSet, kv, defer)
   const iconMarkup = data.getMarkup(icon) ?? FALLBACK_ICON_MARKUP
   const iconWrapper = getIconWrapperAttributes(iconSet, fg)
   return buildIconSvg({ size, glyph: iconGlyph, iconMarkup, wrapper: iconWrapper, defs, backgroundMarkup, clipPath })
@@ -377,10 +381,11 @@ app.get('/', (c) => {
 
 app.get('/icon/:size?', async (c) => {
   const options = parseOptions(c.req.query(), c.req.param('size'))
-  const svg = await buildSvg(options, c.env.KV)
+  const svg = await buildSvg(options, c.env.KV, (promise) => c.executionCtx.waitUntil(promise))
   return c.body(svg, 200, {
     'Content-Type': 'image/svg+xml; charset=utf-8',
-    'Cache-Control': 'public, max-age=3600',
+    'Cache-Control': 'public, max-age=86400, s-maxage=604800',
+    'X-Content-Type-Options': 'nosniff',
   })
 })
 
