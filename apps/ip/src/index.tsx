@@ -80,19 +80,7 @@ const IpPage = ({ details, locale }: { details: IpDetails; locale: Locale }) => 
         <header class="card__header">
           <div class="card__header-main">
             <p class="eyebrow">{pick(locale, { en: 'Current outbound IP', zh: '当前出口 IP' })}</p>
-            <div class="ip-line">
-              <h1 class="title">{details.ip}</h1>
-              <button class="copy-btn" type="button" data-copy-ip={details.ip}>
-                {pick(locale, { en: 'Copy', zh: '复制' })}
-              </button>
-              <span class="copy-status" data-copy-status>
-                {pick(locale, { en: 'Copy', zh: '复制' })}
-              </span>
-            </div>
-            <p class="subtitle">{pick(locale, {
-              en: 'Public address used for this page request',
-              zh: '本次访问所使用的公网地址',
-            })}</p>
+            <h1 class="title">{details.ip}</h1>
           </div>
           <div class="badge">{details.country}</div>
         </header>

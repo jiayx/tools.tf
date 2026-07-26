@@ -69,19 +69,6 @@ body {
   margin: 0;
 }
 
-.ip-line {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.subtitle {
-  margin: 8px 0 0;
-  color: var(--muted);
-  font-size: 15px;
-}
-
 .copy-btn {
   flex: 0 0 auto;
   border: 1px solid var(--border);
@@ -104,11 +91,6 @@ body {
 
 .copy-btn:active {
   transform: translateY(0);
-}
-
-.copy-status {
-  color: var(--muted);
-  font-size: 12px;
 }
 
 .badge {

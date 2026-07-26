@@ -19,7 +19,6 @@ document.addEventListener('DOMContentLoaded', () => {
       checking: 'Checking connectivity…',
       connected: 'Connected',
       unavailable: 'Unavailable on this network',
-      copy: 'Copy',
       copied: 'Copied!',
       failed: 'Copy failed',
     },
@@ -27,7 +26,6 @@ document.addEventListener('DOMContentLoaded', () => {
       checking: '正在检测连接…',
       connected: '连接正常',
       unavailable: '当前网络不可用',
-      copy: '复制',
       copied: '已复制！',
       failed: '复制失败',
     },
@@ -45,29 +43,6 @@ document.addEventListener('DOMContentLoaded', () => {
     input.select()
     document.execCommand('copy')
     input.remove()
-  }
-
-  const primaryButton = document.querySelector<HTMLButtonElement>('[data-copy-ip]')
-  const primaryStatus = document.querySelector<HTMLElement>('[data-copy-status]')
-  if (primaryButton && primaryStatus) {
-    let timer: number | undefined
-    primaryButton.addEventListener('click', async () => {
-      const ip = primaryButton.dataset.copyIp
-      if (!ip) return
-
-      try {
-        await copyText(ip)
-        primaryStatus.textContent = messages.copied
-      } catch (error) {
-        console.error(error)
-        primaryStatus.textContent = messages.failed
-      }
-
-      window.clearTimeout(timer)
-      timer = window.setTimeout(() => {
-        primaryStatus.textContent = messages.copy
-      }, 1_800)
-    })
   }
 
   const probe = async (expectedFamily: IpFamily) => {
