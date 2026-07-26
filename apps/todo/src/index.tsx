@@ -44,32 +44,6 @@ const toClientTask = (task: TaskRecord) => {
   };
 };
 
-const sortTasks = (tasks: TaskRecord[], sortBy: string | undefined) => {
-  const copy = [...tasks];
-
-  if (sortBy === 'created') {
-    copy.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    return copy;
-  }
-
-  if (sortBy === 'start_by') {
-    copy.sort((a, b) => {
-      const av = a.start_by_utc ? new Date(a.start_by_utc).getTime() : Number.MAX_SAFE_INTEGER;
-      const bv = b.start_by_utc ? new Date(b.start_by_utc).getTime() : Number.MAX_SAFE_INTEGER;
-      return av - bv;
-    });
-    return copy;
-  }
-
-  copy.sort((a, b) => {
-    const av = a.due_at_utc ? new Date(a.due_at_utc).getTime() : Number.MAX_SAFE_INTEGER;
-    const bv = b.due_at_utc ? new Date(b.due_at_utc).getTime() : Number.MAX_SAFE_INTEGER;
-    return av - bv;
-  });
-
-  return copy;
-};
-
 app.get('/api/health', (c) => {
   return c.json({ ok: true, now: new Date().toISOString() });
 });

@@ -52,8 +52,6 @@ export function TasksPage({ onTaskClick, onNewImport }: Props) {
     STATUS_ORDER.map((s) => [s, filtered.filter((t) => t.status === s)])
   ) as Record<TaskStatus, ClientTask[]>;
 
-  const totalActive = filtered.filter((t) => t.status !== 'completed').length;
-
   async function handleComplete(id: string) {
     try {
       const updated = await updateTask(id, { completed: true });

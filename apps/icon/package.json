@@ -10,9 +10,9 @@
   },
   "dependencies": {
     "@iconify-json/logos": "^1.2.11",
-    "@iconify-json/tabler": "^1.2.33",
+    "@iconify-json/tabler": "^1.2.37",
     "hono": "catalog:",
-    "lucide-static": "^0.542.0"
+    "lucide-static": "^1.26.0"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "catalog:",

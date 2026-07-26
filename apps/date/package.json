@@ -11,7 +11,7 @@
     "cf-typegen": "wrangler types --env-interface CloudflareBindings"
   },
   "dependencies": {
-    "chrono-node": "^2.9.0",
+    "chrono-node": "^2.10.1",
     "hono": "catalog:"
   },
   "devDependencies": {

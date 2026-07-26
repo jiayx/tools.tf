@@ -9,10 +9,10 @@
     "cf-typegen": "wrangler types --env-interface CloudflareBindings"
   },
   "dependencies": {
-    "@codemirror/commands": "^6.10.1",
-    "@codemirror/merge": "^6.11.2",
-    "@codemirror/state": "^6.5.3",
-    "@codemirror/view": "^6.39.7",
+    "@codemirror/commands": "^6.10.4",
+    "@codemirror/merge": "^6.12.2",
+    "@codemirror/state": "^6.7.1",
+    "@codemirror/view": "^6.43.6",
     "hono": "catalog:"
   },
   "devDependencies": {

@@ -102,17 +102,6 @@ const buildSvg = async (options: IconOptions, kv?: KVNamespace) => {
 }
 
 const IconPage = () => {
-  const defaultParams = new URLSearchParams({
-    type: DEFAULTS.type,
-    text: DEFAULTS.text,
-    fg: DEFAULTS.fg,
-    bg1: DEFAULTS.bg1,
-    bg2: DEFAULTS.bg2,
-    angle: String(DEFAULTS.angle),
-    textGlyph: String(DEFAULTS.textGlyph),
-    iconGlyph: String(DEFAULTS.iconGlyph),
-    radius: String(DEFAULTS.radius),
-  }).toString()
   const getPresetBackground = (bgMode: string, bg1: string, bg2: string, angle: number) => {
     if (bgMode === 'solid') return bg1
     if (bgMode === 'transparent') return 'transparent'

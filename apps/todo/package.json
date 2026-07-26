@@ -7,25 +7,23 @@
     "preview": "$npm_execpath run build && vite preview",
     "deploy": "$npm_execpath run build && wrangler deploy",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
-    "lint": "biome check .",
-    "lint:fix": "biome check . --write",
-    "format": "biome format . --write"
+    "lint": "oxlint . --deny-warnings",
+    "lint:fix": "oxlint . --fix"
   },
   "dependencies": {
-    "@tanstack/react-router": "^1.133.0",
     "hono": "catalog:",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react": "catalog:",
+    "react-dom": "catalog:"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.4",
     "@cloudflare/vite-plugin": "catalog:",
     "@cloudflare/workers-types": "catalog:",
     "@tailwindcss/vite": "catalog:",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
-    "tailwindcss": "4.2.0",
+    "oxlint": "catalog:",
+    "tailwindcss": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vite-ssr-components": "catalog:",

@@ -13,7 +13,7 @@ export function detectLanguage(code: string): SupportedLanguages | null {
   }
 
   // JSON
-  add('json', scoreMatch(source, /^\s*[\[{]/, 4))
+  add('json', scoreMatch(source, /^\s*[[{]/, 4))
   add('json', scoreMatch(source, /"[^"]+"\s*:/, 8))
 
   // YAML

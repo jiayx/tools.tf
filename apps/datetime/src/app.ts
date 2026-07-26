@@ -73,7 +73,7 @@ function formatOffset(offsetMinutes: number) {
 function buildLabel(value: string, date = new Date()) {
   try {
     return `${value.replace(/_/g, ' ')}（${formatOffset(getOffsetMinutes(value, date))}）`
-  } catch (e) {
+  } catch {
     return value
   }
 }
@@ -208,7 +208,7 @@ function convert() {
   let sourceOffset = 0
   try {
     sourceOffset = getOffsetMinutes(sourceZone)
-  } catch (e) {
+  } catch {
     setError('原始时区无效，请重新选择')
     return
   }

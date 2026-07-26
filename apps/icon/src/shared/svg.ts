@@ -45,7 +45,7 @@ const measureTextUnits = (text: string) => {
       units += 0.56
     } else if (/[0-9A-Za-z]/.test(char)) {
       units += 0.62
-    } else if (/[\-_.]/.test(char)) {
+    } else if (/[-_.]/.test(char)) {
       units += 0.36
     } else {
       units += 0.8

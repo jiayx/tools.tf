@@ -9,16 +9,16 @@
     "cf-typegen": "wrangler types --env-interface CloudflareBindings"
   },
   "dependencies": {
-    "@codemirror/lang-json": "^6.0.1",
-    "@uiw/react-codemirror": "^4.23.10",
+    "@codemirror/lang-json": "^6.0.2",
+    "@uiw/react-codemirror": "^4.25.11",
     "hono": "catalog:",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react": "catalog:",
+    "react-dom": "catalog:"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "catalog:",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",

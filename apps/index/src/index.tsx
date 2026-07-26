@@ -24,6 +24,22 @@ const tools: Tool[] = [
     accent: '#6366f1',
   },
   {
+    name: 'Edge Drop',
+    tagline: 'Temporary sharing rooms',
+    description: 'Create a 6-digit room for instant file drops and lightweight chat, with media previews and automatic 24-hour expiry.',
+    url: 'https://drop.tools.tf',
+    icon: 'https://icon.tools.tf/icon/48?type=tabler&fg=%2338bdf8&bg=transparent&iconGlyph=80&icon=transfer',
+    accent: '#38bdf8',
+  },
+  {
+    name: 'ttys',
+    tagline: 'Live terminal sharing',
+    description: 'Share a local terminal anonymously through the browser, with synchronized sessions and host-approved remote control.',
+    url: 'https://ttys.tools.tf',
+    icon: 'https://ttys.tools.tf/logo.svg',
+    accent: '#fbbf24',
+  },
+  {
     name: 'Diff',
     tagline: 'Text diff viewer',
     description: 'Paste two text blocks and get a clear, syntax-highlighted diff — with auto language detection and line-by-line comparison.',
@@ -38,14 +54,6 @@ const tools: Tool[] = [
     url: 'https://ip.tools.tf',
     icon: 'https://icon.tools.tf/icon/48?type=tabler&fg=%230e4ee1&bg=transparent&textGlyph=100&iconGlyph=100&radius=0&icon=location-star',
     accent: '#0ea5e9',
-  },
-  {
-    name: 'Edge Drop',
-    tagline: 'Temporary sharing rooms',
-    description: 'Create a 6-digit room for instant file drops and lightweight chat, with media previews and automatic 24-hour expiry.',
-    url: 'https://drop.tools.tf',
-    icon: 'https://icon.tools.tf/icon/48?type=tabler&fg=%2338bdf8&bg=transparent&iconGlyph=80&icon=transfer',
-    accent: '#38bdf8',
   },
   {
     name: 'QR Code',
