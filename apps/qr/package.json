@@ -12,7 +12,7 @@
   "dependencies": {
     "@tools/i18n": "workspace:*",
     "hono": "catalog:",
-    "qr-code-styling-worker": "^0.1.2",
+    "qr-code-styling-worker": "^0.2.0",
     "react": "catalog:",
     "react-dom": "catalog:"
   },

@@ -5,7 +5,7 @@ import type {
   DotType,
   ErrorCorrectionLevel,
   GradientType,
-  Options,
+  WorkerOptions,
 } from 'qr-code-styling-worker'
 
 const DEFAULT_DATA = 'https://tools.tf'
@@ -15,7 +15,6 @@ const DEFAULT_FG = '#2563eb'
 const DEFAULT_BG = '#ffffff'
 const DEFAULT_ERROR_LEVEL = 'M'
 const MAX_QR_DATA_BYTES = 2_953
-const SVG_NAMESPACE = 'http://www.w3.org/2000/svg'
 
 export class QrInputError extends Error {}
 
@@ -166,7 +165,7 @@ export function parseQrImageOptions(searchParams: URLSearchParams, locale: Local
   }
 }
 
-export function buildQrCodeStylingOptions(config: QrImageOptions): Partial<Options> {
+export function buildQrCodeStylingOptions(config: QrImageOptions): Partial<WorkerOptions> {
   const gradient = config.useGradient
     ? {
         type: config.gradientType,
@@ -199,6 +198,9 @@ export function buildQrCodeStylingOptions(config: QrImageOptions): Partial<Optio
       color: config.fgColor,
       gradient,
       roundSize: false,
+    },
+    svgOptions: {
+      seamOverlap: 0.2,
     },
     cornersSquareOptions: {
       type: config.cornerSquareType,
@@ -245,10 +247,4 @@ export function buildQrImageQuery(config: QrImageOptions): string {
   }
 
   return searchParams.toString()
-}
-
-export function ensureStandaloneSvgNamespace(svg: string): string {
-  if (/<svg\b[^>]*\sxmlns=/.test(svg)) return svg
-
-  return svg.replace(/<svg(?=[\s>])/, `<svg xmlns="${SVG_NAMESPACE}"`)
 }

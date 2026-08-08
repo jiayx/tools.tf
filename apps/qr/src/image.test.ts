@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   QrInputError,
+  buildQrCodeStylingOptions,
   buildQrImageQuery,
-  ensureStandaloneSvgNamespace,
   parseQrImageOptions,
   type QrImageOptions,
 } from './image'
@@ -30,18 +30,11 @@ describe('QR image input validation', () => {
   })
 })
 
-describe('standalone SVG output', () => {
-  it('adds the default SVG namespace when the serializer omits it', () => {
-    const svg = '<?xml version="1.0"?><svg viewBox="0 0 320 320"></svg>'
+describe('SVG rendering options', () => {
+  it('suppresses fractional SVG seams without rounding the QR size', () => {
+    const options = buildQrCodeStylingOptions(parseQrImageOptions(new URLSearchParams()))
 
-    expect(ensureStandaloneSvgNamespace(svg)).toContain(
-      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320">',
-    )
-  })
-
-  it('preserves an existing default SVG namespace', () => {
-    const svg = '<svg xmlns="http://www.w3.org/2000/svg"></svg>'
-
-    expect(ensureStandaloneSvgNamespace(svg)).toBe(svg)
+    expect(options.dotsOptions?.roundSize).toBe(false)
+    expect(options.svgOptions?.seamOverlap).toBe(0.2)
   })
 })

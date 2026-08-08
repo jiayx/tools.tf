@@ -5,7 +5,6 @@ import QRCodeStyling from 'qr-code-styling-worker'
 import {
   QrInputError,
   buildQrCodeStylingOptions,
-  ensureStandaloneSvgNamespace,
   parseQrImageOptions,
 } from './image'
 import { renderer } from './renderer'
@@ -19,7 +18,7 @@ app.get('/image', async (c) => {
   try {
     const options = parseQrImageOptions(new URL(c.req.url).searchParams, locale)
     const qr = new QRCodeStyling(buildQrCodeStylingOptions(options))
-    const svg = ensureStandaloneSvgNamespace(await qr.getSvgString())
+    const svg = await qr.getSvgString()
 
     c.header('Content-Type', 'image/svg+xml; charset=utf-8')
     c.header('Cache-Control', 'public, max-age=300')
