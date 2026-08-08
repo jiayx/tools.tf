@@ -15,6 +15,7 @@ const DEFAULT_FG = '#2563eb'
 const DEFAULT_BG = '#ffffff'
 const DEFAULT_ERROR_LEVEL = 'M'
 const MAX_QR_DATA_BYTES = 2_953
+const SVG_NAMESPACE = 'http://www.w3.org/2000/svg'
 
 export class QrInputError extends Error {}
 
@@ -244,4 +245,10 @@ export function buildQrImageQuery(config: QrImageOptions): string {
   }
 
   return searchParams.toString()
+}
+
+export function ensureStandaloneSvgNamespace(svg: string): string {
+  if (/<svg\b[^>]*\sxmlns=/.test(svg)) return svg
+
+  return svg.replace(/<svg(?=[\s>])/, `<svg xmlns="${SVG_NAMESPACE}"`)
 }
