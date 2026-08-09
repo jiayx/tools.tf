@@ -1,10 +1,10 @@
 /** @jsxImportSource react */
 import QRCodeStyling, {
-  type CornerDotType,
-  type CornerSquareType,
-  type DotType,
   type ErrorCorrectionLevel,
+  type FinderCenterShape,
+  type FinderFrameShape,
   type GradientType,
+  type ModuleShape,
 } from 'qr-code-styling-worker'
 import { browserLocale, pick } from '@tools/i18n'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -16,14 +16,14 @@ import {
 } from './image'
 
 interface Preset {
-  label: string
+  label: LocalizedLabel
   color: string
   config: Partial<QrConfig>
 }
 
 const PRESETS: Preset[] = [
   {
-    label: 'Classic',
+    label: { en: 'Classic', zh: '经典' },
     color: '#111827',
     config: {
       dotType: 'square',
@@ -36,12 +36,12 @@ const PRESETS: Preset[] = [
     },
   },
   {
-    label: 'Ocean',
+    label: { en: 'Ocean', zh: '海洋' },
     color: '#2563eb',
     config: {
       dotType: 'rounded',
       cornerSquareType: 'extra-rounded',
-      cornerDotType: 'dot',
+      cornerDotType: 'circle',
       useGradient: true,
       gradientColor1: '#2563eb',
       gradientColor2: '#06b6d4',
@@ -51,12 +51,12 @@ const PRESETS: Preset[] = [
     },
   },
   {
-    label: 'Sunset',
+    label: { en: 'Sunset', zh: '落日' },
     color: '#f97316',
     config: {
-      dotType: 'classy-rounded',
+      dotType: 'diagonal-extra-rounded',
       cornerSquareType: 'extra-rounded',
-      cornerDotType: 'dot',
+      cornerDotType: 'circle',
       useGradient: true,
       gradientColor1: '#f97316',
       gradientColor2: '#dc2626',
@@ -66,10 +66,10 @@ const PRESETS: Preset[] = [
     },
   },
   {
-    label: 'Forest',
+    label: { en: 'Forest', zh: '森林' },
     color: '#16a34a',
     config: {
-      dotType: 'classy',
+      dotType: 'diagonal-rounded',
       cornerSquareType: 'square',
       cornerDotType: 'square',
       useGradient: true,
@@ -81,12 +81,12 @@ const PRESETS: Preset[] = [
     },
   },
   {
-    label: 'Candy',
+    label: { en: 'Candy', zh: '糖果' },
     color: '#a855f7',
     config: {
-      dotType: 'dots',
+      dotType: 'circle',
       cornerSquareType: 'extra-rounded',
-      cornerDotType: 'dot',
+      cornerDotType: 'circle',
       useGradient: true,
       gradientColor1: '#a855f7',
       gradientColor2: '#ec4899',
@@ -96,10 +96,10 @@ const PRESETS: Preset[] = [
     },
   },
   {
-    label: 'Moss',
+    label: { en: 'Moss', zh: '苔藓' },
     color: '#4d7c0f',
     config: {
-      dotType: 'classy',
+      dotType: 'diagonal-rounded',
       cornerSquareType: 'extra-rounded',
       cornerDotType: 'square',
       useGradient: true,
@@ -111,10 +111,10 @@ const PRESETS: Preset[] = [
     },
   },
   {
-    label: 'Amber',
+    label: { en: 'Amber', zh: '琥珀' },
     color: '#d97706',
     config: {
-      dotType: 'classy-rounded',
+      dotType: 'diagonal-extra-rounded',
       cornerSquareType: 'extra-rounded',
       cornerDotType: 'square',
       useGradient: true,
@@ -126,10 +126,10 @@ const PRESETS: Preset[] = [
     },
   },
   {
-    label: 'Rouge',
+    label: { en: 'Rouge', zh: '胭脂' },
     color: '#9f1239',
     config: {
-      dotType: 'classy',
+      dotType: 'diagonal-rounded',
       cornerSquareType: 'extra-rounded',
       cornerDotType: 'square',
       useGradient: true,
@@ -144,24 +144,24 @@ const PRESETS: Preset[] = [
 
 type LocalizedLabel = { en: string; zh: string }
 
-const DOT_TYPES: { label: LocalizedLabel; value: DotType }[] = [
+const DOT_TYPES: { label: LocalizedLabel; value: ModuleShape }[] = [
   { label: { en: 'Square', zh: '方形' }, value: 'square' },
-  { label: { en: 'Dots', zh: '圆形' }, value: 'dots' },
+  { label: { en: 'Circle', zh: '圆形' }, value: 'circle' },
   { label: { en: 'Rounded', zh: '圆角' }, value: 'rounded' },
-  { label: { en: 'Classy', zh: '优雅' }, value: 'classy' },
-  { label: { en: 'Classy rounded', zh: '优雅圆角' }, value: 'classy-rounded' },
-  { label: { en: 'Extra rounded', zh: '菱形' }, value: 'extra-rounded' },
+  { label: { en: 'Diagonal rounded', zh: '对角圆角' }, value: 'diagonal-rounded' },
+  { label: { en: 'Diagonal extra rounded', zh: '对角大圆角' }, value: 'diagonal-extra-rounded' },
+  { label: { en: 'Extra rounded', zh: '大圆角' }, value: 'extra-rounded' },
 ]
 
-const CORNER_SQUARE_TYPES: { label: LocalizedLabel; value: CornerSquareType }[] = [
+const CORNER_SQUARE_TYPES: { label: LocalizedLabel; value: FinderFrameShape }[] = [
   { label: { en: 'Square', zh: '方形' }, value: 'square' },
-  { label: { en: 'Dot', zh: '点形' }, value: 'dot' },
-  { label: { en: 'Rounded', zh: '大圆角' }, value: 'extra-rounded' },
+  { label: { en: 'Circle', zh: '圆形' }, value: 'circle' },
+  { label: { en: 'Extra rounded', zh: '大圆角' }, value: 'extra-rounded' },
 ]
 
-const CORNER_DOT_TYPES: { label: LocalizedLabel; value: CornerDotType }[] = [
+const CORNER_DOT_TYPES: { label: LocalizedLabel; value: FinderCenterShape }[] = [
   { label: { en: 'Square', zh: '方形' }, value: 'square' },
-  { label: { en: 'Round', zh: '圆形' }, value: 'dot' },
+  { label: { en: 'Circle', zh: '圆形' }, value: 'circle' },
 ]
 
 const ERROR_LEVELS: { label: string; value: ErrorCorrectionLevel }[] = [
@@ -199,25 +199,25 @@ export function QrApp() {
       margin: 'Margin',
       none: 'None',
       large: 'Large',
-      dots: 'Dot style',
+      dots: 'Module shape',
       cornerSquare: 'Finder frame style',
-      cornerDot: 'Finder dot style',
-      correction: 'Error correction',
+      cornerDot: 'Finder center style',
+      correction: 'Error correction level',
       logo: 'Embed a logo (optional)',
       replace: 'Replace image',
       upload: 'Upload image',
       remove: 'Remove',
-      logoHint: 'Error correction is set to H to keep the code scannable.',
+      logoHint: 'H-level error correction is recommended when using a logo.',
       download: 'Download PNG',
       localLogo: 'QR codes with logos are generated only in your browser. Use the download button to save.',
-      open: 'Open the current QR code in a new page',
+      open: 'Open the current QR code in a new tab',
       scan: 'Scan the code with your phone to verify it before sharing.',
       invalidLogo: 'Logo must be PNG, JPEG, GIF, or WebP',
       logoTooLarge: 'Logo cannot exceed 512KB',
       generateFailed: 'QR generation failed. Shorten the content or remove the logo and try again.',
     },
     zh: {
-      title: 'QR Code 生成器',
+      title: '二维码生成器',
       description: '输入内容，定制样式，生成美观的二维码',
       content: '内容',
       placeholder: '输入文字或链接...',
@@ -234,16 +234,16 @@ export function QrApp() {
       large: '大',
       dots: '点阵形状',
       cornerSquare: '定位框样式',
-      cornerDot: '定位点样式',
-      correction: '容错等级',
+      cornerDot: '定位中心样式',
+      correction: '纠错等级',
       logo: '嵌入 Logo（可选）',
       replace: '更换图片',
       upload: '上传图片',
       remove: '移除',
-      logoHint: '已启用 H 级容错以确保可扫性',
+      logoHint: '使用 Logo 时建议选择 H 级纠错，以提高扫码可靠性',
       download: '下载 PNG',
       localLogo: '带 Logo 的二维码仅在浏览器本地生成，请使用下载按钮保存',
-      open: '在新页面打开当前二维码',
+      open: '在新标签页打开当前二维码',
       scan: '请用手机扫码验证内容是否正确后再分享',
       invalidLogo: 'Logo 仅支持 PNG、JPEG、GIF 或 WebP',
       logoTooLarge: 'Logo 不能超过 512KB',
@@ -367,13 +367,13 @@ export function QrApp() {
             <div className="presets">
               {PRESETS.map((p, i) => (
                 <button
-                  key={p.label}
+                  key={p.label.en}
                   className={`preset-btn${activePreset === i ? ' active' : ''}`}
                   style={{ '--preset-color': p.color } as React.CSSProperties}
                   onClick={() => applyPreset(i)}
                 >
                   <span className="preset-swatch" />
-                  {p.label}
+                  {pick(locale, p.label)}
                 </button>
               ))}
             </div>

@@ -1,11 +1,14 @@
 import { pick, type Locale } from '@tools/i18n'
-import type {
-  CornerDotType,
-  CornerSquareType,
-  DotType,
-  ErrorCorrectionLevel,
-  GradientType,
-  WorkerOptions,
+import {
+  parseFinderCenterShape,
+  parseFinderFrameShape,
+  parseModuleShape,
+  type ErrorCorrectionLevel,
+  type FinderCenterShape,
+  type FinderFrameShape,
+  type GradientType,
+  type ModuleShape,
+  type WorkerOptions,
 } from 'qr-code-styling-worker'
 
 const DEFAULT_DATA = 'https://tools.tf'
@@ -20,9 +23,9 @@ export class QrInputError extends Error {}
 
 export interface QrConfig {
   data: string
-  dotType: DotType
-  cornerSquareType: CornerSquareType
-  cornerDotType: CornerDotType
+  dotType: ModuleShape
+  cornerSquareType: FinderFrameShape
+  cornerDotType: FinderCenterShape
   fgColor: string
   useGradient: boolean
   gradientColor1: string
@@ -43,7 +46,7 @@ export const DEFAULT_CONFIG: QrConfig = {
   data: DEFAULT_DATA,
   dotType: 'rounded',
   cornerSquareType: 'extra-rounded',
-  cornerDotType: 'dot',
+  cornerDotType: 'circle',
   fgColor: DEFAULT_FG,
   useGradient: true,
   gradientColor1: '#2563eb',
@@ -91,41 +94,6 @@ function parseErrorLevel(value: string | null): ErrorCorrectionLevel {
   }
 }
 
-function parseDotType(value: string | null): DotType {
-  switch (value) {
-    case 'square':
-    case 'dots':
-    case 'rounded':
-    case 'classy':
-    case 'classy-rounded':
-    case 'extra-rounded':
-      return value
-    default:
-      return DEFAULT_CONFIG.dotType
-  }
-}
-
-function parseCornerSquareType(value: string | null): CornerSquareType {
-  switch (value) {
-    case 'square':
-    case 'dot':
-    case 'extra-rounded':
-      return value
-    default:
-      return DEFAULT_CONFIG.cornerSquareType
-  }
-}
-
-function parseCornerDotType(value: string | null): CornerDotType {
-  switch (value) {
-    case 'square':
-    case 'dot':
-      return value
-    default:
-      return DEFAULT_CONFIG.cornerDotType
-  }
-}
-
 function parseGradientType(value: string | null): GradientType {
   return value === 'radial' ? 'radial' : 'linear'
 }
@@ -150,9 +118,9 @@ export function parseQrImageOptions(searchParams: URLSearchParams, locale: Local
     data,
     size: clampNumber(searchParams.get('size'), DEFAULT_SIZE, 128, 2048),
     margin: clampNumber(searchParams.get('margin'), DEFAULT_MARGIN, 0, 128),
-    dotType: parseDotType(searchParams.get('dotType') || searchParams.get('dot')),
-    cornerSquareType: parseCornerSquareType(searchParams.get('cornerSquareType') || searchParams.get('cornerSquare')),
-    cornerDotType: parseCornerDotType(searchParams.get('cornerDotType') || searchParams.get('cornerDot')),
+    dotType: parseModuleShape(searchParams.get('dotType') || searchParams.get('dot')) ?? DEFAULT_CONFIG.dotType,
+    cornerSquareType: parseFinderFrameShape(searchParams.get('cornerSquareType') || searchParams.get('cornerSquare')) ?? DEFAULT_CONFIG.cornerSquareType,
+    cornerDotType: parseFinderCenterShape(searchParams.get('cornerDotType') || searchParams.get('cornerDot')) ?? DEFAULT_CONFIG.cornerDotType,
     fgColor: parseColor(searchParams.get('fg') || searchParams.get('color'), DEFAULT_FG),
     useGradient: parseBoolean(searchParams.get('gradient')),
     gradientColor1: parseColor(searchParams.get('gradientColor1') || searchParams.get('fg') || searchParams.get('color'), DEFAULT_CONFIG.gradientColor1),
@@ -198,9 +166,6 @@ export function buildQrCodeStylingOptions(config: QrImageOptions): Partial<Worke
       color: config.fgColor,
       gradient,
       roundSize: false,
-    },
-    svgOptions: {
-      seamOverlap: 0.2,
     },
     cornersSquareOptions: {
       type: config.cornerSquareType,

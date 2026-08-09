@@ -1,7 +1,7 @@
 /** @jsxImportSource hono/jsx */
 import { pick, resolveLocale } from '@tools/i18n'
 import { Hono } from 'hono'
-import QRCodeStyling from 'qr-code-styling-worker'
+import { renderSvgString } from 'qr-code-styling-worker'
 import {
   QrInputError,
   buildQrCodeStylingOptions,
@@ -17,8 +17,7 @@ app.get('/image', async (c) => {
   const locale = resolveLocale(c.req.header('Accept-Language'))
   try {
     const options = parseQrImageOptions(new URL(c.req.url).searchParams, locale)
-    const qr = new QRCodeStyling(buildQrCodeStylingOptions(options))
-    const svg = await qr.getSvgString()
+    const svg = await renderSvgString(buildQrCodeStylingOptions(options))
 
     c.header('Content-Type', 'image/svg+xml; charset=utf-8')
     c.header('Cache-Control', 'public, max-age=300')
