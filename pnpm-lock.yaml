@@ -328,8 +328,8 @@ importers:
         specifier: 'catalog:'
         version: 4.12.32
       qr-code-styling-worker:
-        specifier: ^1.0.0
-        version: 1.0.0
+        specifier: ^1.0.1
+        version: 1.0.1
       react:
         specifier: 'catalog:'
         version: 19.2.8
@@ -1935,8 +1935,8 @@ packages:
   property-information@7.2.0:
     resolution: {integrity: sha512-IAtzIB6sUiWaJYrX9smp3V46pBGbBeLFRGdh25kg1334VcBlD8HzhPeNIWQH9zhGmo2itIe25EHt9dQP7G5hmg==}
 
-  qr-code-styling-worker@1.0.0:
-    resolution: {integrity: sha512-pkkq9fgVXarHebAxzyKWznnrdak8CAqAQ+lUPOwjOS4CIjJEpIfEGf8bIw7+0v0T8vhaJWzBDXYg8cdkEH7OVA==}
+  qr-code-styling-worker@1.0.1:
+    resolution: {integrity: sha512-U0++1VmjxPIl6y2IBXVSy/VBp9sg5JsMqyBqakPGxfbD/hS+BrNY9Bn8yKrz9If3CJ+3/9SdGzvUyWnoEcn8QA==}
     engines: {node: ^20.19.0 || >=22.12.0}
 
   qr@0.6.0:
@@ -3402,7 +3402,7 @@ snapshots:
 
   property-information@7.2.0: {}
 
-  qr-code-styling-worker@1.0.0:
+  qr-code-styling-worker@1.0.1:
     dependencies:
       qr: 0.6.0
 
