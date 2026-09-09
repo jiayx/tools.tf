@@ -39,14 +39,14 @@ const tools: Tool[] = [
     accent: '#38bdf8',
   },
   {
-    name: 'ttys',
+    name: 'Shello',
     tagline: { en: 'Live terminal sharing', zh: '实时共享终端' },
     description: {
       en: 'Share a local terminal anonymously through the browser, with synchronized sessions and host-approved remote control.',
       zh: '通过浏览器匿名共享本地终端，支持会话同步及由主机批准的远程控制。',
     },
-    url: 'https://ttys.tools.tf',
-    icon: 'https://ttys.tools.tf/logo.svg',
+    url: 'https://shello.tools.tf',
+    icon: 'https://shello.tools.tf/logo.svg',
     accent: '#fbbf24',
   },
   {
