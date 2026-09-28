@@ -1,3 +1,4 @@
+import { GoogleAnalytics } from '@tools/analytics'
 import { localeTag, pick, resolveLocale } from '@tools/i18n'
 import { jsxRenderer } from 'hono/jsx-renderer'
 import { Link, ViteClient, Script } from 'vite-ssr-components/hono'
@@ -22,6 +23,7 @@ export const renderer = jsxRenderer(({ children }, c) => {
         <ViteClient />
         <Link href="/src/ui/style.css" rel="stylesheet" />
         <link rel="icon" type="image/svg+xml" href="https://icon.tools.tf/icon/32?type=tabler&fg=%236366f1&bg1=%23111827&bg=transparent&angle=140&glyph=100&icon=icons" sizes="32x32" />
+        <GoogleAnalytics url={c.req.url} />
       </head>
       <body>
         {children}

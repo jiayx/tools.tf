@@ -1,4 +1,5 @@
 /** @jsxImportSource hono/jsx */
+import { GoogleAnalytics } from '@tools/analytics'
 import { localeTag, pick, resolveLocale } from '@tools/i18n'
 import { jsxRenderer } from 'hono/jsx-renderer'
 import { Link, Script, ViteClient } from 'vite-ssr-components/hono'
@@ -19,6 +20,7 @@ export const renderer = jsxRenderer((_, c) => {
         <link rel="icon" type="image/png" href="https://icon.tools.tf/icon/128?type=lucide&fg=%23a7d382&bg=transparent&textGlyph=100&iconGlyph=100&radius=0&icon=file-diff" />
         <ViteClient />
         <Link href="/src/style.css" rel="stylesheet" />
+        <GoogleAnalytics url={c.req.url} />
       </head>
       <body>
         <div id="root"></div>

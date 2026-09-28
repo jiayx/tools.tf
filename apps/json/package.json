@@ -10,6 +10,7 @@
     "cf-typegen": "wrangler types --env-interface CloudflareBindings"
   },
   "dependencies": {
+    "@tools/analytics": "workspace:*",
     "@codemirror/lang-json": "^6.0.2",
     "@tools/i18n": "workspace:*",
     "@uiw/react-codemirror": "^4.25.11",
