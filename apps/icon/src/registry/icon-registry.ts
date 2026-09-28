@@ -1,11 +1,8 @@
 import { lucideIconNames, getLucideIconMarkup } from '../icons/lucide'
 import type { IconifyJSON } from '@iconify/types'
-import { ICON_SET_META, type IconSetId, type IconSetData } from './icon-types'
+import type { IconSetId, IconSetData } from './icon-types'
 import { buildIndexFromJson, fetchIconifyJson, ICONIFY_PACKAGES } from './iconify-utils'
-export type { IconSetId } from './icon-types'
 import type { KVNamespace } from '@cloudflare/workers-types'
-
-export const FALLBACK_ICON_MARKUP = '<circle cx="12" cy="12" r="9" />'
 
 const KV_PREFIX = 'iconify:'
 const KV_TTL_SECONDS = 60 * 60 * 24 * 7
@@ -55,11 +52,4 @@ export const loadIconSetData = async (
     console.warn(error)
     return { names: [], getMarkup: () => undefined }
   }
-}
-
-export const getIconWrapperAttributes = (iconSet: IconSetId, color: string) => {
-  if (ICON_SET_META[iconSet].renderMode === 'stroke') {
-    return `fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"`
-  }
-  return `color="${color}"`
 }

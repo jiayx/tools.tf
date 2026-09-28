@@ -1,6 +1,6 @@
 import { html, raw } from 'hono/html'
 
-export const measurementId = 'G-K8QNWFNXLL'
+const measurementId = 'G-K8QNWFNXLL'
 
 const productionHosts = [
   'tools.tf',

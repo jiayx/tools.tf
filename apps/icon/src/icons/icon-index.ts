@@ -1,4 +1,4 @@
-export type IconIndex = [
+type IconIndex = [
   iconNames: string[],
   getIconMarkup: (name: string) => string | undefined
 ]

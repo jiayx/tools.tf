@@ -1,8 +1,8 @@
 export type IconSetId = 'lucide' | 'tabler' | 'logos'
 
-export type IconRenderMode = 'stroke' | 'currentColor'
+type IconRenderMode = 'stroke' | 'currentColor'
 
-export type IconSetMeta = {
+type IconSetMeta = {
   id: IconSetId
   label: string
   defaultIcon: string

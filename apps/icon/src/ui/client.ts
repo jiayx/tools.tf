@@ -1,12 +1,12 @@
 import { localeFromDocument, pick } from '@tools/i18n'
 import { DEFAULTS, PRESETS } from '../config'
-import { ICON_SET_META, getIconSetData, getIconWrapperAttributes, loadIconSet } from '../registry/icon-registry-client'
-import type { IconSetId } from '../registry/icon-types'
+import { getIconSetData, loadIconSet } from '../registry/icon-registry-client'
+import { ICON_SET_META, type IconSetId } from '../registry/icon-types'
 import { IconVirtualList } from './icon-virtual-list'
 import { parseBgMode, parseIconMode, resolveIconSet } from '../shared/parse'
 import type { IconQueryState } from '../shared/query'
 import { buildIconQuery } from '../shared/query'
-import { buildBackgroundParts, buildIconSvg as buildIconSvgMarkup, buildTextSvg } from '../shared/svg'
+import { FALLBACK_ICON_MARKUP, getIconWrapperAttributes, buildBackgroundParts, buildIconSvg as buildIconSvgMarkup, buildTextSvg } from '../shared/svg'
 
 document.addEventListener('DOMContentLoaded', () => {
   const locale = localeFromDocument()
@@ -63,8 +63,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const formatButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-format-btn]'))
 
   if (!preview || !urlInput || !snippetList) return
-
-  const FALLBACK_ICON_MARKUP = '<circle cx="12" cy="12" r="9" />'
 
   const fields = {
     text: document.querySelector<HTMLInputElement>('[data-field="text"]'),
@@ -123,8 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
   let iconLoadToken = 0
   let previewRenderFrame: number | null = null
   let previewRenderToken = 0
-
-  const presets = PRESETS
 
   const normalizeHex = (value: string) => {
     const trimmed = value.trim()
@@ -201,12 +197,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const getIconSet = (mode: string): IconSetId => resolveIconSet(parseIconMode(mode))
-
-  const ensureIconSet = async (iconSet: IconSetId) => {
-    const cached = getIconSetData(iconSet)
-    if (cached) return cached
-    return await loadIconSet(iconSet)
-  }
 
   const placeRadiusControl = (mode: string) => {
     if (!radiusControl) return
@@ -300,12 +290,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const iconSet = getIconSet(state.type)
     let data = getIconSetData(iconSet)
     if (!data) {
-      data = await ensureIconSet(iconSet)
+      data = await loadIconSet(iconSet)
       if (getIconSet(state.type) !== iconSet) return null
     }
     const { defs, backgroundMarkup, clipPath } = getPreviewBackground(size)
     const iconMarkup = data.getMarkup(state.icon) ?? FALLBACK_ICON_MARKUP
-    const wrapper = getIconWrapperAttributes(ICON_SET_META[iconSet].renderMode, state.fg)
+    const wrapper = getIconWrapperAttributes(iconSet, state.fg)
     return buildIconSvgMarkup({
       size,
       glyph: state.iconGlyph,
@@ -391,7 +381,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!getIconSetData(iconSet)) {
       setIconLoading(true)
     }
-    const data = await ensureIconSet(iconSet)
+    const data = await loadIconSet(iconSet)
     if (token !== iconLoadToken || getIconSet(state.type) !== iconSet) return
     const nextIcon = data.names.includes(currentIcon) ? currentIcon : fallbackIcon
     if (iconSet === 'tabler') {
@@ -468,7 +458,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24"></svg>`
     }
     const iconMarkup = data.getMarkup(name) ?? FALLBACK_ICON_MARKUP
-    const wrapper = getIconWrapperAttributes(ICON_SET_META[iconSet].renderMode, color)
+    const wrapper = getIconWrapperAttributes(iconSet, color)
     return buildIconSvgMarkup({ size, glyph: 100, iconMarkup, wrapper, includeXmlDeclaration: false })
   }
 
@@ -476,7 +466,6 @@ document.addEventListener('DOMContentLoaded', () => {
     target.innerHTML = buildIconSvg(iconSet, name, color, size)
   }
 
-  const iconResults: string[] = []
   const iconRowHeight = iconOptionsContainer
     ? Number.parseFloat(getComputedStyle(iconOptionsContainer).getPropertyValue('--icon-row')) || 46
     : 46
@@ -497,9 +486,6 @@ document.addEventListener('DOMContentLoaded', () => {
     previewWrap.setAttribute('aria-hidden', 'true')
 
     const preview = document.createElement('span')
-    preview.dataset.iconPreview = 'true'
-    preview.dataset.iconName = name
-    preview.dataset.iconSet = iconSet
     preview.innerHTML = buildIconSvg(iconSet, name, '#111827', 20)
     previewWrap.append(preview)
 
@@ -513,11 +499,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const iconVirtualList =
     iconOptionsContainer
-      ? new IconVirtualList<IconSetId>({
+      ? new IconVirtualList({
           container: iconOptionsContainer,
           rowHeight: iconRowHeight,
           overscan: 8,
-          renderRow: (name, iconSet) => createIconOption(name, iconSet),
+          renderRow: createIconOption,
         })
       : null
 
@@ -528,20 +514,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!getIconSetData(iconSet)) {
       setIconLoading(true)
     }
-    const data = await ensureIconSet(iconSet)
+    const data = await loadIconSet(iconSet)
     if (token !== iconLoadToken || getIconSet(state.type) !== iconSet) return
-    const names = data.names || []
+    const names = data.names
     const results = query ? names.filter((name) => name.includes(query)) : names
-    iconResults.length = 0
-    iconResults.push(...results)
-    iconVirtualList.setItems(iconResults, iconSet)
-    iconVirtualList.refresh()
+    iconVirtualList.setItems(results, iconSet)
     setIconLoading(false)
   }
 
   const clearIconOptions = () => {
     if (!iconVirtualList) return
-    iconResults.length = 0
     iconVirtualList.clear()
   }
 
@@ -555,7 +537,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!iconTriggerPreview) return
     const iconSet = getIconSet(state.type)
     if (!getIconSetData(iconSet)) {
-      void ensureIconSet(iconSet).then(() => {
+      void loadIconSet(iconSet).then(() => {
         renderIconPreview(iconTriggerPreview, iconSet, state.icon, '#111827', 20)
       })
     } else {
@@ -652,7 +634,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const previewSize = 256
 
     if (state.type === 'text') {
-      if (renderToken !== previewRenderToken) return
       setPreviewSource(buildTextPreviewSvg(previewSize))
       return
     }
@@ -693,34 +674,23 @@ document.addEventListener('DOMContentLoaded', () => {
     })
   }
 
-  const debounce = <T extends (...args: unknown[]) => void>(fn: T, wait = 120) => {
-    let timer: number | null = null
-    return (...args: Parameters<T>) => {
-      if (timer) window.clearTimeout(timer)
-      timer = window.setTimeout(() => {
-        fn(...args)
-      }, wait)
+  let renderTimer: number | undefined
+
+  const updatePreviewDetails = () => {
+    updatePreviewMeta()
+    updateIconPreview()
+  }
+
+  const applyState = (immediate = false) => {
+    updatePreviewRadius()
+    updateLabels()
+    schedulePreviewRender()
+    window.clearTimeout(renderTimer)
+    if (immediate) {
+      updatePreviewDetails()
+    } else {
+      renderTimer = window.setTimeout(updatePreviewDetails, 220)
     }
-  }
-
-  const scheduleRender = debounce(() => {
-    updatePreviewMeta()
-    updateIconPreview()
-  }, 220)
-
-  const applyState = () => {
-    updatePreviewRadius()
-    updateLabels()
-    schedulePreviewRender()
-    scheduleRender()
-  }
-
-  const applyStateImmediate = () => {
-    updatePreviewRadius()
-    updateLabels()
-    schedulePreviewRender()
-    updatePreviewMeta()
-    updateIconPreview()
   }
 
   const applyPalette = (palette: { bgMode: string; fg: string; bg1: string; bg2: string; angle: number }) => {
@@ -733,7 +703,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setBackgroundMode(state.bgMode)
     syncPaletteFields()
 
-    applyStateImmediate()
+    applyState(true)
   }
 
   const applyRandomPalette = () => {
@@ -770,7 +740,7 @@ document.addEventListener('DOMContentLoaded', () => {
     closeIconMenu()
     setActiveMode(initialState.type)
     setBackgroundMode(initialState.bgMode)
-    applyStateImmediate()
+    applyState(true)
   }
 
 
@@ -780,7 +750,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (state.type !== 'text') {
         void syncIconSet()
       }
-      applyStateImmediate()
+      applyState(true)
     })
   })
 
@@ -788,14 +758,14 @@ document.addEventListener('DOMContentLoaded', () => {
   bgModeButtons.forEach((btn) => {
     btn.addEventListener('click', () => {
       setBackgroundMode(btn.dataset.bgModeValue || 'gradient')
-      applyStateImmediate()
+      applyState(true)
     })
   })
 
   presetButtons.forEach((btn) => {
     btn.addEventListener('click', () => {
       const index = Number(btn.dataset.preset || 0)
-      const preset = presets[index]
+      const preset = PRESETS[index]
       if (!preset) return
       applyPalette(preset)
     })
@@ -816,24 +786,19 @@ document.addEventListener('DOMContentLoaded', () => {
       isComposing = true
     })
 
-    fields.text.addEventListener('compositionend', () => {
-      isComposing = false
-      if (!fields.text) return;
+    const updateText = () => {
+      if (!fields.text || isComposing) return
       const value = fields.text.value.replace(/\s+/g, '').slice(0, 6)
-      state.text = value || 'TF'
+      state.text = value || DEFAULTS.text
       fields.text.value = value
       applyState()
-    })
+    }
 
-    fields.text.addEventListener('input', (event) => {
-      if (isComposing) return
-      const value = (event.target as HTMLInputElement).value.replace(/\s+/g, '').slice(0, 6)
-      state.text = value || 'TF'
-      if (fields.text) {
-        fields.text.value = value
-      }
-      applyState()
+    fields.text.addEventListener('compositionend', () => {
+      isComposing = false
+      updateText()
     })
+    fields.text.addEventListener('input', updateText)
   }
 
   const setIconSelection = (name: string) => {
@@ -852,7 +817,7 @@ document.addEventListener('DOMContentLoaded', () => {
         option.classList.toggle('is-selected', isMatch)
       })
     }
-    applyStateImmediate()
+    applyState(true)
   }
 
   const openIconMenu = () => {
@@ -892,8 +857,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const iconSet = option.dataset.iconSet
     if (!name || iconSet !== getIconSet(state.type)) return
     setIconSelection(name)
-    if (iconFilter) iconFilter.value = ''
-    filterIconOptions()
     closeIconMenu()
   })
 
@@ -1033,7 +996,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!size) return
       state.size = size
       if (fields.size) fields.size.value = String(size)
-      applyStateImmediate()
+      applyState(true)
     })
   })
 
@@ -1055,7 +1018,7 @@ document.addEventListener('DOMContentLoaded', () => {
       formatButtons.forEach((item) => {
         item.classList.toggle('is-active', item.dataset.format === downloadFormat)
       })
-      applyStateImmediate()
+      applyState(true)
     })
   })
 

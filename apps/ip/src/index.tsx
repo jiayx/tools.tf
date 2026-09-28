@@ -5,7 +5,7 @@ import { renderer } from './renderer'
 
 type CfFields = Partial<IncomingRequestCfProperties>
 
-export type IpDetails = {
+type IpDetails = {
   ip: string
   country: string
   city?: string
@@ -29,7 +29,7 @@ app.use('*', async (c, next) => {
   c.header('X-Content-Type-Options', 'nosniff')
 })
 
-export const collectIpDetails = (c: Context): IpDetails => {
+const collectIpDetails = (c: Context): IpDetails => {
   const ip = c.req.header('CF-Connecting-IP') ?? 'Unknown'
   const country = c.req.header('CF-IPCountry') ?? 'Unknown'
   const userAgent = c.req.header('User-Agent') ?? undefined
@@ -89,37 +89,23 @@ const IpPage = ({ details, locale }: { details: IpDetails; locale: Locale }) => 
           en: 'IPv4 and IPv6 connectivity',
           zh: 'IPv4 与 IPv6 连接状态',
         })}>
-          <article class="address-card">
-            <div>
-              <p class="address-card__label">IPv4</p>
-              <p class="address-card__value" data-ip-family="ipv4">{checking}</p>
-              <p class="address-card__status" data-ip-status="ipv4">{checking}</p>
-            </div>
-            <button
-              class="copy-btn"
-              type="button"
-              data-copy-family="ipv4"
-              disabled
-            >
-              {pick(locale, { en: 'Copy', zh: '复制' })}
-            </button>
-          </article>
-
-          <article class="address-card">
-            <div>
-              <p class="address-card__label">IPv6</p>
-              <p class="address-card__value" data-ip-family="ipv6">{checking}</p>
-              <p class="address-card__status" data-ip-status="ipv6">{checking}</p>
-            </div>
-            <button
-              class="copy-btn"
-              type="button"
-              data-copy-family="ipv6"
-              disabled
-            >
-              {pick(locale, { en: 'Copy', zh: '复制' })}
-            </button>
-          </article>
+          {(['ipv4', 'ipv6'] as const).map((family) => (
+            <article class="address-card">
+              <div>
+                <p class="address-card__label">{family.toUpperCase()}</p>
+                <p class="address-card__value" data-ip-family={family}>{checking}</p>
+                <p class="address-card__status" data-ip-status={family}>{checking}</p>
+              </div>
+              <button
+                class="copy-btn"
+                type="button"
+                data-copy-family={family}
+                disabled
+              >
+                {pick(locale, { en: 'Copy', zh: '复制' })}
+              </button>
+            </article>
+          ))}
         </section>
 
         <section class="grid">

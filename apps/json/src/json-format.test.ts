@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatJson, minifyJson } from './json-format'
+import { formatJson } from './json-format'
 
 describe('JSON formatting', () => {
   it('formats with the requested indentation', () => {
@@ -10,7 +10,7 @@ describe('JSON formatting', () => {
   })
 
   it('minifies valid JSON', () => {
-    expect(minifyJson('{\n  "ok": true\n}')).toEqual({
+    expect(formatJson('{\n  "ok": true\n}', 0)).toEqual({
       ok: true,
       value: '{"ok":true}',
     })
@@ -18,6 +18,5 @@ describe('JSON formatting', () => {
 
   it('reports invalid JSON', () => {
     expect(formatJson('{"ok":}', 2)).toMatchObject({ ok: false })
-    expect(minifyJson('not-json')).toMatchObject({ ok: false })
   })
 })

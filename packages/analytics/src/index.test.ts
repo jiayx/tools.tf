@@ -1,6 +1,8 @@
 import { runInNewContext } from 'node:vm'
 import { describe, expect, it } from 'vitest'
-import { GoogleAnalytics, measurementId } from './index'
+import { GoogleAnalytics } from './index'
+
+const measurementId = 'G-K8QNWFNXLL'
 
 async function scriptFor(url: string) {
   const markup = await GoogleAnalytics({ url })

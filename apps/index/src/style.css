@@ -36,15 +36,6 @@
   text-align: center;
 }
 
-.hero__eyebrow {
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-bottom: 12px;
-}
-
 .hero__title {
   font-size: clamp(2rem, 5vw, 2.75rem);
   font-weight: 700;

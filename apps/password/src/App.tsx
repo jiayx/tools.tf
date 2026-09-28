@@ -40,7 +40,7 @@ export const DEFAULT_CONFIG: Config = {
   count: 1,
 }
 
-export function getStrength(password: string, locale: Locale = 'zh'): { level: number; label: string; color: string } {
+function getStrength(password: string, locale: Locale = 'zh'): { level: number; label: string; color: string } {
   let score = 0
   if (password.length >= 8) score++
   if (password.length >= 12) score++
@@ -56,28 +56,20 @@ export function getStrength(password: string, locale: Locale = 'zh'): { level: n
   return { level: 4, label: pick(locale, { en: 'Very strong', zh: '极强' }), color: '#059669' }
 }
 
-const filterPool = (value: string, excludeAmbiguous: boolean) =>
-  excludeAmbiguous ? value.split('').filter((char) => !AMBIGUOUS.has(char)).join('') : value
+const getActivePools = (cfg: Config) =>
+  Object.entries(CHAR_SETS)
+    .filter(([key]) => cfg[key as keyof typeof CHAR_SETS])
+    .map(([, chars]) => cfg.excludeAmbiguous
+      ? [...chars].filter((char) => !AMBIGUOUS.has(char)).join('')
+      : chars)
 
 export function estimateEntropy(cfg: Config): number {
-  const poolSize = Object.entries(CHAR_SETS)
-    .filter(([key]) => cfg[key as keyof typeof CHAR_SETS])
-    .reduce((total, [, chars]) => total + filterPool(chars, cfg.excludeAmbiguous).length, 0)
-
+  const poolSize = getActivePools(cfg).join('').length
   return poolSize > 0 ? cfg.length * Math.log2(poolSize) : 0
 }
 
 export function generatePassword(cfg: Config): string {
-  const filter = (s: string) =>
-    filterPool(s, cfg.excludeAmbiguous)
-
-  const pools: string[] = []
-  if (cfg.upper) pools.push(filter(CHAR_SETS.upper))
-  if (cfg.lower) pools.push(filter(CHAR_SETS.lower))
-  if (cfg.digits) pools.push(filter(CHAR_SETS.digits))
-  if (cfg.symbols) pools.push(filter(CHAR_SETS.symbols))
-
-  const activePools = pools.filter((p) => p.length > 0)
+  const activePools = getActivePools(cfg)
   if (activePools.length === 0) return ''
   const chars = activePools.join('')
 
@@ -96,10 +88,6 @@ export function generatePassword(cfg: Config): string {
     ;[result[i], result[j]] = [result[j], result[i]]
   }
   return result.join('')
-}
-
-function generatePasswords(cfg: Config): string[] {
-  return Array.from({ length: cfg.count }, () => generatePassword(cfg))
 }
 
 export function PasswordApp() {
@@ -150,39 +138,31 @@ export function PasswordApp() {
   }), [locale])
   const [cfg, setCfg] = useState<Config>(DEFAULT_CONFIG)
   const [passwords, setPasswords] = useState<string[]>([])
-  const [copied, setCopied] = useState<number | null>(null)
-  const [copyError, setCopyError] = useState(false)
+  const [copyFeedback, setCopyFeedback] = useState<{ index: number } | { error: true } | null>(null)
+  const copied = copyFeedback && 'index' in copyFeedback ? copyFeedback.index : null
+  const copyError = copyFeedback !== null && 'error' in copyFeedback
+
+  useEffect(() => {
+    if (!copyFeedback) return
+    const timer = setTimeout(() => setCopyFeedback(null), 2000)
+    return () => clearTimeout(timer)
+  }, [copyFeedback])
 
   const generate = useCallback(() => {
-    setPasswords(generatePasswords(cfg))
-    setCopied(null)
+    setPasswords(Array.from({ length: cfg.count }, () => generatePassword(cfg)))
+    setCopyFeedback(null)
   }, [cfg])
 
   useEffect(() => {
     generate()
-  }, [cfg])
+  }, [generate])
 
-  const copyPassword = async (pw: string, idx: number) => {
+  const copyPassword = async (value: string, index: number) => {
     try {
-      await navigator.clipboard.writeText(pw)
-      setCopied(idx)
-      setCopyError(false)
-      setTimeout(() => setCopied(null), 2000)
+      await navigator.clipboard.writeText(value)
+      setCopyFeedback({ index })
     } catch {
-      setCopyError(true)
-      setTimeout(() => setCopyError(false), 2000)
-    }
-  }
-
-  const copyAll = async () => {
-    try {
-      await navigator.clipboard.writeText(passwords.join('\n'))
-      setCopied(-1)
-      setCopyError(false)
-      setTimeout(() => setCopied(null), 2000)
-    } catch {
-      setCopyError(true)
-      setTimeout(() => setCopyError(false), 2000)
+      setCopyFeedback({ error: true })
     }
   }
 
@@ -236,42 +216,22 @@ export function PasswordApp() {
           <section className="section">
             <label className="field-label">{copy.characterTypes}</label>
             <div className="toggle-group">
-              <label className="toggle-item">
-                <input
-                  type="checkbox"
-                  checked={cfg.upper}
-                  onChange={(e) => update({ upper: e.target.checked })}
-                />
-                <span className="toggle-label">{copy.upper}</span>
-                <span className="toggle-example">A–Z</span>
-              </label>
-              <label className="toggle-item">
-                <input
-                  type="checkbox"
-                  checked={cfg.lower}
-                  onChange={(e) => update({ lower: e.target.checked })}
-                />
-                <span className="toggle-label">{copy.lower}</span>
-                <span className="toggle-example">a–z</span>
-              </label>
-              <label className="toggle-item">
-                <input
-                  type="checkbox"
-                  checked={cfg.digits}
-                  onChange={(e) => update({ digits: e.target.checked })}
-                />
-                <span className="toggle-label">{copy.digits}</span>
-                <span className="toggle-example">0–9</span>
-              </label>
-              <label className="toggle-item">
-                <input
-                  type="checkbox"
-                  checked={cfg.symbols}
-                  onChange={(e) => update({ symbols: e.target.checked })}
-                />
-                <span className="toggle-label">{copy.symbols}</span>
-                <span className="toggle-example">!@#…</span>
-              </label>
+              {([
+                ['upper', 'A–Z'],
+                ['lower', 'a–z'],
+                ['digits', '0–9'],
+                ['symbols', '!@#…'],
+              ] as const).map(([key, example]) => (
+                <label key={key} className="toggle-item">
+                  <input
+                    type="checkbox"
+                    checked={cfg[key]}
+                    onChange={(e) => update({ [key]: e.target.checked })}
+                  />
+                  <span className="toggle-label">{copy[key]}</span>
+                  <span className="toggle-example">{example}</span>
+                </label>
+              ))}
               <label className="toggle-item toggle-item--divider">
                 <input
                   type="checkbox"
@@ -350,7 +310,7 @@ export function PasswordApp() {
           {cfg.count > 1 && (
             <button
               className={`copy-all-btn${copied === -1 ? ' copied' : ''}`}
-              onClick={copyAll}
+              onClick={() => copyPassword(passwords.join('\n'), -1)}
             >
               {copied === -1 ? copy.copiedAll : copy.copyAll}
             </button>

@@ -267,7 +267,6 @@ export function QrApp() {
       containerRef.current.innerHTML = ''
       qr.append(containerRef.current)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
@@ -282,11 +281,6 @@ export function QrApp() {
   const update = (patch: Partial<QrConfig>) => {
     setActivePreset(-1)
     setCfg((prev) => ({ ...prev, ...patch }))
-  }
-
-  const commitData = (value: string) => {
-    setActivePreset(-1)
-    setCfg((prev) => ({ ...prev, data: value }))
   }
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -348,7 +342,7 @@ export function QrApp() {
                 const nextValue = e.target.value
                 setInputValue(nextValue)
                 if (!isComposing) {
-                  commitData(nextValue)
+                  update({ data: nextValue })
                 }
               }}
               onCompositionStart={() => setIsComposing(true)}
@@ -356,7 +350,7 @@ export function QrApp() {
                 const nextValue = e.currentTarget.value
                 setIsComposing(false)
                 setInputValue(nextValue)
-                commitData(nextValue)
+                update({ data: nextValue })
               }}
             />
           </section>

@@ -8,7 +8,7 @@
     "lint": "oxlint . --deny-warnings --deny typescript/no-floating-promises",
     "lint:fix": "oxlint . --fix",
     "test": "pnpm --recursive --if-present test",
-    "typecheck": "for config in apps/*/tsconfig.json packages/*/tsconfig.json; do tsc --noEmit -p \"$config\"; done"
+    "typecheck": "for config in apps/*/tsconfig.json packages/*/tsconfig.json; do tsc --noEmit -p \"$config\" || exit $?; done"
   },
   "devDependencies": {
     "oxlint": "catalog:",

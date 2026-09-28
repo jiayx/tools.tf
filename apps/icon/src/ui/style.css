@@ -103,36 +103,6 @@ body::after {
   color: var(--ink);
 }
 
-.subtitle {
-  margin: 0;
-  font-size: 16px;
-  color: var(--muted);
-  max-width: 520px;
-}
-
-.hero__card {
-  background: var(--panel);
-  border: 1px solid var(--panel-border);
-  border-radius: 20px;
-  padding: 20px 24px;
-  box-shadow: var(--shadow);
-  animation: floatIn 0.9s ease-out;
-}
-
-.hero__card h2 {
-  margin: 0 0 12px;
-  font-family: "Segoe UI", "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-  font-size: 20px;
-}
-
-.hero__card ul {
-  padding-left: 18px;
-  margin: 0;
-  display: grid;
-  gap: 8px;
-  color: var(--muted);
-}
-
 .studio {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

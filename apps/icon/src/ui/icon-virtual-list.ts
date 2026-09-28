@@ -1,28 +1,29 @@
-type IconVirtualListOptions<T = string> = {
+import type { IconSetId } from '../registry/icon-types'
+
+type IconVirtualListOptions = {
   container: HTMLElement
   rowHeight: number
   overscan?: number
-  renderRow: (name: string, group: T) => HTMLElement
+  renderRow: (name: string, group: IconSetId) => HTMLElement
 }
 
-export class IconVirtualList<T = string> {
+export class IconVirtualList {
   private container: HTMLElement
   private spacer: HTMLDivElement
   private list: HTMLDivElement
   private rowHeight: number
   private overscan: number
-  private renderRow: IconVirtualListOptions<T>['renderRow']
+  private renderRow: IconVirtualListOptions['renderRow']
   private names: string[] = []
-  private group: T
+  private group: IconSetId = 'lucide'
   private lastStart = -1
   private lastEnd = -1
 
-  constructor(options: IconVirtualListOptions<T>) {
+  constructor(options: IconVirtualListOptions) {
     this.container = options.container
     this.rowHeight = options.rowHeight
     this.overscan = options.overscan ?? 6
     this.renderRow = options.renderRow
-    this.group = undefined as unknown as T
 
     this.spacer = document.createElement('div')
     this.spacer.className = 'icon-options__spacer'
@@ -34,7 +35,7 @@ export class IconVirtualList<T = string> {
     this.container.addEventListener('scroll', this.onScroll)
   }
 
-  setItems(names: string[], group: T) {
+  setItems(names: string[], group: IconSetId) {
     this.names = names
     this.group = group
     this.lastStart = -1

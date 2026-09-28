@@ -1,13 +1,12 @@
 import * as chrono from 'chrono-node'
 import type { ParsedComponents } from 'chrono-node'
 
-export type ConvertResult = {
+type ConvertResult = {
   eventDate: Date
   parsedText: string
-  sourceOffsetMinutes: number
 }
 
-export type ConvertError = {
+type ConvertError = {
   error: string
 }
 
@@ -34,14 +33,6 @@ const parserByLang: Record<ParserLang, ChronoParser> = {
 
 const allParserLangs = Object.keys(parserByLang) as ParserLang[]
 
-function hasMatch(text: string, pattern: RegExp): boolean {
-  return pattern.test(text)
-}
-
-function pushUnique(list: ParserLang[], lang: ParserLang) {
-  if (!list.includes(lang)) list.push(lang)
-}
-
 function resolveUiLang(lang: string): ParserLang | null {
   const normalized = lang.toLowerCase()
   if (normalized in parserByLang) return normalized as ParserLang
@@ -51,43 +42,41 @@ function resolveUiLang(lang: string): ParserLang | null {
 
 function detectParserOrder(text: string, lang: string): ParserLang[] {
   const normalized = text.toLowerCase()
-  const ordered: ParserLang[] = []
+  const ordered = new Set<ParserLang>()
   const uiLang = resolveUiLang(lang)
 
-  if (uiLang) pushUnique(ordered, uiLang)
+  if (uiLang) ordered.add(uiLang)
 
-  if (hasMatch(text, /[\u3040-\u30ff]/)) pushUnique(ordered, 'ja')
-  if (hasMatch(text, /[\u4e00-\u9fff]/)) pushUnique(ordered, 'zh')
-  if (hasMatch(normalized, /\b(tomorrow|today|tonight|next|am|pm|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/))
-    pushUnique(ordered, 'en')
-  if (hasMatch(text, /明天|今天|后天|下午|晚上|早上|周[一二三四五六日天]|下周|点|截止/)) pushUnique(ordered, 'zh')
-  if (hasMatch(text, /明日|今日|明後日|午後|午前|来週|時|まで/)) pushUnique(ordered, 'ja')
-  if (hasMatch(normalized, /\b(demain|aujourd'hui|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\b/))
-    pushUnique(ordered, 'fr')
-  if (hasMatch(normalized, /\b(manana|mañana|hoy|lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo)\b/))
-    pushUnique(ordered, 'es')
-  if (hasMatch(normalized, /\b(morgen|heute|montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag|uhr)\b/))
-    pushUnique(ordered, 'de')
-  if (hasMatch(normalized, /\b(amanha|amanhã|hoje|segunda|terca|terça|quarta|quinta|sexta|sabado|sábado|domingo)\b/))
-    pushUnique(ordered, 'pt')
-  if (hasMatch(normalized, /\b(domani|oggi|luned[iì]|marted[iì]|mercoled[iì]|gioved[iì]|venerd[iì]|sabato|domenica)\b/))
-    pushUnique(ordered, 'it')
-  if (hasMatch(normalized, /\b(vandaag|morgen|maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag|uur)\b/))
-    pushUnique(ordered, 'nl')
-  if (hasMatch(normalized, /\b(i dag|imorgon|måndag|mandag|tisdag|onsdag|torsdag|fredag|lördag|lordag|söndag|sondag)\b/))
-    pushUnique(ordered, 'sv')
-  if (hasMatch(text, /сегодня|завтра|понедельник|вторник|среда|четверг|пятница|суббота|воскресенье/)) pushUnique(ordered, 'ru')
-  if (hasMatch(text, /сьогодні|завтра|понеділок|вівторок|середа|четвер|п’ятниця|пятниця|субота|неділя/)) pushUnique(ordered, 'uk')
+  if (/[\u3040-\u30ff]/.test(text)) ordered.add('ja')
+  if (/[\u4e00-\u9fff]/.test(text)) ordered.add('zh')
+  if (/\b(tomorrow|today|tonight|next|am|pm|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/.test(normalized))
+    ordered.add('en')
+  if (/明天|今天|后天|下午|晚上|早上|周[一二三四五六日天]|下周|点|截止/.test(text)) ordered.add('zh')
+  if (/明日|今日|明後日|午後|午前|来週|時|まで/.test(text)) ordered.add('ja')
+  if (/\b(demain|aujourd'hui|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\b/.test(normalized))
+    ordered.add('fr')
+  if (/\b(manana|mañana|hoy|lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo)\b/.test(normalized))
+    ordered.add('es')
+  if (/\b(morgen|heute|montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag|uhr)\b/.test(normalized))
+    ordered.add('de')
+  if (/\b(amanha|amanhã|hoje|segunda|terca|terça|quarta|quinta|sexta|sabado|sábado|domingo)\b/.test(normalized))
+    ordered.add('pt')
+  if (/\b(domani|oggi|luned[iì]|marted[iì]|mercoled[iì]|gioved[iì]|venerd[iì]|sabato|domenica)\b/.test(normalized))
+    ordered.add('it')
+  if (/\b(vandaag|morgen|maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag|uur)\b/.test(normalized))
+    ordered.add('nl')
+  if (/\b(i dag|imorgon|måndag|mandag|tisdag|onsdag|torsdag|fredag|lördag|lordag|söndag|sondag)\b/.test(normalized))
+    ordered.add('sv')
+  if (/сегодня|завтра|понедельник|вторник|среда|четверг|пятница|суббота|воскресенье/.test(text)) ordered.add('ru')
+  if (/сьогодні|завтра|понеділок|вівторок|середа|четвер|п’ятниця|пятниця|субота|неділя/.test(text)) ordered.add('uk')
 
-  if (hasMatch(normalized, /[a-z]/i)) pushUnique(ordered, 'en')
+  ordered.add('en')
+  ordered.add('zh')
+  ordered.add('ja')
 
-  pushUnique(ordered, 'en')
-  pushUnique(ordered, 'zh')
-  pushUnique(ordered, 'ja')
+  for (const parserLang of allParserLangs) ordered.add(parserLang)
 
-  for (const parserLang of allParserLangs) pushUnique(ordered, parserLang)
-
-  return ordered
+  return [...ordered]
 }
 
 export function getOffsetMinutes(timeZone: string, date = new Date()): number {
@@ -200,6 +189,5 @@ export function parseTime(
   return {
     eventDate: buildDateInTimeZone(parsed.start, sourceZone),
     parsedText: parsed.text,
-    sourceOffsetMinutes: sourceOffsetMin,
   }
 }

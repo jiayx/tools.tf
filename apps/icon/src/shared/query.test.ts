@@ -1,16 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { buildIconQuery, parseIconQuery } from './query'
+import { buildIconQuery } from './query'
 import { buildTextSvg } from './svg'
 
 describe('icon query helpers', () => {
-  it('normalizes unsupported modes', () => {
-    expect(parseIconQuery({ type: 'unknown', bg: 'invalid' })).toMatchObject({
-      type: 'text',
-      bgMode: 'solid',
-    })
-  })
-
-  it('round-trips a complete icon query', () => {
+  it('serializes gradient and icon options', () => {
     const state = {
       type: 'tabler' as const,
       text: '',

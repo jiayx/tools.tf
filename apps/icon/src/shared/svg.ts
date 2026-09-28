@@ -1,3 +1,12 @@
+import { ICON_SET_META, type IconSetId } from '../registry/icon-types'
+
+export const FALLBACK_ICON_MARKUP = '<circle cx="12" cy="12" r="9" />'
+
+export const getIconWrapperAttributes = (iconSet: IconSetId, color: string) =>
+  ICON_SET_META[iconSet].renderMode === 'stroke'
+    ? `fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"`
+    : `color="${color}"`
+
 type BackgroundOptions = {
   size: number
   bgMode: 'solid' | 'gradient' | 'transparent'

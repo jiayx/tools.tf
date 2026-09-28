@@ -3,7 +3,7 @@ import { json } from '@codemirror/lang-json'
 import CodeMirror, { EditorView } from '@uiw/react-codemirror'
 import { browserLocale, pick } from '@tools/i18n'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { minifyJson, type IndentValue, type JsonResult } from './json-format'
+import { formatJson, type IndentValue, type JsonResult } from './json-format'
 
 const PLACEHOLDER = `{\n  "paste": "your JSON here"\n}`
 const COPY_FEEDBACK_MS = 2000
@@ -127,7 +127,7 @@ export function JsonApp() {
   }, [result])
 
   const handleMinify = useCallback(() => {
-    const r = minifyJson(input)
+    const r = formatJson(input, 0)
     if (r.ok) setInput(r.value)
   }, [input])
 

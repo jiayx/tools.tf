@@ -1,8 +1,8 @@
 import type { IconifyJSON } from '@iconify/types'
 import { createIconIndex } from '../icons/icon-index'
 
-export const BASE_SIZE = 24
-export const CDN_BASE = 'https://cdn.jsdelivr.net/npm'
+const BASE_SIZE = 24
+const CDN_BASE = 'https://cdn.jsdelivr.net/npm'
 export const ICONIFY_PACKAGES = {
   tabler: '@iconify-json/tabler@1.2.37',
   logos: '@iconify-json/logos@1.2.11',
@@ -16,7 +16,7 @@ export const fetchIconifyJson = async (pkg: string): Promise<IconifyJSON> => {
   return (await response.json()) as IconifyJSON
 }
 
-export const normalizeIconBody = (body: string, width: number, height: number) => {
+const normalizeIconBody = (body: string, width: number, height: number) => {
   if (!width || !height) return body
   const scale = Math.min(BASE_SIZE / width, BASE_SIZE / height)
   const offsetX = (BASE_SIZE - width * scale) / 2

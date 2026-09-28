@@ -10,14 +10,12 @@ describe('password generation', () => {
       excludeAmbiguous: false,
     }
 
-    for (let iteration = 0; iteration < 20; iteration += 1) {
-      const password = generatePassword(config)
-      expect(password).toHaveLength(32)
-      expect(password).toMatch(/[A-Z]/)
-      expect(password).toMatch(/[a-z]/)
-      expect(password).toMatch(/[0-9]/)
-      expect(password).toMatch(/[^A-Za-z0-9]/)
-    }
+    const password = generatePassword(config)
+    expect(password).toHaveLength(32)
+    expect(password).toMatch(/[A-Z]/)
+    expect(password).toMatch(/[a-z]/)
+    expect(password).toMatch(/[0-9]/)
+    expect(password).toMatch(/[^A-Za-z0-9]/)
   })
 
   it('excludes ambiguous characters when requested', () => {

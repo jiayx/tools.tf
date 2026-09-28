@@ -1,5 +1,4 @@
 import type { BgMode, IconMode } from './parse'
-import { parseBgMode, parseIconMode } from './parse'
 
 export type IconQueryState = {
   type: IconMode
@@ -13,22 +12,6 @@ export type IconQueryState = {
   textGlyph: number
   iconGlyph: number
   radius: number
-}
-
-export const parseIconQuery = (query: Record<string, string>): IconQueryState => {
-  return {
-    type: parseIconMode(query.type),
-    text: query.text || '',
-    icon: query.icon || '',
-    fg: query.fg || '',
-    bgMode: parseBgMode(query.bg),
-    bg1: query.bg1 || '',
-    bg2: query.bg2 || '',
-    angle: Number(query.angle || 0),
-    textGlyph: Number(query.textGlyph || query.glyph || 0),
-    iconGlyph: Number(query.iconGlyph || query.glyph || 0),
-    radius: Number(query.radius || 0),
-  }
 }
 
 export const buildIconQuery = (state: IconQueryState) => {

@@ -1,22 +1,13 @@
-# Shared Google Analytics
+# Analytics
 
-All eight apps use `GoogleAnalytics` in their Hono HTML renderer. The shared
-measurement ID is `G-K8QNWFNXLL`. Only the explicit production HTTPS hostnames
-in `src/index.ts` load the Google tag; localhost and preview hosts are excluded.
-New apps must add their production hostname to this list and include the component.
+`GoogleAnalytics` 在各应用的 Hono HTML renderer 中接入 GA4，Measurement ID 为 `G-K8QNWFNXLL`。仅 `src/index.ts` 列出的正式 HTTPS 域名加载脚本，使用 `tools.tf` Cookie 域名。
 
-The tag sends the initial page view through GA4's default `config` behavior.
-These apps currently do not use client-side history routing. No custom tool-input
-or action events are sent. Page location and referrer omit query strings and
-fragments (including UTM parameters); automatic advertising signals are disabled.
-API and image responses are not instrumented.
+Google tag 初始化时记录页面访问。上报的页面与来源 URL 不含查询参数和片段，因此也不保留 UTM 参数。集成不发送自定义业务事件，Google Signals 和广告个性化信号已关闭。
 
-In the GA4 Web data stream, disable enhanced measurement of form interactions,
-site search, outbound clicks and file downloads if only basic visit statistics
-are desired: those Google-controlled features can collect additional URLs and
-form metadata beyond this integration's page fields. If routing is introduced,
-review page-view handling before enabling automatic history measurement.
+GA4 后台的增强型衡量独立控制表单、站内搜索、出站链接、下载和历史路由事件。若只需要访问统计，应在 Web 数据流中关闭这些选项，避免额外收集 URL 或表单元数据。
 
-After deployment, use Tag Assistant and GA4 Realtime to confirm one initial
-page view and the correct hostname per site. This requires access to the GA4
-property and cannot be verified by the local tests.
+```tsx
+import { GoogleAnalytics } from '@tools/analytics'
+
+<GoogleAnalytics url={c.req.url} />
+```

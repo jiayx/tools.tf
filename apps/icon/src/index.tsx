@@ -1,18 +1,13 @@
 import { pick, resolveLocale, type Locale } from '@tools/i18n'
 import { Hono } from 'hono'
 import { renderer } from './renderer'
-import {
-  FALLBACK_ICON_MARKUP,
-  type IconSetId,
-  getIconWrapperAttributes,
-  loadIconSetData,
-} from './registry/icon-registry'
+import { loadIconSetData } from './registry/icon-registry'
 import { ICON_SET_META } from './registry/icon-types'
 import { DEFAULTS, PRESETS } from './config'
-import { resolveIconSet } from './shared/parse'
-import { buildBackgroundParts, buildIconSvg, buildTextSvg } from './shared/svg'
-import { parseIconQuery } from './shared/query'
-import { KVNamespace } from '@cloudflare/workers-types'
+import { parseBgMode, parseIconMode, resolveIconSet } from './shared/parse'
+import { FALLBACK_ICON_MARKUP, getIconWrapperAttributes, buildBackgroundParts, buildIconSvg, buildTextSvg } from './shared/svg'
+import type { IconQueryState } from './shared/query'
+import type { KVNamespace } from '@cloudflare/workers-types'
 
 const app = new Hono<{ Bindings: { KV: KVNamespace } }>()
 
@@ -39,30 +34,16 @@ const sanitizeText = (value: string | undefined, fallback: string) => {
   return trimmed ? trimmed : fallback
 }
 
-type IconOptions = {
-  type: 'text' | IconSetId
-  text: string
-  icon: string
-  fg: string
-  bgMode: 'solid' | 'gradient' | 'transparent'
-  bg1: string
-  bg2: string
-  angle: number
-  size: number
-  textGlyph: number
-  iconGlyph: number
-  radius: number
-}
+type IconOptions = IconQueryState & { size: number }
 
 const parseOptions = (query: Record<string, string>, sizeParam?: string) => {
-  const parsed = parseIconQuery(query)
-  const type = parsed.type
+  const type = parseIconMode(query.type)
 
   const size = clamp(parseNumber(sizeParam || query.size, DEFAULTS.size), 16, 1024)
   const angle = clamp(parseNumber(query.angle, DEFAULTS.angle), 0, 360)
   const radius = clamp(parseNumber(query.radius, DEFAULTS.radius), 0, 50)
 
-  const bgMode = parsed.bgMode
+  const bgMode = parseBgMode(query.bg)
   const textGlyph = clamp(parseNumber(query.textGlyph || query.glyph, DEFAULTS.textGlyph), 1, 100)
   const iconGlyph = clamp(parseNumber(query.iconGlyph || query.glyph, DEFAULTS.iconGlyph), 32, 100)
 
@@ -73,9 +54,9 @@ const parseOptions = (query: Record<string, string>, sizeParam?: string) => {
 
   return {
     type,
-    text: sanitizeText(parsed.text, DEFAULTS.text),
-    icon: (parsed.icon || '').trim().toLowerCase() || iconFallback,
-    fg: parseHex(parsed.fg, DEFAULTS.fg),
+    text: sanitizeText(query.text, DEFAULTS.text),
+    icon: (query.icon || '').trim().toLowerCase() || iconFallback,
+    fg: parseHex(query.fg, DEFAULTS.fg),
     bgMode,
     bg1,
     bg2,

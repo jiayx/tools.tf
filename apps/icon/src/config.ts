@@ -1,5 +1,4 @@
 export type Preset = {
-  key: string
   label: string
   fg: string
   bg1: string
@@ -24,7 +23,6 @@ export const DEFAULTS = {
 
 export const PRESETS: Preset[] = [
   {
-    key: 'default',
     label: 'Default',
     fg: DEFAULTS.fg,
     bg1: DEFAULTS.bg1,
@@ -33,7 +31,6 @@ export const PRESETS: Preset[] = [
     bgMode: DEFAULTS.bg1 === DEFAULTS.bg2 ? 'solid' : 'gradient',
   },
   {
-    key: 'midnight',
     label: 'Midnight',
     fg: '#f8fafc',
     bg1: '#0f172a',
@@ -42,7 +39,6 @@ export const PRESETS: Preset[] = [
     bgMode: 'gradient',
   },
   {
-    key: 'citrus',
     label: 'Citrus',
     fg: '#7c2d12',
     bg1: '#fef3c7',
@@ -51,7 +47,6 @@ export const PRESETS: Preset[] = [
     bgMode: 'gradient',
   },
   {
-    key: 'pearl',
     label: 'Pearl',
     fg: '#0f172a',
     bg1: '#f8f5f2',
@@ -60,7 +55,6 @@ export const PRESETS: Preset[] = [
     bgMode: 'solid',
   },
   {
-    key: 'evergreen',
     label: 'Evergreen',
     fg: '#ecfeff',
     bg1: '#065f46',
@@ -69,7 +63,6 @@ export const PRESETS: Preset[] = [
     bgMode: 'gradient',
   },
   {
-    key: 'carbon',
     label: 'Carbon',
     fg: '#f8fafc',
     bg1: '#111827',
@@ -78,7 +71,6 @@ export const PRESETS: Preset[] = [
     bgMode: 'solid',
   },
   {
-    key: 'azure',
     label: 'Azure',
     fg: '#1e3a8a',
     bg1: '#dbeafe',
